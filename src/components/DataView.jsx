@@ -115,7 +115,7 @@ export default function DataView({file}) {
     return (
       <div>
         <Typography variant="h5" component="h5" sx={{ m: 2 }}>
-          Please upload a file first.
+          Please drag a file first. All processing is done client-side so your savefile won't be uploaded.
         </Typography>
       </div>
     );
