@@ -102,15 +102,20 @@ export default function DataView({file}) {
   }, [file])
 
   if (!database || !basicInfo) {
+    if (file) {
+      return (
+        <div>
+          <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+            File might be corrupted or not an F1 Manager 2023 savefile.
+          </Typography>
+        </div>
+      );
+    }
+
     return (
       <div>
-        <Typography variant="h5" component="h5" sx={{ mt: 2 }}>
-          Drag your F1 Manager 2023 savefile here to get started.
-        </Typography>
-        <Typography variant="p" component="p" sx={{ mt: 2 }}>
-          F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames
-          <br />
-          F1 Manager 2022 savefiles will not work.
+        <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+          Please upload a file first.
         </Typography>
       </div>
     );
