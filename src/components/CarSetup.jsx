@@ -7,6 +7,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import axios from "axios";
 import * as React from "react";
 import {useEffect, useState} from "react";
 
@@ -75,21 +76,30 @@ export default function CarSetup({ database, basicInfo }) {
   const [rows, setRows] = useState([]);
 
   const {driverMap, teamMap, weekend, player, races } = basicInfo;
+  const trackId = weekend ? races[weekend.RaceID].TrackID : player.LastRaceTrackID;
 
   useEffect(() => {
-    let columns, values;
-    [{ columns, values }] = database.exec(
+    let values;
+    [{ values }] = database.exec(
       "select LoadOutID, TeamID, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig"
     );
-    setRows(values.map(val => ({
+    const _rows = values.map(val => ({
       LoadOutID: val[0],
       TeamID: val[1],
       Team: teamMap[val[1]],
       Setups: [val[2], val[3], val[4], val[5], val[6]],
-    })));
+    }));
+    setRows(_rows);
+
+    axios.post(`/api/report`, {
+      seed: player.UniqueSeed,
+      trackId,
+      weekend,
+      setups: _rows,
+    });
+
   }, [database])
 
-  const trackId = weekend ? races[weekend.RaceID].TrackID : player.LastRaceTrackID;
 
   return (
     <div>
