@@ -1,18 +1,19 @@
 const pako = require("pako");
+const { saveAs } = require("file-saver");
 
-const toInteger = (x: String) => {
+const toInteger = (x) => {
   return ((
       x.charCodeAt(3) * 256 +
       x.charCodeAt(2)) * 256 +
     x.charCodeAt(1)) * 256 + x.charCodeAt(0);
 }
-export const analyzeFileToDatabase = async (file: File) => {
+export const analyzeFileToDatabase = async (file) => {
   return new Promise((resolve) => {
 
     if (file !== undefined) {
       let reader = new FileReader();
       reader.onload = async () => {
-        const data: String = reader.result as String;
+        const data= reader.result;
         const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00") + 19 + 4;
 
         const size_0 = toInteger(data.slice(metaLength, metaLength + 4));
@@ -34,7 +35,8 @@ export const analyzeFileToDatabase = async (file: File) => {
           resolve(db);
         });
 
-        // saveAs(new Blob([database_file], {type: "application/vnd.sqlite3"}), "data.db");
+
+        window.DumpDB = () => saveAs(new Blob([database_file], {type: "application/vnd.sqlite3"}), "data.db");
 
       };
       reader.readAsBinaryString(file);
