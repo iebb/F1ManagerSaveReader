@@ -80,23 +80,28 @@ export default function CarSetup({ database, basicInfo }) {
 
   useEffect(() => {
     let values;
-    [{ values }] = database.exec(
-      "select LoadOutID, TeamID, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig"
-    );
-    const _rows = values.map(val => ({
-      LoadOutID: val[0],
-      TeamID: val[1],
-      Team: teamMap[val[1]],
-      Setups: [val[2], val[3], val[4], val[5], val[6]],
-    }));
-    setRows(_rows);
+    try {
 
-    axios.post(`/api/report`, {
-      seed: player.UniqueSeed,
-      trackId,
-      weekend,
-      setups: _rows,
-    });
+      [{ values }] = database.exec(
+        "select LoadOutID, TeamID, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig"
+      );
+      const _rows = values.map(val => ({
+        LoadOutID: val[0],
+        TeamID: val[1],
+        Team: teamMap[val[1]],
+        Setups: [val[2], val[3], val[4], val[5], val[6]],
+      }));
+      setRows(_rows);
+
+      axios.post(`/api/report`, {
+        seed: player.UniqueSeed,
+        trackId,
+        weekend,
+        setups: _rows,
+      });
+    } catch {
+
+    }
 
   }, [database])
 
