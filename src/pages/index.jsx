@@ -4,6 +4,8 @@ import {Container, Divider, Typography} from "@mui/material";
 import Head from 'next/head'
 import {useState} from "react";
 import Dropzone from 'react-dropzone'
+import KofiButton from "../components/Kofi/Kofi";
+import Footer from "../components/UI/Footer";
 
 export default function Home() {
 
@@ -18,6 +20,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+
         <div className={styles.headerContainer}>
           <div className={styles.headerTitle} >
             <Typography variant="h3" component="h3">
@@ -25,8 +28,12 @@ export default function Home() {
               <span
                 className={styles.wideScreenOnly}
                 style={{ color: "#777", fontSize: 15, marginInline: 15, textTransform: "uppercase" }}
-              >{' '}for F1® Manager 2023</span>
+              >{' '}for F1® Manager 2023
+          </span>
             </Typography>
+          </div>
+          <div className={styles.headerUser}>
+            <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
           </div>
         </div>
         <Divider variant="fullWidth" sx={{ mt: 1 }} />
@@ -46,6 +53,7 @@ export default function Home() {
           </div>
         )}
       </Dropzone>
+      <Footer />
     </>
   )
 }

@@ -65,7 +65,6 @@
 
   .headerUser {
     flex-basis: 200px;
-    flex-direction: column;
     gap: 2px;
   }
 }
