@@ -28,6 +28,7 @@ export const analyzeFileToDatabase = async (file: File) => {
         const output = pako.inflate(compressedData);
         const database_file = output.slice(0, size_1);
 
+        // @ts-ignore
         require('sql.js')({locateFile: f => `https://sql.js.org/dist/${f}`}).then(SQL => {
           const db = new SQL.Database(database_file);
           resolve(db);
