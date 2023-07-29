@@ -112,7 +112,9 @@ export default function CarSetup({ database, basicInfo }) {
         !weekend && (
           <>
             <span style={{ color: "yellow", fontSize: 20 }}>
-              If you want to find out the Setup Data, be sure to enter Practice 1 first. The data below is for the last race.
+              If you want to find out the Setup Data, be sure to enter Practice 1 first and do a manual save. The data below is for the last race.
+              <br />
+              Note: If you want to use the autosave, you might need to wait until P2.
             </span>
             <br/>
           </>
