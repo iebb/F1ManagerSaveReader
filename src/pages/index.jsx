@@ -35,7 +35,14 @@ export default function Home() {
             <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
           </div>
         </div>
-        <Divider variant="fullWidth" sx={{ mt: 1 }} />
+        <Divider variant="fullWidth" sx={{ m: 1 }} />
+        <Typography className={styles.description}>
+          Tutorial: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3011785417">Steam Guide for Save Viewer</a>
+          <br />
+          Bug & Feedbacks: <a href="https://discord.gg/u46QWWaNfV">Discord</a>
+          <br />
+          <a href="https://f1setup.it/">F1Setup.it</a> - the original calculator
+        </Typography>
       </Container>
       <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
         <Dropzone
