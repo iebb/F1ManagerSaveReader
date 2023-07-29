@@ -18,7 +18,7 @@ export const weekendStages = [
   "Race End",
 ]
 export const circuitNames = [
-  "",
+  "Unknown",
   "Melbourne",
   "Silverstone",
   "Sakhir",
@@ -50,7 +50,7 @@ export const circuitNames = [
   "Las Vegas",
 ]
 export const countryNames = [
-  "",
+  "Unknown",
   "Australia",
   "Great Britain",
   "Bahrain",

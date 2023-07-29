@@ -108,6 +108,16 @@ export default function CarSetup({ database, basicInfo }) {
 
   return (
     <div>
+      {
+        !weekend && (
+          <>
+            <span style={{ color: "yellow", fontSize: 20 }}>
+              If you want to find out the Setup Data, be sure to enter Practice 1 first. The data below is for the last race.
+            </span>
+            <br/>
+          </>
+        )
+      }
       <Typography variant="h5" component="h5">
         Perfect Car Setups for {circuitNames[trackId]}, {countryNames[trackId]}
       </Typography>
