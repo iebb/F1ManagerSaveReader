@@ -41,7 +41,6 @@ export default function Home() {
 
         <Dropzone
           onDropAccepted={files => setFile(files[0])}
-          noClick
           multiple={false}
         >
           {({ getRootProps, getInputProps }) => (
