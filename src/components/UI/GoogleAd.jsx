@@ -9,7 +9,7 @@ function GoogleAd({ classNames = "", slot, googleAdId, style, format = "autorela
     if (!googleInit) {
       setGoogleInit(setTimeout(() => {
         if (typeof window !== 'undefined')
-          ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
       }, timeout));
     }
 
