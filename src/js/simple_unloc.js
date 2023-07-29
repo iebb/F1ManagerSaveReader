@@ -20,7 +20,6 @@ export const weekendStages = [
 export const circuitNames = [
   "Unknown",
   "Melbourne",
-  "Silverstone",
   "Sakhir",
   "China",
   "Baku",
@@ -30,6 +29,7 @@ export const circuitNames = [
   "Le Castellet",
   "Spielberg",
 
+  "Silverstone",
   "Jeddah",
   "Budapest",
   "Spa-Francorchamps",
@@ -52,7 +52,6 @@ export const circuitNames = [
 export const countryNames = [
   "Unknown",
   "Australia",
-  "Great Britain",
   "Bahrain",
   "China",
   "Azerbaijan",
@@ -62,6 +61,7 @@ export const countryNames = [
   "France",
   "Austria",
 
+  "Great Britain",
   "Saudi Arabia",
   "Hungary",
   "Belgium",

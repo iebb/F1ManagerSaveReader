@@ -38,7 +38,6 @@ export default function Home() {
         <Divider variant="fullWidth" sx={{ mt: 1 }} />
       </Container>
       <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
-
         <Dropzone
           onDropAccepted={files => setFile(files[0])}
           noClick
