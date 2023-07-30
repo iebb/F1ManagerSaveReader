@@ -1,6 +1,8 @@
 import '@/styles/globals.css'
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import Head from "next/head";
+import Footer from "../components/UI/Footer";
+import Header from "../components/UI/Header";
 
 const theme = createTheme({
   palette: {
@@ -22,6 +24,8 @@ export default function App({ Component, pageProps }) {
       <title>F1 Manager Setup Calculator</title>
     </Head>
     <CssBaseline />
+    <Header />
     <Component {...pageProps} />
+    <Footer />
   </ThemeProvider>);
 }

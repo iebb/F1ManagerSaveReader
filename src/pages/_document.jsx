@@ -12,7 +12,6 @@ export default function Document() {
         />
       </Head>
       <body>
-      <Header />
       <div dangerouslySetInnerHTML={{ __html: `<script async
                   src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3253159471656308"
                   crossOrigin="anonymous"></script>` }} />
@@ -22,7 +21,6 @@ export default function Document() {
         </script>` }} />
       <Main />
       <NextScript />
-      <Footer />
       </body>
     </Html>
   )
