@@ -142,7 +142,7 @@ export default function CarSetup({ database, basicInfo }) {
             {rows.map(row => ({
               ...row,
               order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
-            }).sort((x, y) => x.order - y.order).map((row) => (
+            })).sort((x, y) => x.order - y.order).map((row) => (
               <TableRow
                 key={`${row.TeamID}_${row.LoadOutID}`}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
