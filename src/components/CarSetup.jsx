@@ -111,8 +111,10 @@ export default function CarSetup({ database, basicInfo }) {
       {
         !weekend && (
           <>
-            <span style={{ color: "yellow", fontSize: 20 }}>
-              If you want to find out the Setup Data, be sure to enter Practice 1 first and do a manual save. The data below is for the last race.
+            <span style={{ color: "yellow", fontSize: 18 }}>
+              If you want to find out the Setup Data, be sure to enter Practice 1 first and do a manual save.
+              <br />
+              The data below is for the last race.
               <br />
               Note: If you want to use the autosave, you might need to wait until P2.
             </span>
@@ -137,7 +139,10 @@ export default function CarSetup({ database, basicInfo }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
+            {rows.map(row => ({
+              ...row,
+              order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
+            }).sort((x, y) => x.order - y.order).map((row) => (
               <TableRow
                 key={`${row.TeamID}_${row.LoadOutID}`}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
