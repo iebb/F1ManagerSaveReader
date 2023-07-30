@@ -5,7 +5,7 @@ import Dropzone from 'react-dropzone'
 import DataView from "../components/DataView";
 import KofiButton from "../components/Kofi/Kofi";
 import Footer from "../components/UI/Footer";
-import styles from '../styles/Home.module.css'
+import styles from '../components/UI/Header.module.css'
 
 export default function Home() {
 
@@ -19,31 +19,6 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
-        <div className={styles.headerContainer}>
-          <div className={styles.headerTitle} >
-            <Typography variant="h3" component="h3">
-              F1 Manager Save Viewer
-              <span
-                className={styles.wideScreenOnly}
-                style={{ color: "#777", fontSize: 15, marginInline: 15, textTransform: "uppercase" }}
-              >{' '}for F1® Manager 2023
-          </span>
-            </Typography>
-          </div>
-          <div className={styles.headerUser}>
-            <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
-          </div>
-        </div>
-        <Divider variant="fullWidth" sx={{ m: 1 }} />
-        <Typography className={styles.description}>
-          Tutorial: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3011785417">Steam Guide for Save Viewer</a>
-          <br />
-          Bug & Feedbacks: <a href="https://discord.gg/u46QWWaNfV">Discord</a>
-          <br />
-          <a href="https://f1setup.it/">F1Setup.it</a> - the original calculator
-        </Typography>
-      </Container>
       <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
         <Dropzone
           onDropAccepted={files => setFile(files[0])}
@@ -70,7 +45,6 @@ export default function Home() {
       <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
         <DataView file={file} />
       </Container>
-      <Footer />
     </>
   )
 }

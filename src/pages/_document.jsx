@@ -1,4 +1,6 @@
-import { Html, Head, Main, NextScript } from 'next/document'
+import {Head, Html, Main, NextScript} from 'next/document'
+import Footer from "../components/UI/Footer";
+import Header from "../components/UI/Header";
 
 export default function Document() {
   return (
@@ -10,6 +12,7 @@ export default function Document() {
         />
       </Head>
       <body>
+      <Header />
       <div dangerouslySetInnerHTML={{ __html: `<script async
                   src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3253159471656308"
                   crossOrigin="anonymous"></script>` }} />
@@ -19,6 +22,7 @@ export default function Document() {
         </script>` }} />
       <Main />
       <NextScript />
+      <Footer />
       </body>
     </Html>
   )
