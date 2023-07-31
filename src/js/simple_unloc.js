@@ -46,8 +46,8 @@ export const circuitNames = [
   "Zandvoort",
   "Imola",
 
-  "Losail",
   "Las Vegas",
+  "Losail",
 ]
 export const countryNames = [
   "Unknown",
@@ -78,6 +78,6 @@ export const countryNames = [
   "Netherlands",
   "Italy",
 
-  "Qatar",
   "United States",
+  "Qatar",
 ]
