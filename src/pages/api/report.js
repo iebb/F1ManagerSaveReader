@@ -3,9 +3,9 @@ import {databasePromise} from "../../libs/cloud/mongodb";
 
 export const handler = async (req, res) => {
   let db = await databasePromise;
-  const { seed, weekend, trackId, setups } = req.body;
+  const { seed, weekend, trackId, teamId, setups } = req.body;
   await db.collection(`reports_track_${trackId}`).insertOne(
-    { seed, trackId, setups, weekend },
+    { seed, trackId, teamId, setups, weekend },
   );
   await db.collection(`reports_total`).updateOne(
     { seed },

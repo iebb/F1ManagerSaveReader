@@ -148,6 +148,21 @@ export default function TracksData( { trackValues } ) {
     return ret;
   }
 
+  const vals = tracks.map(t => (
+      {
+        trackId: t,
+        track: circuitNames[t],
+        values: [0, 1, 2, 3, 4].map(i => {
+          const [mn, mx, median] = minMax(trackValues[t][i]).map(
+            v => v / 560
+          );
+          return median
+        })
+      }
+  ))
+
+  console.log(vals);
+
   return (
     <>
       <Head>

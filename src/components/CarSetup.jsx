@@ -96,6 +96,7 @@ export default function CarSetup({ database, basicInfo }) {
       axios.post(`/api/report`, {
         seed: player.UniqueSeed,
         trackId,
+        teamId: basicInfo.player.TeamID,
         weekend,
         setups: _rows,
       });
