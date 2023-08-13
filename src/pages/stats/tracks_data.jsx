@@ -100,7 +100,6 @@ export const getServerSideProps = async () => {
   let trackBiases = {};
   for(const trackId of tracks) {
     const values = [{}, {}, {}, {}, {}];
-    const biases = [{}, {}, {}, {}, {}];
     v = await db.collection(`reports_track_${trackId}`).find({}).toArray();
     for(const row of v) {
       for(const loadOut of row.setups) {
@@ -110,25 +109,36 @@ export const getServerSideProps = async () => {
           if (!values[i][rv]) values[i][rv] = 0;
           values[i][rv]++;
         }
-        for(let i = 0; i < 5; i++) {
-          const rv = Math.round(bias[i] * 100);
-          if (!biases[i][rv]) biases[i][rv] = 0;
-          biases[i][rv]++;
-        }
       }
     }
     trackValues[trackId] = values;
-    trackBiases[trackId] = biases;
   }
 
   return { props: { trackValues, trackBiases } }
 }
 
-export default function TracksData( { trackValues, trackBiases } ) {
+export default function TracksData( { trackValues } ) {
 
   const splits = [20, 14, 8, 16, 20];
   const displayIntervals = [4, 3.5, 2, 4, 5];
   const intervals = splits.map(x => 560 / x);
+
+
+  const minMax = (d) => {
+    const totalData = Object.keys(d).map(x => d[x]).reduce((a, b) => a+b, 0);
+    const unsortedIndex = Object.keys(d).map(x => parseInt(x, 10));
+    const sortedIndex = unsortedIndex.sort((a, b) => a-b);
+    let sum = 0;
+    let currentIndex = 0;
+    for(const s of sortedIndex) {
+      sum += d[s];
+      currentIndex = s;
+      if (sum * 2 >= totalData) {
+        break;
+      }
+    }
+    return [sortedIndex[0], sortedIndex[sortedIndex.length - 1], currentIndex];
+  }
 
   const parseData = (d, step) => {
     const ret = [];
@@ -182,74 +192,19 @@ export default function TracksData( { trackValues, trackBiases } ) {
                     </TableCell>
                     {
                       [0, 1, 2, 3, 4].map(i => {
+
+                        const [mn, mx, median] = minMax(trackValues[t][i]).map(
+                          v => CarSetupParams[i].render(
+                            CarSetupParams[i].min + (CarSetupParams[i].max - CarSetupParams[i].min) * (v / 560)
+                          )
+                        );
                         return (
                           <TableCell
                             align="right"
                             key={i}
                             style={{ width: "18%", height: 150 }}
                           >
-                            <ReactECharts
-                              theme="dark"
-                              style={{ height: 200 }}
-                              option={{
-                                backgroundColor: "transparent",
-                                grid: {
-                                  show: false,
-                                  left: 15,
-                                  right: 15,
-                                  top: 20,
-                                  bottom: 20,
-                                },
-                                xAxis: {
-                                  type: 'value',
-                                  showGrid: false,
-                                  min: 0,
-                                  max: splits[i],
-                                  minInterval: displayIntervals[i],
-                                  axisLabel: {
-                                    formatter: v => CarSetupParams[i].render(
-                                      CarSetupParams[i].min + (CarSetupParams[i].max - CarSetupParams[i].min) * (v / splits[i])
-                                    ),
-                                  },
-                                  axisLine: {
-                                    show: false, // Hide full Line
-                                  },
-                                  splitLine: {
-                                    show: false
-                                  },
-                                  axisTick: {
-                                    show: false, // Hide Ticks,
-                                  },
-                                },
-                                yAxis: {
-                                  type: 'value',
-                                  axisLabel: {
-                                    show: false,
-                                  },
-                                  axisLine: {
-                                    show: false, // Hide full Line
-                                  },
-                                  splitLine: {
-                                    show: false
-                                  },
-                                  axisTick: {
-                                    show: false, // Hide Ticks,
-                                  },
-                                },
-                                series: [
-                                  {
-                                    data: parseData(trackValues[t][i], intervals[i]),
-                                    type: 'bar',
-                                    barWidth: '95%',
-                                    label: {
-                                      show: true,
-                                      position: 'top',
-                                      formatter: x => x.value[1] ? x.value[1] : ""
-                                    },
-                                  }
-                                ]
-                              }}
-                            />
+                            {mn} ~ {mx}
                           </TableCell>
                         )
                       })
