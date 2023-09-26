@@ -8,9 +8,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import ReactECharts from 'echarts-for-react';
 import Head from 'next/head'
-import {CarSetupParams} from "../../components/CarSetup";
-import {circuitNames} from "../../js/simple_unloc";
-import {databasePromise} from "../../libs/cloud/mongodb";
+import {CarSetupParams} from "../../src/components/CarSetup";
+import {circuitNames} from "../../src/js/simple_unloc";
+import {databasePromise} from "../../src/libs/cloud/mongodb";
 
 const tracks = [
   2,

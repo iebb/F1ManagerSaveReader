@@ -1,11 +1,8 @@
-import {Container, Divider, Typography} from "@mui/material";
+import {Container, Typography} from "@mui/material";
 import Head from 'next/head'
 import {useState} from "react";
 import Dropzone from 'react-dropzone'
 import DataView from "../components/DataView";
-import KofiButton from "../components/Kofi/Kofi";
-import Footer from "../components/UI/Footer";
-import styles from '../components/UI/Header.module.css'
 
 export default function Home() {
 
