@@ -3,6 +3,8 @@ import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/lo
 import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import Image from "next/image";
+import RaceResults22 from "./RaceResults";
+import {VTabs} from "../Tabs";
 
 export default function DataView2022({ db }) {
   const [basicInfo, setBasicInfo] = useState({});
@@ -130,7 +132,7 @@ export default function DataView2022({ db }) {
   return (
     <div>
       <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
-        Playing as {player.FirstName} {player.LastName} for {team.TeamName} since {player.StartSeason}.
+        Playing as {player.FirstName} {player.LastName} for {team.TeamName} in 2022 Game.
         <br />
         It's {
         new Date(player.Day*86400000 - 2208988800000).toLocaleDateString()
@@ -164,10 +166,10 @@ export default function DataView2022({ db }) {
         </Stepper>
       </div>
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
-      <CarSetup
-        database={db}
-        basicInfo={basicInfo}
-      />
+      <VTabs options={[
+        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo}/>},
+        {name: "Race Results", tab: <RaceResults22 database={db} basicInfo={basicInfo}/>},
+      ]} />
     </div>
   )
 }
