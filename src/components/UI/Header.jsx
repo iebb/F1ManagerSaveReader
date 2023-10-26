@@ -10,7 +10,7 @@ export default function Header() {
             F1 Manager Save Viewer
             <span
               style={{ color: "#777", fontSize: 15, marginInline: 15, textTransform: "uppercase" }}
-            >{' '}for F1® Manager 2023
+            >{' '}for F1® Manager 2022/2023
         </span>
           </Typography>
         </div>

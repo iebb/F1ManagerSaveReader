@@ -73,7 +73,7 @@ export const CarSetupParams = [
 export default function CarSetup({ database, basicInfo }) {
 
   const [rows, setRows] = useState([]);
-  const [teamOnly, setTeamOnly] = useState(true);
+  const [teamOnly, setTeamOnly] = useState(false);
 
   const {driverMap, teamMap, weekend, player, races } = basicInfo;
   const trackId = weekend.RaceID > 0 ? races[weekend.RaceID].TrackID : player.LastRaceTrackID;
@@ -83,12 +83,12 @@ export default function CarSetup({ database, basicInfo }) {
     try {
 
       [{ values }] = database.exec(
-        "select LoadOutID, TeamID, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig"
+        "select LoadOutID, 0, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig"
       );
       const _rows = values.map(val => ({
         LoadOutID: val[0],
-        TeamID: val[1],
-        Team: teamMap[val[1]],
+        TeamID: basicInfo.player.TeamID,
+        Team: teamMap[basicInfo.player.TeamID],
         Setups: [val[2], val[3], val[4], val[5], val[6]],
       }));
       setRows(_rows);
@@ -132,7 +132,7 @@ export default function CarSetup({ database, basicInfo }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.filter(teamOnly ? (row => basicInfo.player.TeamID === row.TeamID) : () => true).map(row => ({
+            {rows.map(row => ({
               ...row,
               order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
             })).sort((x, y) => x.order - y.order).map((row) => (

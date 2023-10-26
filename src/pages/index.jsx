@@ -2,7 +2,7 @@ import {Container, Typography} from "@mui/material";
 import Head from 'next/head'
 import {useState} from "react";
 import Dropzone from 'react-dropzone'
-import DataView from "../components/F1M2023/DataView";
+import DataView from "../components/DataView";
 
 export default function Home() {
 
@@ -27,17 +27,19 @@ export default function Home() {
               <input {...getInputProps()} hidden />
               <div id="dropzone">
                 <Typography variant="h5" component="h5">
-                  Drag your F1 Manager 2023 savefile here to get started.
+                  Drag your F1 Manager 2022/2023 savefile here to get started.
                 </Typography>
                 <Typography variant="p" component="p" sx={{ mt: 2 }}>
                   F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames
+                  <br />
+                  F1 Manager 2022: %LOCALAPPDATA%\F1Manager22\Saved\SaveGames
                   <br />
                   If you are playing Xbox Store version, please use <a
                     href="https://github.com/Fr33dan/GPSaveConverter/releases">
                     GPSaveConverter
                   </a> to convert the savefile into original format.
                   <br />
-                  F1 Manager 2022 savefiles will not work.
+                  Support for F1 Manager 2022 might be limited.
                 </Typography>
               </div>
             </div>

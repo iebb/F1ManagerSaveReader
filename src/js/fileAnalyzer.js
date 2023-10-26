@@ -14,6 +14,7 @@ export const analyzeFileToDatabase = async (file) => {
       let reader = new FileReader();
       reader.onload = async () => {
         const data= reader.result;
+        const version = data.charCodeAt(4);
         const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x00\x00\x00\x00") + 19 + 4;
 
         const size_0 = toInteger(data.slice(metaLength, metaLength + 4));
@@ -32,7 +33,7 @@ export const analyzeFileToDatabase = async (file) => {
         // @ts-ignore
         require('sql.js')({locateFile: f => `https://sql.js.org/dist/${f}`}).then(SQL => {
           const db = new SQL.Database(database_file);
-          resolve(db);
+          resolve({db, version});
         });
 
 
