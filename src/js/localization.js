@@ -17,6 +17,24 @@ export const weekendStages = [
   "Race End",
   "Race End",
 ]
+
+export const weekendStagesAbbrev = [
+  "P1", //
+  "P1",
+  "P2",
+  "P3", //
+  "P3",
+  "Q1",
+  "Q2",
+  "Q3",
+  "Race",
+  "Race",
+  "End",
+  "End",
+  "End",
+]
+
+
 export const circuitNames = [
   "Unknown",
   "Melbourne",
@@ -80,4 +98,63 @@ export const countryNames = [
 
   "United States",
   "Qatar",
+]
+
+export const raceAbbrevs = [
+  "Unknown",
+  "AUS",
+  "BHR",
+  "CHN",
+  "AZE",
+  "ESP",
+  "MON",
+  "CAN",
+  "FRA",
+  "AUT",
+  "GBR",
+  "KSA",
+  "HUN",
+  "BEL",
+  "ITA",
+  "SIN",
+  "RUS",
+  "JPN",
+  "MEX",
+  "USA",
+  "BRA",
+  "UAE",
+  "MIA", // Miami
+  "NED",
+  "EMI", // SMR
+  "LVG", // Las Vegas
+  "QAT",
+]
+export const raceFlags = [
+  "Unknown",
+  "AU",
+  "BH",
+  "CN",
+  "AZ",
+  "ES",
+  "MC",
+  "CA",
+  "FR",
+  "AT",
+  "GB",
+  "SA",
+  "HU",
+  "BE",
+  "IT",
+  "SG",
+  "RU",
+  "JP",
+  "MX",
+  "US",
+  "BR",
+  "AE",
+  "US-MIAMI", // Miami
+  "NL",
+  "IT-EMI", // SMR
+  "US-VEGAS", // Las Vegas
+  "QA",
 ]

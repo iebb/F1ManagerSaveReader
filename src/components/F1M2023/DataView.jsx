@@ -1,8 +1,9 @@
-import CarSetup from "@/components/CarSetup";
+import CarSetup from "./CarSetup";
 import {analyzeFileToDatabase} from "@/js/fileAnalyzer";
-import {weekendStages, circuitNames, countryNames} from "@/js/simple_unloc";
-import {Divider, Typography} from "@mui/material";
+import {circuitNames, countryNames, weekendStages, weekendStagesAbbrev, raceAbbrevs, raceFlags} from "@/js/localization";
+import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
+import Image from "next/image";
 
 export default function DataView({file}) {
 
@@ -14,6 +15,7 @@ export default function DataView({file}) {
     analyzeFileToDatabase(file).then(db => {
 
       const basicInfo = {
+        currentSeasonRaces: [],
         races: {},
         teamMap: {},
         driverMap: {},
@@ -53,13 +55,6 @@ export default function DataView({file}) {
             basicInfo.driverMap[r[0]][columns[_idx]] = x;
           })
         }
-        [{ columns, values }] = db.exec("select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID");
-        for(const r of values) {
-          basicInfo.races[r[0]] = {};
-          r.map((x, _idx) => {
-            basicInfo.races[r[0]][columns[_idx]] = x;
-          })
-        }
 
         [{ columns, values }] = db.exec("select * from Player");
         for(const r of values) {
@@ -79,6 +74,21 @@ export default function DataView({file}) {
             basicInfo.player[columns[_idx]] = x;
           })
         }
+
+
+        [{ columns, values }] = db.exec(
+          "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
+        );
+        for(const r of values) {
+          basicInfo.races[r[0]] = {};
+          r.map((x, _idx) => {
+            basicInfo.races[r[0]][columns[_idx]] = x;
+          })
+          if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
+            basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
+          }
+        }
+
         try {
           [{ columns, values }] = db.exec("select * from Save_Weekend");
           for(const r of values) {
@@ -87,7 +97,9 @@ export default function DataView({file}) {
             })
           }
         } catch {
-          basicInfo.weekend = null;
+          basicInfo.weekend = {
+            RaceID: -1
+          };
         }
 
         setBasicInfo(basicInfo);
@@ -95,8 +107,6 @@ export default function DataView({file}) {
       } catch {
 
       }
-
-
 
     });
   }, [file])
@@ -122,36 +132,47 @@ export default function DataView({file}) {
   }
 
 
-  const { player, teamMap, weekend, races } = basicInfo;
+  const { player, teamMap, weekend, races, currentSeasonRaces } = basicInfo;
   const team = teamMap[player.TeamID];
+
+  const currentRaceIdx = currentSeasonRaces.map(x => x.RaceID).indexOf(weekend.RaceID);
 
   return (
     <div>
-      <Typography variant="p" component="p" style={{ color: "#ccc" }}>
+      <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
         Playing as {player.FirstName} {player.LastName} for {team.TeamName} since {player.StartSeason}.
         <br />
         It's {
-          new Date(player.Day*86400000 - 2208988800000).toLocaleDateString()
-        } in-game and last raced at {
-          circuitNames[player.LastRaceTrackID]
-        }, {
-          countryNames[player.LastRaceTrackID]
-        }.
-        <br />
-        {
-          weekend && (
-            <>
-              <span style={{ color: "yellow", fontSize: 20 }}>
-                It's in a race weekend right now. <br />
-                Current Race: {
-                  circuitNames[races[weekend.RaceID].TrackID]
-                }, Current Stage: {weekendStages[weekend.WeekendStage]}
-              </span>
-              <br/>
-            </>
-          )
-        }
+        new Date(player.Day*86400000 - 2208988800000).toLocaleDateString()
+      } in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
       </Typography>
+      <div style={{ overflowX: "auto" }}>
+        <Stepper
+          activeStep={currentRaceIdx}
+          alternativeLabel
+        >
+          {currentSeasonRaces.map((race) => (
+            <Step key={race.RaceID}>
+              <StepLabel
+                StepIconComponent={() => <Image
+                  src={require(`../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
+                  key={race.TrackID}
+                  width={24} height={18}
+                  alt={race.Name}
+                  style={{ opacity: race.RaceID === weekend.RaceID ? 1 : 0.3 }}
+                />}
+              >
+                {raceAbbrevs[race.TrackID]}
+                <br />
+                {
+                  race.RaceID === weekend.RaceID ? weekendStagesAbbrev[weekend.WeekendStage] :
+                    race.Day < player.Day ? "✅" : `${(race.Day - player.Day)}d`
+                }
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      </div>
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
       <CarSetup
         database={database}

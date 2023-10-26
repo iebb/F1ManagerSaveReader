@@ -2,7 +2,7 @@ import {Container, Typography} from "@mui/material";
 import Head from 'next/head'
 import {useState} from "react";
 import Dropzone from 'react-dropzone'
-import DataView from "../components/DataView";
+import DataView from "../components/F1M2023/DataView";
 
 export default function Home() {
 

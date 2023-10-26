@@ -9,7 +9,6 @@ export default function Header() {
           <Typography variant="h3" component="h3">
             F1 Manager Save Viewer
             <span
-              className="wideScreenOnly"
               style={{ color: "#777", fontSize: 15, marginInline: 15, textTransform: "uppercase" }}
             >{' '}for F1® Manager 2023
         </span>
@@ -21,11 +20,15 @@ export default function Header() {
       </div>
       <Divider variant="fullWidth" sx={{ m: 1 }} />
       <Typography className="description">
-        Tutorial: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3011785417">Steam Guide for Save Viewer</a>
-        <br />
-        Bug & Feedbacks: <a href="https://discord.gg/u46QWWaNfV">Discord</a>
-        <br />
-        <a href="https://f1setup.it/">F1Setup.it</a> - the original calculator
+        <span style={{ paddingRight: 20 }}>
+          Tutorial: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3011785417">Steam Guide</a>
+        </span>
+        <span style={{ paddingRight: 20 }}>
+          Bug & Feedbacks: <a href="https://discord.gg/u46QWWaNfV">Discord</a>
+        </span>
+        <span style={{ paddingRight: 20 }}>
+          <a href="https://f1setup.it/">F1Setup.it</a> - the original calculator
+        </span>
       </Typography>
     </Container>
   )

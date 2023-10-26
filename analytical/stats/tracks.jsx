@@ -8,8 +8,8 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import ReactECharts from 'echarts-for-react';
 import Head from 'next/head'
-import {CarSetupParams} from "../../src/components/CarSetup";
-import {circuitNames} from "../../src/js/simple_unloc";
+import {CarSetupParams} from "../../src/components/F1M2023/CarSetup";
+import {circuitNames} from "../../src/js/localization";
 import {databasePromise} from "../../src/libs/cloud/mongodb";
 
 const tracks = [
