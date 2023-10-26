@@ -32,6 +32,11 @@ export default function Home() {
                 <Typography variant="p" component="p" sx={{ mt: 2 }}>
                   F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames
                   <br />
+                  If you are playing Xbox Store version, please use <a
+                    href="https://github.com/Fr33dan/GPSaveConverter/releases">
+                    GPSaveConverter
+                  </a> to convert the savefile into original format.
+                  <br />
                   F1 Manager 2022 savefiles will not work.
                 </Typography>
               </div>
