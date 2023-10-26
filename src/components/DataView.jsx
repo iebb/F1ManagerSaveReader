@@ -13,8 +13,6 @@ export default function DataView({file}) {
     analyzeFileToDatabase(file).then(({db, version}) => {
       setDb(db);
       setVersion(version);
-
-      console.log("version", version);
     });
   }, [file])
 
@@ -32,9 +30,15 @@ export default function DataView({file}) {
   if (version === 2) {
     return <DataView2022 db={db} />;
   }
-
-
   if (version === 3) {
     return <DataView2023 db={db} />;
   }
+
+  return (
+    <div>
+      <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+        This savefile is not supported.
+      </Typography>
+    </div>
+  );
 }
