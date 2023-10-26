@@ -14,7 +14,7 @@ export const analyzeFileToDatabase = async (file) => {
       let reader = new FileReader();
       reader.onload = async () => {
         const data= reader.result;
-        const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00") + 19 + 4;
+        const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x00\x00\x00\x00") + 19 + 4;
 
         const size_0 = toInteger(data.slice(metaLength, metaLength + 4));
         const size_1 = toInteger(data.slice(metaLength + 4, metaLength + 8));
