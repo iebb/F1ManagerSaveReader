@@ -3,8 +3,8 @@ import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/lo
 import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import Image from "next/image";
-import RaceResults22 from "./RaceResults";
 import {VTabs} from "../Tabs";
+import RaceResults from "../Common/RaceResults";
 
 export default function DataView2022({ db }) {
   const [basicInfo, setBasicInfo] = useState({});
@@ -110,6 +110,8 @@ export default function DataView2022({ db }) {
         };
       }
 
+      basicInfo.player.StartSeason = 2022;
+
       setBasicInfo(basicInfo);
     } catch (e) {
       console.error(e);
@@ -168,10 +170,10 @@ export default function DataView2022({ db }) {
           ))}
         </Stepper>
       </div>
-      <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
+      <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />s
       <VTabs options={[
-        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo}/>},
-        {name: "Race Results", tab: <RaceResults22 database={db} basicInfo={basicInfo}/>},
+        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={2}/>},
+        {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={2}/>},
       ]} />
     </div>
   )

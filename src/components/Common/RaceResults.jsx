@@ -11,34 +11,69 @@ import {useEffect, useState} from "react";
 import Image from "next/image";
 import TableBody from "@mui/material/TableBody";
 import {getDriverCode, getDriverName} from "../../js/localization";
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 
 
-export default function RaceResults22({ database, basicInfo }) {
+export default function RaceResults({ database, basicInfo, version }) {
+
+  const {driverMap, teamMap, weekend, player, races, currentSeasonRaces } = basicInfo;
 
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
+
+  const [season, setSeason] = useState(player.CurrentSeason);
+  const [seasons, setSeasons] = useState([]);
+
+  useEffect(() => {
+    let seasonList = [];
+    for(let s = player.StartSeason; s <= player.CurrentSeason; s++) {
+      seasonList.push(s);
+    }
+    setSeasons(seasonList);
+  }, [player.CurrentSeason, player.StartSeason]);
+
   // const [currentSeason, setCurrentSeason] = useState(2023);
 
-  const {driverMap, teamMap, weekend, player, races, currentSeasonRaces } = basicInfo;
+  const handleChange = (event) => {
+    setSeason(event.target.value);
+  };
+
+
 
 
   useEffect(() => {
+
+    // let season = player.CurrentSeason;
+
+    let columns, values;
+
     let raceSchedule = [];
-    for(const race of currentSeasonRaces) {
+    [{ columns, values }] = database.exec(
+      `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
+    );
+    for(const r of values) {
+      let race = {};
+      r.map((x, _idx) => {
+        race[columns[_idx]] = x;
+      })
       if (race.WeekendType === 1) {
         raceSchedule.push({ type: "sprint", race })
       } // 2 is ATA
       raceSchedule.push({ type: "race", race })
     }
 
-
-    let columns, values;
     let driverResults = {};
     let driverStandings = [];
     try {
       [{ columns, values }] = database.exec(
-        `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${player.CurrentSeason} ORDER BY Position ASC`
+        version === 3 ?
+          `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY Position ASC` :
+
+          `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} ORDER BY Position ASC`
       );
 
       for(const r of values) {
@@ -50,7 +85,7 @@ export default function RaceResults22({ database, basicInfo }) {
       }
 
       [{ columns, values }] = database.exec(
-        `SELECT * FROM 'Races_Results' WHERE Season = ${player.CurrentSeason} ORDER BY RaceID ASC`
+        `SELECT * FROM 'Races_Results' WHERE Season = ${season} ORDER BY RaceID ASC`
       );
       for(const r of values) {
         let raceResult = {};
@@ -66,22 +101,26 @@ export default function RaceResults22({ database, basicInfo }) {
         driverResults[raceResult.DriverID].race[raceResult.RaceID] = raceResult;
       }
 
-      // [{ columns, values }] = database.exec(
-      //   `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${player.CurrentSeason} AND RaceFormula = 1 ORDER BY RaceID ASC`
-      // );
-      // for(const r of values) {
-      //   let raceResult = {};
-      //   r.map((x, _idx) => {
-      //     raceResult[columns[_idx]] = x;
-      //   });
-      //   if (!driverResults[raceResult.DriverID]) {
-      //     driverResults[raceResult.DriverID] = {
-      //       race: {},
-      //       sprint: {},
-      //     }
-      //   }
-      //   driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
-      // }
+      if (version === 3) {
+
+        [{ columns, values }] = database.exec(
+          `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY RaceID ASC`
+        );
+        for(const r of values) {
+          let raceResult = {};
+          r.map((x, _idx) => {
+            raceResult[columns[_idx]] = x;
+          });
+          if (!driverResults[raceResult.DriverID]) {
+            driverResults[raceResult.DriverID] = {
+              race: {},
+              sprint: {},
+            }
+          }
+          driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
+        }
+
+      }
 
       setRaceSchedule(raceSchedule);
       setDriverStandings(driverStandings);
@@ -92,12 +131,23 @@ export default function RaceResults22({ database, basicInfo }) {
       console.error(e);
     }
 
-  }, [database])
+  }, [database, season])
 
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Race Results Overview for Season {player.CurrentSeason}
+        Race Results Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+          <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
+          <Select
+            labelId="demo-simple-select-standard-label"
+            id="demo-simple-select-standard"
+            value={season}
+            onChange={handleChange}
+            label="Season"
+          >
+            {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
+          </Select>
+        </FormControl>
       </Typography>
       <Divider variant="fullWidth" sx={{ m: 1 }} />
       <div style={{ overflowX: "auto" }}>
@@ -155,15 +205,16 @@ export default function RaceResults22({ database, basicInfo }) {
                       const result = driverResults[row.DriverID][type][race.RaceID];
                       let color = "auto";
                       if (result.FinishingPos === 1) {
-                        color = "#ab6a01";
+                        color = "#ffd700";
                       } else if (result.FinishingPos <= 3) {
-                        color = "#4b4b4b";
+                        color = "#b7b7b7";
                       } else if (result.Points > 0) {
-                        color = "#003424";
+                        color = "#24ffcc";
                       }
-                      return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0.2, pr: 0.5, minWidth: 36, background: color }}>
-                        <span>{result.DNF ? "DNF" : "P" + result.FinishingPos}</span>
-                        <br />
+                      return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0.2, minWidth: 36 }}>
+                        <div style={{borderTop: `4px solid ${color}`, display: "block"}}>
+                          {result.DNF ? "DNF" : "P" + result.FinishingPos}
+                        </div>
                         <sub>{result.Points > 0 ? `+${result.Points}`: "-"}</sub>
                       </TableCell>
                     })

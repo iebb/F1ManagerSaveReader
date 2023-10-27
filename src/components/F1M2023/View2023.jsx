@@ -3,7 +3,7 @@ import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/lo
 import {Box, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import Image from "next/image";
-import RaceResults23 from "./RaceResults";
+import RaceResults from "../Common/RaceResults";
 import {VTabs} from "../Tabs";
 
 export default function DataView2023({ db }) {
@@ -161,8 +161,8 @@ export default function DataView2023({ db }) {
       </div>
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
       <VTabs options={[
-        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo}/>},
-        {name: "Race Results", tab: <RaceResults23 database={db} basicInfo={basicInfo}/>},
+        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
       ]} />
     </div>
   )
