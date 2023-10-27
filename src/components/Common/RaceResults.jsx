@@ -24,6 +24,7 @@ export default function RaceResults({ database, basicInfo, version }) {
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
+  const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
 
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
@@ -60,7 +61,7 @@ export default function RaceResults({ database, basicInfo, version }) {
       r.map((x, _idx) => {
         race[columns[_idx]] = x;
       })
-      if (race.WeekendType === 1) {
+      if (version === 3 && race.WeekendType === 1) {
         raceSchedule.push({ type: "sprint", race })
       } // 2 is ATA
       raceSchedule.push({ type: "race", race })
@@ -68,6 +69,7 @@ export default function RaceResults({ database, basicInfo, version }) {
 
     let driverResults = {};
     let driverStandings = [];
+    let fastestLapOfRace = {};
     try {
       [{ columns, values }] = database.exec(
         version === 3 ?
@@ -92,6 +94,9 @@ export default function RaceResults({ database, basicInfo, version }) {
         r.map((x, _idx) => {
           raceResult[columns[_idx]] = x;
         });
+        if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap) {
+          fastestLapOfRace[raceResult.RaceID] = raceResult.FastestLap
+        }
         if (!driverResults[raceResult.DriverID]) {
           driverResults[raceResult.DriverID] = {
             race: {},
@@ -125,6 +130,7 @@ export default function RaceResults({ database, basicInfo, version }) {
       setRaceSchedule(raceSchedule);
       setDriverStandings(driverStandings);
       setDriverResults(driverResults);
+      setFastestLapOfRace(fastestLapOfRace);
 
 
     } catch (e) {
@@ -211,11 +217,18 @@ export default function RaceResults({ database, basicInfo, version }) {
                       } else if (result.Points > 0) {
                         color = "#24ffcc";
                       }
+                      let fastest =
+                        result.FastestLap === fastestLapOfRace[race.RaceID];
                       return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0.2, minWidth: 36 }}>
                         <div style={{borderTop: `4px solid ${color}`, display: "block"}}>
+                          {fastest && (
+                            <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "80%", padding: "0 4px", marginRight: 2}}>F</span>
+                          )}
                           {result.DNF ? "DNF" : "P" + result.FinishingPos}
                         </div>
-                        <sub>{result.Points > 0 ? `+${result.Points}`: "-"}</sub>
+                        <div style={{display: "block"}}>
+                          <sub>{result.Points > 0 ? `+${result.Points}`: "-"}</sub>
+                        </div>
                       </TableCell>
                     })
                   }

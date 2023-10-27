@@ -170,7 +170,7 @@ export default function DataView2022({ db }) {
           ))}
         </Stepper>
       </div>
-      <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />s
+      <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
       <VTabs options={[
         {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={2}/>},
         {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={2}/>},
