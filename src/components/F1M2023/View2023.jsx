@@ -45,7 +45,9 @@ export default function DataView2023({ db }) {
         })
       }
 
-      [{ columns, values }] = db.exec("select * from Staff_DriverData");
+      [{ columns, values }] = db.exec("SELECT * FROM 'Staff_DriverData' " +
+        "LEFT JOIN 'Staff_BasicData' ON Staff_DriverData.StaffID = Staff_BasicData.StaffID " +
+        "LEFT JOIN 'Staff_DriverNumbers' ON Staff_DriverData.StaffID = Staff_DriverNumbers.CurrentHolder");
       for(const r of values) {
         basicInfo.driverMap[r[0]] = {};
         r.map((x, _idx) => {

@@ -1,5 +1,14 @@
-export const getDriverCode = (loc) => {
-  return loc.replace("[DriverCode_", "").replace("]", "").toUpperCase();
+import {staffNames, driverCodes} from "./staffNames";
+
+export const getDriverCode = (d) => {
+  let nameString = d.DriverCode.replace("[", "").replace("]", "")
+  if (driverCodes[nameString]) return driverCodes[nameString];
+  const split = nameString.split("_");
+  return split[split.length - 1].toUpperCase();
+}
+
+export const getDriverName = (d) => {
+  return `${resolveName(d.FirstName)} ${resolveName(d.LastName)}`;
 }
 
 export const weekendStages = [
@@ -15,7 +24,7 @@ export const weekendStages = [
   "Race",
   "Race End",
   "Race End",
-  "Race End",
+  "Sprint Race",
 ]
 
 export const weekendStagesAbbrev = [
@@ -158,3 +167,10 @@ export const raceFlags = [
   "US-VEGAS", // Las Vegas
   "QA",
 ]
+
+export const resolveName = (_nameString) => {
+  let nameString = _nameString.replace("[", "").replace("]", "")
+  if (staffNames[nameString]) return staffNames[nameString];
+  const split = nameString.split("_");
+  return split[split.length - 1]
+}

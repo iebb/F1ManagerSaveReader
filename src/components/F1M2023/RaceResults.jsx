@@ -10,7 +10,7 @@ import * as React from "react";
 import {useEffect, useState} from "react";
 import Image from "next/image";
 import TableBody from "@mui/material/TableBody";
-import {getDriverCode} from "../../js/localization";
+import {getDriverCode, getDriverName} from "../../js/localization";
 
 
 export default function RaceResults23({ database, basicInfo }) {
@@ -142,10 +142,10 @@ export default function RaceResults23({ database, basicInfo }) {
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                   style={basicInfo.player.TeamID === row.TeamID ? { background: "#333333" } : {}}
                 >
-                  <TableCell component="th" scope="row">
-                    {
-                      getDriverCode(driverMap[row.DriverID].DriverCode)
-                    }
+                  <TableCell component="th" scope="row" sx={{ py: 0.2 }}>
+                    {getDriverCode(driverMap[row.DriverID])} #{driverMap[row.DriverID].Number}
+                    <br />
+                    <sub>{getDriverName(driverMap[row.DriverID])}</sub>
                   </TableCell>
                   <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
                   {
@@ -163,7 +163,7 @@ export default function RaceResults23({ database, basicInfo }) {
                         color = "#003625";
                       }
                       return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0.2, minWidth: 36, background: color }}>
-                        <b>{result.DNF ? "DNF" : "P" + result.FinishingPos}</b>
+                        <span>{result.DNF ? "DNF" : "P" + result.FinishingPos}</span>
                         <br />
                         <sub>{result.Points > 0 ? `+${result.Points}`: "-"}</sub>
                       </TableCell>

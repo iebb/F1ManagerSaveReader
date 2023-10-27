@@ -1,4 +1,4 @@
-import {circuitNames, countryNames, getDriverCode} from "@/js/localization";
+import {circuitNames, countryNames, getDriverName} from "@/js/localization";
 import {Divider, Typography} from "@mui/material";
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -143,7 +143,7 @@ export default function CarSetup({ database, basicInfo }) {
               >
                 <TableCell component="th" scope="row">
                   {
-                    getDriverCode(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]].DriverCode)
+                    getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
                   }
                   <br />
                   <sub>{row.Team.TeamName}</sub>
