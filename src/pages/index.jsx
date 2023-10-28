@@ -14,14 +14,14 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
-        <Dropzone
-          onDropAccepted={files => setFile(files[0])}
-          noClick
-          multiple={false}
-        >
-          {({ getRootProps, getInputProps }) => (
-            <div {...getRootProps()}>
+      <Dropzone
+        onDropAccepted={files => setFile(files[0])}
+        noClick
+        multiple={false}
+      >
+        {({ getRootProps, getInputProps }) => (
+          <div {...getRootProps()}>
+            <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
               <input {...getInputProps()} hidden />
               <div id="dropzone">
                 {
@@ -53,13 +53,13 @@ export default function Home() {
                 }
 
               </div>
-            </div>
-          )}
-        </Dropzone>
-      </Container>
-      <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
-        <DataView file={file} />
-      </Container>
+            </Container>
+            <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+              <DataView file={file} />
+            </Container>
+          </div>
+        )}
+      </Dropzone>
     </>
   )
 }
