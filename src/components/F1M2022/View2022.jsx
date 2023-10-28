@@ -154,7 +154,7 @@ export default function DataView2022({ db }) {
                   key={race.TrackID}
                   width={24} height={18}
                   alt={race.Name}
-                  style={{ opacity: race.RaceID === weekend.RaceID ? 1 : 0.3 }}
+                  style={{ opacity: race.Day >= player.Day ? 1 : 0.3 }}
                 />}
               >
                 {raceAbbrevs[race.TrackID]}
