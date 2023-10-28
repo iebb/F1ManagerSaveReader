@@ -1,10 +1,11 @@
 import CarSetup from "./CarSetup";
-import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev, dayToDate, formatDate} from "@/js/localization";
-import {Box, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import {circuitNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
+import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import Image from "next/image";
 import RaceResults from "../Common/RaceResults";
 import {VTabs} from "../Tabs";
+import CostCap from "../Common/CostCap";
 
 export default function DataView2023({ db }) {
   const [basicInfo, setBasicInfo] = useState({});
@@ -161,6 +162,7 @@ export default function DataView2023({ db }) {
       <VTabs options={[
         {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},
       ]} />
     </div>
   )

@@ -5,6 +5,7 @@ import {useEffect, useState} from "react";
 import Image from "next/image";
 import {VTabs} from "../Tabs";
 import RaceResults from "../Common/RaceResults";
+import CostCap from "../Common/CostCap";
 
 export default function DataView2022({ db }) {
   const [basicInfo, setBasicInfo] = useState({});
@@ -172,6 +173,7 @@ export default function DataView2022({ db }) {
       <VTabs options={[
         {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={2}/>},
         {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={2}/>},
+        {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={2}/>},
       ]} />
     </div>
   )
