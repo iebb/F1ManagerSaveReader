@@ -1,5 +1,5 @@
 import CarSetup from "./CarSetup";
-import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
+import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev, dayToDate, formatDate} from "@/js/localization";
 import {Box, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import Image from "next/image";
@@ -128,9 +128,7 @@ export default function DataView2023({ db }) {
       <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
         Playing as {player.FirstName} {player.LastName} for {team.TeamName} in 2023 Game.
         <br />
-        It's {
-        new Date(player.Day*86400000 - 2208988800000).toLocaleDateString()
-      } in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
+        It's {formatDate(dayToDate(player.Day))} in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
       </Typography>
       <div style={{ overflowX: "auto" }}>
         <Stepper

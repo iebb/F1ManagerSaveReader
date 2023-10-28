@@ -195,7 +195,6 @@ export default function RaceResults({ database, basicInfo, version }) {
                 <TableRow
                   key={`${row.DriverID}`}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                  style={basicInfo.player.TeamID === row.TeamID ? { background: "#333333" } : {}}
                 >
                   <TableCell component="th" scope="row" sx={{ py: 0.2 }}>
                     {getDriverCode(driverMap[row.DriverID])} #{driverMap[row.DriverID].Number}
@@ -215,11 +214,16 @@ export default function RaceResults({ database, basicInfo, version }) {
                       } else if (result.FinishingPos <= 3) {
                         color = "#b7b7b7";
                       } else if (result.Points > 0) {
-                        color = "#24ffcc";
+                        color = "#059372";
                       }
                       let fastest =
                         result.FastestLap === fastestLapOfRace[race.RaceID];
-                      return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0.2, minWidth: 36 }}>
+                      return <TableCell
+                        align="right"
+                        key={race.RaceID + type}
+                        sx={{ p: 0.2, minWidth: 36 }}
+                        style={basicInfo.player.TeamID === result.TeamID ? { background: "#333333" } : {}}
+                      >
                         <div style={{borderTop: `4px solid ${color}`, display: "block"}}>
                           {fastest && (
                             <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "80%", padding: "0 4px", marginRight: 2}}>F</span>

@@ -1,5 +1,8 @@
 import {staffNames, driverCodes} from "./staffNames";
 
+export const dayToDate = d => new Date((d - 2)*86400000 - 2208988800000)
+export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+
 export const getDriverCode = (d) => {
   let nameString = d.DriverCode.replace("[", "").replace("]", "")
   if (driverCodes[nameString]) return driverCodes[nameString];
