@@ -211,8 +211,10 @@ export default function RaceResults({ database, basicInfo, version }) {
                       let color = "auto";
                       if (result.FinishingPos === 1) {
                         color = "#ffd700";
-                      } else if (result.FinishingPos <= 3) {
+                      } else if (result.FinishingPos <= 2) {
                         color = "#b7b7b7";
+                      } else if (result.FinishingPos <= 3) {
+                        color = "#cd7f32";
                       } else if (result.Points > 0) {
                         color = "#059372";
                       }
