@@ -19,7 +19,7 @@ import Select from '@mui/material/Select';
 
 export default function RaceResults({ database, basicInfo, version }) {
 
-  const {driverMap, teamMap, weekend, player, races, currentSeasonRaces } = basicInfo;
+  const {driverMap, player } = basicInfo;
 
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
@@ -35,6 +35,7 @@ export default function RaceResults({ database, basicInfo, version }) {
       seasonList.push(s);
     }
     setSeasons(seasonList);
+    setSeason(player.CurrentSeason);
   }, [player.CurrentSeason, player.StartSeason]);
 
   // const [currentSeason, setCurrentSeason] = useState(2023);
@@ -217,6 +218,8 @@ export default function RaceResults({ database, basicInfo, version }) {
                         color = "#cd7f32";
                       } else if (result.Points > 0) {
                         color = "#059372";
+                      } else {
+                        color = "transparent";
                       }
                       let fastest =
                         result.FastestLap === fastestLapOfRace[race.RaceID];
