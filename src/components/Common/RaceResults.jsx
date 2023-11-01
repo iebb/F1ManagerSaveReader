@@ -109,21 +109,25 @@ export default function RaceResults({ database, basicInfo, version }) {
 
       if (version === 3) {
 
-        [{ columns, values }] = database.exec(
-          `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY RaceID ASC`
-        );
-        for(const r of values) {
-          let raceResult = {};
-          r.map((x, _idx) => {
-            raceResult[columns[_idx]] = x;
-          });
-          if (!driverResults[raceResult.DriverID]) {
-            driverResults[raceResult.DriverID] = {
-              race: {},
-              sprint: {},
+        try {
+          [{columns, values}] = database.exec(
+            `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY RaceID ASC`
+          );
+          for (const r of values) {
+            let raceResult = {};
+            r.map((x, _idx) => {
+              raceResult[columns[_idx]] = x;
+            });
+            if (!driverResults[raceResult.DriverID]) {
+              driverResults[raceResult.DriverID] = {
+                race: {},
+                sprint: {},
+              }
             }
+            driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
           }
-          driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
+        } catch (e) {
+
         }
 
       }
