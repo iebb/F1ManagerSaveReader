@@ -1,26 +1,18 @@
-import {raceAbbrevs, raceFlags} from "@/js/localization";
+import {raceAbbrevs} from "@/js/localization";
 import {Divider, Typography} from "@mui/material";
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import * as React from "react";
-import {useEffect, useState} from "react";
-import Image from "next/image";
-import TableBody from "@mui/material/TableBody";
-import {dayToDate, getDriverCode, getDriverName, teamColors} from "../../js/localization";
+import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import ReactECharts from "echarts-for-react";
+import * as React from "react";
+import {useEffect, useState} from "react";
+import {dayToDate, teamColors} from "../../js/localization";
 
 
 export default function CostCap({ database, basicInfo, version }) {
 
-  const {driverMap, teamMap, weekend, player, races, currentSeasonRaces } = basicInfo;
+  const { player } = basicInfo;
 
   const [seriesList, setSeriesList] = useState([]);
   const [yMax, setYMax] = useState(0);

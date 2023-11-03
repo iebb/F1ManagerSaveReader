@@ -146,6 +146,7 @@ export default function DataView2022({ db }) {
         <Stepper
           activeStep={currentRaceIdx}
           alternativeLabel
+          key={player.Day}
         >
           {currentSeasonRaces.map((race) => (
             <Step key={race.RaceID}>
