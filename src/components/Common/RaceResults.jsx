@@ -95,7 +95,7 @@ export default function RaceResults({ database, basicInfo, version }) {
         r.map((x, _idx) => {
           raceResult[columns[_idx]] = x;
         });
-        if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap) {
+        if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap && raceResult.FastestLap > 0) {
           fastestLapOfRace[raceResult.RaceID] = raceResult.FastestLap
         }
         if (!driverResults[raceResult.DriverID]) {
