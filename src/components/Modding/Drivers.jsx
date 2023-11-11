@@ -1,5 +1,5 @@
-import {getDriverName, getDriverCode} from "@/js/localization";
-import {Box, Button, Divider, Modal, TextField, Typography} from "@mui/material";
+import {getDriverCode, getDriverName, resolveDriverCode, resolveName, unresolveDriverCode, unresolveName, teamNames} from "@/js/localization";
+import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -9,7 +9,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {teamNames} from "../../js/localization";
+import {countries} from "../../js/staffNames";
 
 const StaffPerformance = [
   "",
@@ -28,39 +28,84 @@ const StaffPerformance = [
 export default function DriverView({ database, basicInfo, metadata }) {
 
   const [rows, setRows] = useState([]);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [driverCode, setDriverCode] = useState("");
+  const [country, setCountry] = useState("");
+
+  const [namePool, setNamePool] = useState([]);
+  const [surnamePool, setSurnamePool] = useState([]);
+  const [driverCodePool, setDriverCodePool] = useState([]);
+  const [surnameMapping, setSurnameMapping] = useState({});
+
   const [updated, setUpdated] = useState(0);
+  const [editRow, _setEditRow] = useState(null);
+  const [stats, setStats] = useState({});
 
   useEffect(() => {
     let values, columns;
+    const names = [];
+    const driver_codes = [];
+    const surname_codes = {};
+    [{ values }] = database.exec(
+      "SELECT LocKey FROM Staff_ForenamePool"
+    );
+    for(const row of values) {
+      names.push(resolveName(row[0]))
+    }
+    [{ values }] = database.exec(
+      "SELECT LocKey, DriverCodeLocKey FROM Staff_SurnamePool"
+    );
+    for(const row of values) {
+      names.push(resolveName(row[0]));
+      driver_codes.push( resolveDriverCode(row[1]) );
+      surname_codes[resolveName(row[0])] = resolveDriverCode(row[1]) ;
+    }
     try {
-      const PerformanceStats = {};
-      [{ columns, values }] = database.exec(
-        "SELECT * FROM Staff_PerformanceStats\n"
+      [{ values }] = database.exec(
+        "SELECT LastName, DriverCode FROM Staff_DriverData_View ORDER BY StaffID DESC"
       );
       for(const row of values) {
-        if (!PerformanceStats[row[0]]) {
-          PerformanceStats[row[0]] = {};
-        }
-        PerformanceStats[row[0]][row[1]] = row[2];
+        names.push(resolveName(row[0]));
+        driver_codes.push( resolveDriverCode(row[1]) );
+        surname_codes[resolveName(row[0])] = resolveDriverCode(row[1]);
       }
 
-      [{ columns, values }] = database.exec(
-        "SELECT Staff_DriverData.StaffID as StaffID, * from Staff_DriverData \n" +
-        "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
-        "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
-        "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n"
-      );
-      setRows(values.map(val => {
-        let row = {};
-        val.map((x, _idx) => {
-          if (x !== null) row[columns[_idx]] = x;
-        })
-        row.performanceStats = PerformanceStats[row.StaffID];
-        return row;
-      }));
     } catch {
 
     }
+    setNamePool([...new Set(names.sort())])
+    setDriverCodePool([...new Set(driver_codes.sort())])
+    setSurnameMapping(surname_codes)
+
+    const PerformanceStats = {};
+    [{ columns, values }] = database.exec(
+      "SELECT * FROM Staff_PerformanceStats"
+    );
+    for(const row of values) {
+      if (!PerformanceStats[row[0]]) {
+        PerformanceStats[row[0]] = {};
+      }
+      PerformanceStats[row[0]][row[1]] = row[2];
+    }
+
+    [{ columns, values }] = database.exec(
+      "SELECT Staff_DriverData.StaffID as StaffID, * from Staff_DriverData \n" +
+      "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
+      "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
+      "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n"
+    );
+
+    setRows(values.map(val => {
+      let row = {};
+      val.map((x, _idx) => {
+        if (x !== null) row[columns[_idx]] = x;
+      })
+      row.performanceStats = PerformanceStats[row.StaffID];
+      return row;
+    }));
+
 
   }, [database, updated])
 
@@ -70,13 +115,20 @@ export default function DriverView({ database, basicInfo, metadata }) {
     maximumFractionDigits: 0,
   });
 
-  const [editRow, _setEditRow] = React.useState(null);
-  const [stats, setStats] = React.useState({});
 
   const setEditRow = (r) => {
-    if (r) setStats({...r.performanceStats});
+    if (r) {
+      setStats({...r.performanceStats});
+      setFirstName(resolveName(r.FirstName));
+      setLastName(resolveName(r.LastName));
+      setDriverCode(resolveDriverCode(r.DriverCode));
+      setCountry(r.Nationality);
+    }
+
     _setEditRow(r);
   }
+
+
 
   return (
     <div>
@@ -99,8 +151,82 @@ export default function DriverView({ database, basicInfo, metadata }) {
             borderRadius: 20,
           }}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
-              Editing Stats of {getDriverName(editRow)}
+              Editing {getDriverName(editRow)}
             </Typography>
+
+            <Divider variant="fullWidth" sx={{ my: 2 }} />
+
+            <div>
+              <Autocomplete
+                disablePortal
+                options={namePool}
+                value={firstName}
+                sx={{ width: 200, m: 1, display: "inline-block" }}
+                onChange={ (e, nv) => {
+                  if (nv) {
+                    setFirstName(nv);
+                  }
+                }}
+                renderInput={(params) => <TextField {...params} label="First Name" autocomplete="off" />}
+              />
+              <Autocomplete
+                disablePortal
+                options={namePool}
+                value={lastName}
+                sx={{ width: 200, m: 1, display: "inline-block" }}
+                onChange={ (e, nv) => {
+                  if (nv) {
+                    setLastName(nv);
+                    setDriverCode(surnameMapping[nv])
+                  }
+                } }
+                renderInput={(params) => <TextField {...params} label="Last Name" autocomplete="off" />}
+              />
+              <Autocomplete
+                disablePortal
+                options={driverCodePool}
+                value={driverCode}
+                sx={{ width: 120, m: 1, display: "inline-block" }}
+                onInputChange={ (e, nv) => {
+                  if (nv) {
+                    setDriverCode(nv);
+                  }
+                }}
+                renderInput={(params) => <TextField {...params} label="Code" autocomplete="off" />}
+              />
+            </div>
+            <Grid direction="row-reverse" container spacing={1}>
+              <Grid item>
+                <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
+                  const _firstName = unresolveName(firstName);
+                  const _lastName = unresolveName(lastName);
+                  const _driverCode = unresolveDriverCode(driverCode);
+                  database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
+                  database.exec(`UPDATE Staff_DriverData SET DriverCode = "${_driverCode}" WHERE StaffID = ${editRow.StaffID}`);
+                  setUpdated(+new Date());
+                }}>Save Names</Button>
+              </Grid>
+              <Grid item>
+              </Grid>
+              <Grid item style={{ flex: 1 }}>
+                <Autocomplete
+                  disablePortal
+                  options={countries}
+                  value={country}
+                  sx={{ width: 200, m: 1, display: "inline-block" }}
+                  onChange={ (e, nv) => {
+                    if (nv) {
+                      setCountry(country);
+                    }
+                  }}
+                  renderInput={(params) => <TextField {...params} label="Country" autocomplete="off" />}
+                />
+              </Grid>
+            </Grid>
+
+
+            <Divider variant="fullWidth" sx={{ my: 2 }} />
+
             <div style={{ display: "grid",
               gridTemplateColumns: 'repeat(5, 1fr)' }}>
               {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => (

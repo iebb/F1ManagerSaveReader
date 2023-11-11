@@ -13,16 +13,6 @@ export const teamNames = (x, version) => {
   return teams2023[x];
 }
 
-export const getDriverCode = (d) => {
-  let nameString = d.DriverCode.replace("[", "").replace("]", "")
-  if (driverCodes[nameString]) return driverCodes[nameString];
-  const split = nameString.split("_");
-  return split[split.length - 1].toUpperCase();
-}
-
-export const getDriverName = (d) => {
-  return `${resolveName(d.FirstName)} ${resolveName(d.LastName)}`;
-}
 
 export const weekendStages = [
   "Day 1",
@@ -181,9 +171,38 @@ export const raceFlags = [
   "QA",
 ]
 
+export const getDriverCode = (d) => {
+  return resolveDriverCode(d.DriverCode);
+}
+
+export const getDriverName = (d) => {
+  return `${resolveName(d.FirstName)} ${resolveName(d.LastName)}`;
+}
+
 export const resolveName = (_nameString) => {
   let nameString = _nameString.replace("[", "").replace("]", "")
   if (staffNames[nameString]) return staffNames[nameString];
   const split = nameString.split("_");
   return split[split.length - 1]
+}
+
+export const resolveDriverCode = (_nameString) => {
+  let nameString = _nameString.replace("[", "").replace("]", "")
+  if (driverCodes[nameString]) return driverCodes[nameString];
+  const split = nameString.split("_");
+  return split[split.length - 1].toUpperCase();
+}
+
+export const unresolveName = (_nameString) => {
+  for(const s of Object.keys(staffNames)) {
+    if (_nameString === staffNames[s]) return `[${s}]`;
+  }
+  return _nameString
+}
+
+export const unresolveDriverCode = (_nameString) => {
+  for(const s of Object.keys(driverCodes)) {
+    if (_nameString === driverCodes[s]) return `[${s}]`;
+  }
+  return _nameString
 }
