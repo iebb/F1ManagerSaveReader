@@ -86,9 +86,11 @@ export default function Home() {
             )}
           </Dropzone>
         ) : (
-          <Typography variant="h5" component="h5">
-            Loading Database parser. Please wait.
-          </Typography>
+          <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+            <Typography variant="h5" component="h5">
+              Loading Database parser. Please wait.
+            </Typography>
+          </Container>
         )
       }
     </>
