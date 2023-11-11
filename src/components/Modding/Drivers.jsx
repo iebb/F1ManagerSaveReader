@@ -186,6 +186,15 @@ export default function DriverView({ database, basicInfo, metadata }) {
                       <span
                         style={{ color: retirementInYears > 0 ? "white" : "orange" }}
                       >{retirementInYears > 0 ? `in ${retirementInYears} years` : `${-retirementInYears} years ago`}</span>
+                      <br />
+                      {
+                        retirementInYears < 5 && (
+                          <a style={{ color: "lightblue" }} onClick={() => {
+                            database.exec(`UPDATE Staff_GameData SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
+                            setUpdated(+new Date());
+                          }}>postpone</a>
+                        )
+                      }
                     </TableCell>
                     {
                       row.Retired ? (
@@ -224,14 +233,6 @@ export default function DriverView({ database, basicInfo, metadata }) {
                       )
                     }
                     <TableCell>
-                      {
-                        retirementInYears < 5 && (
-                          <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
-                            database.exec(`UPDATE Staff_GameData SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
-                            setUpdated(+new Date());
-                          }}>Postpone</Button>
-                        )
-                      }
                       <Button variant="contained" sx={{ m: 1 }} onClick={
                         () => setEditRow(row)
                       }>Edit Stats</Button>
