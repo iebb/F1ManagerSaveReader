@@ -216,7 +216,7 @@ export default function DriverView({ database, basicInfo, metadata }) {
                   sx={{ width: 200, m: 1, display: "inline-block" }}
                   onChange={ (e, nv) => {
                     if (nv) {
-                      setCountry(country);
+                      setCountry(nv);
                     }
                   }}
                   renderInput={(params) => <TextField {...params} label="Country" autocomplete="off" />}
