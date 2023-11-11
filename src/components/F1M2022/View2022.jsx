@@ -7,7 +7,7 @@ import {VTabs} from "../Tabs";
 import RaceResults from "../Common/RaceResults";
 import CostCap from "../Common/CostCap";
 
-export default function DataView2022({ db }) {
+export default function DataView2022({ db, metadata }) {
   const [basicInfo, setBasicInfo] = useState({});
 
   useEffect(() => {

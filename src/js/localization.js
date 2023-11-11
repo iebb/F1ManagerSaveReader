@@ -1,20 +1,17 @@
+import {teamColors2023, teams2023} from "./localization_2023";
 import {staffNames, driverCodes} from "./staffNames";
+
+
 
 export const dayToDate = d => new Date((d - 2)*86400000 - 2208988800000)
 export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
 
-export const teamColors = [
-  "",
-  "#F91536",
-  "#F58020",
-  "#3671C6",
-  "#6CD3BF",
-  "#2293D1",
-  "#37BEDD",
-  "#B6BABD",
-  "#5E8FAA",
-  "#358C75",
-]
+export const teamColors =  (x) => {
+  return teamColors2023[x];
+}
+export const teamNames = (x, version) => {
+  return teams2023[x];
+}
 
 export const getDriverCode = (d) => {
   let nameString = d.DriverCode.replace("[", "").replace("]", "")

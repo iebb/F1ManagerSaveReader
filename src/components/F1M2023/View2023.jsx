@@ -1,3 +1,4 @@
+import Modding from "../Common/Modding";
 import CarSetup from "./CarSetup";
 import {circuitNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
 import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
@@ -7,7 +8,7 @@ import RaceResults from "../Common/RaceResults";
 import {VTabs} from "../Tabs";
 import CostCap from "../Common/CostCap";
 
-export default function DataView2023({ db }) {
+export default function DataView2023({ db, metadata }) {
   const [basicInfo, setBasicInfo] = useState({});
 
 
@@ -160,7 +161,12 @@ export default function DataView2023({ db }) {
         </Stepper>
       </div>
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
-      <VTabs options={[
+      <VTabs options={(document.location.host === "f1setup.cfd") ? [
+        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
+      ] : [
         {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},

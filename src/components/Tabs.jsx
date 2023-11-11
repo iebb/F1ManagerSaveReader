@@ -7,7 +7,7 @@ import {useState} from "react";
 
 export const VTabs = ({ options }) => {
 
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState("0");
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -15,10 +15,10 @@ export const VTabs = ({ options }) => {
   return <TabContext value={value}>
     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
       <TabList onChange={handleChange}>
-        {options.map((t, _idx) => <Tab label={t.name} value={_idx} key={_idx} />)}
+        {options.map((t, _idx) => <Tab label={t.name} value={_idx.toString(10)} key={_idx.toString(10)} />)}
       </TabList>
     </Box>
-    {options.map((t, _idx) => <TabPanel value={_idx} key={_idx}>
+    {options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0 }}>
       {t.tab}
     </TabPanel>)}
   </TabContext>;

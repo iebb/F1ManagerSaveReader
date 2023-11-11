@@ -118,7 +118,7 @@ export default function CarSetup({ database, basicInfo }) {
       <Typography variant="h5" component="h5">
         Perfect Car Setups for {circuitNames[trackId]}, {countryNames[trackId]}
       </Typography>
-      <Divider variant="fullWidth" sx={{ m: 1 }} />
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>

@@ -4,20 +4,9 @@ import {useEffect, useState} from "react";
 import DataView2023 from "./F1M2023/View2023";
 import DataView2022 from "./F1M2022/View2022";
 
-export default function DataView({file}) {
+export default function DataView({db, version, metadata}) {
 
-  const [db, setDb] = useState(null);
-  const [version, setVersion] = useState(null);
-
-  useEffect(() => {
-    analyzeFileToDatabase(file).then(({db, version}) => {
-      setDb(db);
-      setVersion(version);
-    });
-  }, [file])
-
-
-  if (!file) {
+  if (!version) {
     return (
       <div>
         <Typography variant="h5" component="h5" sx={{ m: 2 }}>
@@ -28,10 +17,10 @@ export default function DataView({file}) {
   }
 
   if (version === 2) {
-    return <DataView2022 db={db} />;
+    return <DataView2022 db={db} metadata={metadata} />;
   }
   if (version === 3) {
-    return <DataView2023 db={db} />;
+    return <DataView2023 db={db} metadata={metadata} />;
   }
 
   return (

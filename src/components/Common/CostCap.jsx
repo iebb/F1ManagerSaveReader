@@ -7,7 +7,7 @@ import Select from '@mui/material/Select';
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {dayToDate, teamColors} from "../../js/localization";
+import {dayToDate, teamColors, teamNames} from "../../js/localization";
 
 
 export default function CostCap({ database, basicInfo, version }) {
@@ -117,9 +117,9 @@ export default function CostCap({ database, basicInfo, version }) {
           calcYMax = totalCostCapForTeam[i];
         }
         seriesList.push( {
-          name: basicInfo.teamMap[i].TeamName,
+          name: teamNames(i, version),
           type: 'line',
-          itemStyle: {color: teamColors[i]},
+          itemStyle: {color: teamColors(i, version)},
           data: costCapHistoryForTeam[i]
         })
       }
@@ -149,7 +149,7 @@ export default function CostCap({ database, basicInfo, version }) {
         </Select>
       </FormControl>
       </Typography>
-      <Divider variant="fullWidth" sx={{ m: 1 }} />
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <ReactECharts
           theme="dark"

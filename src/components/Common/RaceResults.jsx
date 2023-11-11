@@ -160,7 +160,7 @@ export default function RaceResults({ database, basicInfo, version }) {
           </Select>
         </FormControl>
       </Typography>
-      <Divider variant="fullWidth" sx={{ m: 1 }} />
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <TableContainer component={Paper}>
           <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -210,7 +210,10 @@ export default function RaceResults({ database, basicInfo, version }) {
                   {
                     raceSchedule.map(({type, race}) => {
                       if (!driverResults[row.DriverID][type][race.RaceID]) {
-                        return <TableCell sx={{p: 0.2, minWidth: 36}}/>;
+                        return <TableCell
+                          key={race.RaceID + type}
+                          sx={{p: 0.2, minWidth: 36}}
+                        />;
                       }
                       const result = driverResults[row.DriverID][type][race.RaceID];
                       let color = "auto";

@@ -18,7 +18,7 @@ export default function Header() {
           <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
         </div>
       </div>
-      <Divider variant="fullWidth" sx={{ m: 1 }} />
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
       <Typography className="description">
         <span style={{ paddingRight: 20 }}>
           Tutorial: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3011785417">Steam Guide</a>
