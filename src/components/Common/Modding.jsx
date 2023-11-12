@@ -15,9 +15,7 @@ export default function Modding({ database, basicInfo, metadata }) {
         Database Modding
       </Typography>
       <Typography variant="p" component="p" sx={{ color: "orange" }}>
-        Not supported. Use at your own risk. Always make a backup before changing anything.
-        <br />
-        [Only available at F1Setup.CFD]
+        Use at your own risk. Always make a backup before changing anything.
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata)}>Re-export Savefile</Button>
