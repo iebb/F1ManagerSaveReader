@@ -12,8 +12,8 @@ import {useEffect, useState} from "react";
 import {countries} from "../../js/staffNames";
 
 const StaffPerformance = [
-  "",
-  "",
+  "Impr",
+  "Aggr", // hack
   "Corn",
   "Brak",
   "Cntl",
@@ -25,6 +25,25 @@ const StaffPerformance = [
   "Accu",
 ]
 
+const StaffPerformanceLong = [
+  "Improvability",
+  "Aggression", // hack
+  "Cornering",
+  "Braking",
+  "Control",
+  "Smoothness",
+  "Adaptability",
+  "Overtaking",
+  "Defence",
+  "Acceleration",
+  "Accuracy",
+]
+
+const driverNumbers = ["N/A"];
+for(let i = 0; i < 100; i++) {
+  driverNumbers.push(i);
+}
+
 export default function DriverView({ database, basicInfo, metadata }) {
 
   const [rows, setRows] = useState([]);
@@ -33,6 +52,7 @@ export default function DriverView({ database, basicInfo, metadata }) {
   const [lastName, setLastName] = useState("");
   const [driverCode, setDriverCode] = useState("");
   const [country, setCountry] = useState("");
+  const [driverNumber, setDriverNumber] = useState("");
 
   const [namePool, setNamePool] = useState([]);
   const [surnamePool, setSurnamePool] = useState([]);
@@ -64,12 +84,25 @@ export default function DriverView({ database, basicInfo, metadata }) {
     }
     try {
       [{ values }] = database.exec(
-        "SELECT LastName, DriverCode FROM Staff_DriverData_View ORDER BY StaffID DESC"
+        "SELECT LastName, DriverCode, FirstName FROM Staff_DriverData_View ORDER BY StaffID DESC"
       );
       for(const row of values) {
         names.push(resolveName(row[0]));
+        names.push(resolveName(row[2]));
         driver_codes.push( resolveDriverCode(row[1]) );
         surname_codes[resolveName(row[0])] = resolveDriverCode(row[1]);
+      }
+
+    } catch {
+
+    }
+    try {
+      [{ values }] = database.exec(
+        "SELECT FirstName, LastName FROM Staff_BasicData ORDER BY StaffID DESC"
+      );
+      for(const row of values) {
+        names.push(resolveName(row[0]));
+        names.push(resolveName(row[1]));
       }
 
     } catch {
@@ -91,10 +124,11 @@ export default function DriverView({ database, basicInfo, metadata }) {
     }
 
     [{ columns, values }] = database.exec(
-      "SELECT Staff_DriverData.StaffID as StaffID, * from Staff_DriverData \n" +
+      "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
       "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
       "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
-      "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n"
+      "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
+      "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
     );
 
     setRows(values.map(val => {
@@ -118,11 +152,12 @@ export default function DriverView({ database, basicInfo, metadata }) {
 
   const setEditRow = (r) => {
     if (r) {
-      setStats({...r.performanceStats});
+      setStats({...r.performanceStats, 0: r.Improvability, 1: r.Aggression});
       setFirstName(resolveName(r.FirstName));
       setLastName(resolveName(r.LastName));
       setDriverCode(resolveDriverCode(r.DriverCode));
       setCountry(r.Nationality);
+      setDriverNumber(r.CurrentNumber ? r.CurrentNumber : "N/A");
     }
 
     _setEditRow(r);
@@ -186,7 +221,7 @@ export default function DriverView({ database, basicInfo, metadata }) {
                 disablePortal
                 options={driverCodePool}
                 value={driverCode}
-                sx={{ width: 120, m: 1, display: "inline-block" }}
+                sx={{ width: 160, m: 1, display: "inline-block" }}
                 onInputChange={ (e, nv) => {
                   if (nv) {
                     setDriverCode(nv);
@@ -201,10 +236,22 @@ export default function DriverView({ database, basicInfo, metadata }) {
                   const _firstName = unresolveName(firstName);
                   const _lastName = unresolveName(lastName);
                   const _driverCode = unresolveDriverCode(driverCode);
+
                   database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
                   database.exec(`UPDATE Staff_DriverData SET DriverCode = "${_driverCode}" WHERE StaffID = ${editRow.StaffID}`);
+
+
+                  const haveDriverNumber = !(driverNumber === "N/A" || driverNumber === "");
+                  const _driverNumber = haveDriverNumber ? driverNumber : "";
+                  if (haveDriverNumber) {
+                    if (_driverNumber !== 1) {
+                      database.exec(`UPDATE Staff_DriverData SET LastKnownDriverNumber = "${_driverNumber}" WHERE StaffID = ${editRow.StaffID}`);
+                    }
+                    database.exec(`UPDATE Staff_DriverNumbers SET CurrentHolder = NULL WHERE CurrentHolder = ${editRow.StaffID}`);
+                    database.exec(`INSERT OR REPLACE INTO Staff_DriverNumbers VALUES(${_driverNumber}, ${editRow.StaffID})`);
+                  }
                   setUpdated(+new Date());
-                }}>Save Names</Button>
+                }}>Save Profile</Button>
               </Grid>
               <Grid item>
               </Grid>
@@ -221,6 +268,18 @@ export default function DriverView({ database, basicInfo, metadata }) {
                   }}
                   renderInput={(params) => <TextField {...params} label="Country" autocomplete="off" />}
                 />
+                <Autocomplete
+                  disablePortal
+                  options={driverNumbers}
+                  value={driverNumber}
+                  sx={{ width: 160, m: 1, display: "inline-block" }}
+                  onInputChange={ (e, nv) => {
+                    if (nv) {
+                      setDriverNumber(nv);
+                    }
+                  }}
+                  renderInput={(params) => <TextField {...params} label="Number" autocomplete="off" />}
+                />
               </Grid>
             </Grid>
 
@@ -228,12 +287,12 @@ export default function DriverView({ database, basicInfo, metadata }) {
             <Divider variant="fullWidth" sx={{ my: 2 }} />
 
             <div style={{ display: "grid",
-              gridTemplateColumns: 'repeat(5, 1fr)' }}>
-              {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => (
+              gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              {[2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 1].map(x => (
                 <div key={x} style={{ margin: 10 }}>
                   <TextField
                     sx={{ width: 90 }}
-                    label={StaffPerformance[x]}
+                    label={StaffPerformanceLong[x]}
                     type="number"
                     value={stats[x]}
                     variant="standard"
@@ -255,13 +314,33 @@ export default function DriverView({ database, basicInfo, metadata }) {
               ))}
 
               <div style={{ margin: 10 }}>
-                <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
+                <Button variant="contained" sx={{ m: 1 }} onClick={() => {
                   [2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => {
                     database.exec(`UPDATE Staff_PerformanceStats SET Val = ${stats[x]} WHERE StaffID = ${editRow.StaffID} AND StatID = ${x}`);
                   })
+
+                  database.exec(`UPDATE Staff_DriverData SET Improvability = ${stats[0]}, Aggression = ${stats[1]} WHERE StaffID = ${editRow.StaffID}`);
                   setUpdated(+new Date());
-                }}>Save</Button>
+                }}>Save Stats</Button>
               </div>
+            </div>
+
+            <Divider variant="fullWidth" sx={{ my: 2 }} />
+
+            <div style={{ margin: 10 }}>
+              {
+                editRow.Retired ? (
+                  <Button color="error" variant="contained" onClick={() => {
+                    database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
+                    setUpdated(+new Date());
+                  }}>Unretire</Button>
+                ) : (
+                  <Button color="error" variant="contained" onClick={() => {
+                    database.exec(`UPDATE Staff_GameData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
+                    setUpdated(+new Date());
+                  }}>Retire</Button>
+                )
+              }
             </div>
           </Box>
         </Modal>
@@ -280,6 +359,8 @@ export default function DriverView({ database, basicInfo, metadata }) {
                   {StaffPerformance[x]}
                 </TableCell>
               ))}
+              <TableCell>Impr</TableCell>
+              <TableCell>Aggr</TableCell>
               <TableCell>Retirement</TableCell>
               <TableCell>Team</TableCell>
               <TableCell>Contract</TableCell>
@@ -301,13 +382,20 @@ export default function DriverView({ database, basicInfo, metadata }) {
                         getDriverName(row)
                       }
                       <br />
-                      <sub>{getDriverCode(row)}</sub>
+                      <span style={{ fontSize: "90%" }}>{row.CurrentNumber} {getDriverCode(row)}</span>
                     </TableCell>
                     {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => (
                       <TableCell key={x}>
                         {row.performanceStats[x]}
                       </TableCell>
                     ))}
+
+                    <TableCell>
+                      {row.Improvability}
+                    </TableCell>
+                    <TableCell>
+                      {row.Aggression}
+                    </TableCell>
                     <TableCell>
                       <span
                         style={{ color: retirementInYears > 0 ? "white" : "orange" }}

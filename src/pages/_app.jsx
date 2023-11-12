@@ -21,7 +21,7 @@ export default function App({ Component, pageProps }) {
   return (<ThemeProvider theme={theme}>
     <Head>
       <meta name="viewport" content="initial-scale=1, width=device-width" />
-      <title>F1 Manager Setup Calculator</title>
+      <title>F1Setup.CFD</title>
     </Head>
     <CssBaseline />
     <Header />

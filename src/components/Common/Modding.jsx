@@ -24,7 +24,7 @@ export default function Modding({ database, basicInfo, metadata }) {
       <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>Dump Database</Button>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <VTabs options={[
-        {name: "Driver Viewer", tab: <DriverView database={database} metadata={metadata} basicInfo={basicInfo} />},
+        {name: "Driver Database", tab: <DriverView database={database} metadata={metadata} basicInfo={basicInfo} />},
         {name: "Data Browser", tab: <DataBrowser database={database} metadata={metadata} basicInfo={basicInfo} />},
       ]} />
 

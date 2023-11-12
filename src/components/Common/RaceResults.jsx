@@ -209,7 +209,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                   <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
                   {
                     raceSchedule.map(({type, race}) => {
-                      if (!driverResults[row.DriverID][type][race.RaceID]) {
+                      if (!driverResults[row.DriverID] || !driverResults[row.DriverID][type][race.RaceID]) {
                         return <TableCell
                           key={race.RaceID + type}
                           sx={{p: 0.2, minWidth: 36}}

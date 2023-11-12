@@ -7,10 +7,10 @@ export default function Header() {
       <div className="headerContainer">
         <div className="headerTitle" >
           <Typography variant="h3" component="h3">
-            F1 Manager Save Viewer
+            F1 Manager Save Browser
             <span
               style={{ color: "#777", fontSize: 15, marginInline: 15, textTransform: "uppercase" }}
-            >{' '}for F1® Manager 2022/2023
+            >{' '}for F1® Manager 2022/2023 @ F1Setup.CFD
         </span>
           </Typography>
         </div>
@@ -27,7 +27,7 @@ export default function Header() {
           Bug & Feedbacks: <a href="https://discord.gg/u46QWWaNfV">Discord</a>
         </span>
         <span style={{ paddingRight: 20 }}>
-          <a href="https://f1setup.it/">F1Setup.it</a> - the original calculator
+          <a href="https://f1setup.it/">F1Setup.it</a> - the calculator
         </span>
       </Typography>
     </Container>
