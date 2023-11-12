@@ -161,15 +161,11 @@ export default function DataView2023({ db, metadata }) {
         </Stepper>
       </div>
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
-      <VTabs options={(document.location.host !== "save.f1setup.it") ? [
+      <VTabs options={[
         {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
         {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
-      ] : [
-        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} version={3}/>},
-        {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
-        {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},
       ]} />
     </div>
   )

@@ -17,7 +17,7 @@ export default function Document() {
                   crossOrigin="anonymous"></script>` }} />
       <div dangerouslySetInnerHTML={{ __html: `<script defer data-domain="save.f1setup.it" src="https://analytics.nekoko.it/js/script.js"></script>` }} />
       <div dangerouslySetInnerHTML={{ __html: `<script>
-            if (document.location.host.includes("vercel.app")) document.location.host = "save.f1setup.it";
+            if (document.location.host.includes("vercel.app")) document.location.host = "f1setup.cfd";
         </script>` }} />
       <Main />
       <NextScript />
