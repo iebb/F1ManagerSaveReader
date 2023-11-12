@@ -31,8 +31,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>F1 Manager Save Viewer</title>
-        <meta name="description" content="F1 Manager Save Viewer by ieb" />
+        <title>F1 Manager Save Browser - F1Setup.CFD</title>
+        <meta name="description" content="F1 Manager Save Browser by ieb" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
