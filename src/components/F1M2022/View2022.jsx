@@ -153,7 +153,6 @@ export default function DataView2022({ db, metadata }) {
               <StepLabel
                 StepIconComponent={() => <Image
                   src={require(`../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
-                  key={race.TrackID}
                   width={24} height={18}
                   alt={race.Name}
                   style={{ opacity: race.Day >= player.Day ? 1 : 0.3 }}

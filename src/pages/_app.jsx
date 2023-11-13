@@ -1,5 +1,6 @@
 import '@/styles/globals.css'
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
+import {SnackbarProvider} from "notistack";
 import Head from "next/head";
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
@@ -23,9 +24,11 @@ export default function App({ Component, pageProps }) {
       <meta name="viewport" content="initial-scale=1, width=device-width" />
       <title>F1Setup.CFD</title>
     </Head>
-    <CssBaseline />
-    <Header />
-    <Component {...pageProps} />
-    <Footer />
+    <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right'}}>
+      <CssBaseline />
+      <Header />
+      <Component {...pageProps} />
+      <Footer />
+    </SnackbarProvider>
   </ThemeProvider>);
 }

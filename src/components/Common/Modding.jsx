@@ -3,6 +3,7 @@ import * as React from "react";
 import {dump, repack} from "../../js/fileAnalyzer";
 import DriverView from "../Modding/Drivers";
 import DataBrowser from "../Modding/SQL";
+import Toolbox from "../Modding/Toolbox";
 import {VTabs} from "../Tabs";
 
 
@@ -24,6 +25,7 @@ export default function Modding({ database, basicInfo, metadata }) {
       <VTabs options={[
         {name: "Driver Database", tab: <DriverView database={database} metadata={metadata} basicInfo={basicInfo} />},
         {name: "Data Browser", tab: <DataBrowser database={database} metadata={metadata} basicInfo={basicInfo} />},
+        {name: "Tools / Cheats", tab: <Toolbox database={database} metadata={metadata} basicInfo={basicInfo} />},
       ]} />
 
     </div>
