@@ -13,7 +13,7 @@ export default function ContractSwapper(ctx) {
 
   return (
     <Modal
-      open={swapRow !== null}
+      open={swapRow}
       onClose={() => setSwapRow(null)}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
@@ -66,6 +66,7 @@ export default function ContractSwapper(ctx) {
         <div style={{ margin: 10 }}>
           <Button color="error" variant="contained" onClick={() => {
             fireDriverContract(ctx, swapRow.StaffID);
+            refresh();
           }}>Fire {getDriverName(swapRow)}</Button>
         </div>
       </Box>
