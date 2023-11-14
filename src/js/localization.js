@@ -179,6 +179,7 @@ export const getDriverName = (d) => {
   return `${resolveName(d.FirstName)} ${resolveName(d.LastName)}`;
 }
 
+
 export const resolveName = (_nameString) => {
   let nameString = _nameString.replace("[", "").replace("]", "")
   if (staffNames[nameString]) return staffNames[nameString];
