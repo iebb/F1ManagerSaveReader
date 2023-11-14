@@ -9,6 +9,7 @@ export const teamColors2023 = [
   "#37BEDD",
   "#B6BABD",
   "#5E8FAA",
+  "#C92D4B",
   "#358C75",
 ]
 export const teams2023 = [

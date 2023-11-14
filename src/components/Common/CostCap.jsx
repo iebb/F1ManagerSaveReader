@@ -112,7 +112,9 @@ export default function CostCap({ database, basicInfo, version }) {
 
       let calcYMax = costCap;
       for(let i = 1; i <= 10; i++) {
-        costCapHistoryForTeam[i].push([dayToDate(player.Day), totalCostCapForTeam[i]])
+        costCapHistoryForTeam[i].push([dayToDate(
+          Math.min(player.Day, seasonEnd - 1)
+        ), totalCostCapForTeam[i]])
         if (totalCostCapForTeam[i] > calcYMax) {
           calcYMax = totalCostCapForTeam[i];
         }
