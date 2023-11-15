@@ -1,7 +1,10 @@
-import {Button, Divider, Typography} from "@mui/material";
+import {Button, Container, Divider, Typography} from "@mui/material";
 import * as React from "react";
+import Dropzone from "react-dropzone";
 import {dump, repack} from "../../js/fileAnalyzer";
+import DataView from "../DataView";
 import ContractView from "../Modding/Contracts";
+import ReplaceDB from "../Modding/ReplaceDB";
 import DriverView from "../Modding/Drivers";
 import DataBrowser from "../Modding/SQL";
 import Toolbox from "../Modding/Toolbox";
@@ -26,8 +29,9 @@ export default function Modding({ database, basicInfo, metadata }) {
       <VTabs options={[
         {name: "Driver Database", tab: <DriverView database={database} metadata={metadata} basicInfo={basicInfo} />},
         // {name: "Contracts", tab: <ContractView database={database} metadata={metadata} basicInfo={basicInfo} />},
-        {name: "Data Browser", tab: <DataBrowser database={database} metadata={metadata} basicInfo={basicInfo} />},
         {name: "Tools / Cheats", tab: <Toolbox database={database} metadata={metadata} basicInfo={basicInfo} />},
+        {name: "SQL Browser", tab: <DataBrowser database={database} metadata={metadata} basicInfo={basicInfo} />},
+        {name: "Replace Database", tab: <ReplaceDB database={database} metadata={metadata} basicInfo={basicInfo} />},
       ]} />
 
     </div>

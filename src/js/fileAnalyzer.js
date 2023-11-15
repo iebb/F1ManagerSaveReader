@@ -17,7 +17,7 @@ export const analyzeFileToDatabase = async (file) => {
     if (file !== undefined) {
       let reader = new FileReader();
       reader.onload = async (e) => {
-        const data= reader.result;
+        const data = reader.result;
         const version = data.charCodeAt(4);
         const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x00\x00\x00\x00") + 19 + 4;
 

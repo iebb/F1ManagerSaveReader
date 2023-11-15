@@ -1,4 +1,4 @@
-import {raceAbbrevs, raceFlags} from "@/js/localization";
+import {raceAbbrevs, raceFlags, teamColors} from "@/js/localization";
 import {Divider, Typography} from "@mui/material";
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -52,6 +52,7 @@ export default function RaceResults({ database, basicInfo, version }) {
     // let season = player.CurrentSeason;
 
     let columns, values;
+    let results;
 
     let raceSchedule = [];
     [{ columns, values }] = database.exec(
@@ -87,24 +88,27 @@ export default function RaceResults({ database, basicInfo, version }) {
         driverStandings.push(driverStanding);
       }
 
-      [{ columns, values }] = database.exec(
+      results = database.exec(
         `SELECT * FROM 'Races_Results' WHERE Season = ${season} ORDER BY RaceID ASC`
       );
-      for(const r of values) {
-        let raceResult = {};
-        r.map((x, _idx) => {
-          raceResult[columns[_idx]] = x;
-        });
-        if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap && raceResult.FastestLap > 0) {
-          fastestLapOfRace[raceResult.RaceID] = raceResult.FastestLap
-        }
-        if (!driverResults[raceResult.DriverID]) {
-          driverResults[raceResult.DriverID] = {
-            race: {},
-            sprint: {},
+      if (results.length) {
+        [{ columns, values }] = results;
+        for(const r of values) {
+          let raceResult = {};
+          r.map((x, _idx) => {
+            raceResult[columns[_idx]] = x;
+          });
+          if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap && raceResult.FastestLap > 0) {
+            fastestLapOfRace[raceResult.RaceID] = raceResult.FastestLap
           }
+          if (!driverResults[raceResult.DriverID]) {
+            driverResults[raceResult.DriverID] = {
+              race: {},
+              sprint: {},
+            }
+          }
+          driverResults[raceResult.DriverID].race[raceResult.RaceID] = raceResult;
         }
-        driverResults[raceResult.DriverID].race[raceResult.RaceID] = raceResult;
       }
 
       if (version === 3) {
@@ -233,14 +237,27 @@ export default function RaceResults({ database, basicInfo, version }) {
                       return <TableCell
                         align="right"
                         key={race.RaceID + type}
-                        sx={{ p: 0.2, minWidth: 36 }}
-                        style={basicInfo.player.TeamID === result.TeamID ? { background: "#333333" } : {}}
+                        sx={{ p: 0.25, width: 40 }}
+                        style={
+                          basicInfo.player.TeamID === result.TeamID ? {
+                            background: `repeating-linear-gradient(45deg, 
+                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 15px, ${teamColors(result.TeamID)}20 100%)`
+                          } : {
+                            background: `repeating-linear-gradient(45deg,
+                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 10px, transparent 20px, transparent 100%)`
+                          }
+                        }
                       >
                         <div style={{borderTop: `4px solid ${color}`, display: "block"}}>
                           {fastest && (
-                            <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "80%", padding: "0 4px", marginRight: 2}}>F</span>
+                            <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "75%", padding: "0 3px", marginRight: 2}}>F</span>
                           )}
-                          {result.DNF ? "DNF" : "P" + result.FinishingPos}
+                          <span style={{ color: result.Points > 0 ? "#fff" : "#999" }}>
+                            <span style={{ fontSize: "80%" }}>{result.DNF ? "DNF" : "P"}</span>
+                            {
+                              !result.DNF && result.FinishingPos
+                            }
+                          </span>
                         </div>
                         <div style={{display: "block"}}>
                           <sub>{result.Points > 0 ? `+${result.Points}`: "-"}</sub>

@@ -70,7 +70,7 @@ html {
   color-scheme: dark;
 }
 
-#dropzone {
+#dropzone, .dropzone {
   width: 100%;
   transition: visibility 175ms, opacity 175ms;
   display: table;
