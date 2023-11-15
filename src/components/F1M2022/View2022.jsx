@@ -59,10 +59,10 @@ export default function DataView2022({ db, metadata }) {
         "LEFT JOIN 'Staff_CommonData' ON Staff_DriverData.StaffID = Staff_CommonData.StaffID " +
         "LEFT JOIN 'Staff_DriverNumbers' ON Staff_DriverData.StaffID = Staff_DriverNumbers.CurrentHolder");
       for(const r of values) {
-        basicInfo.driverMap[r[0]] = {};
-        r.map((x, _idx) => {
-          basicInfo.driverMap[r[0]][columns[_idx]] = x;
-        })
+        let d = {};
+        r.map((x, _idx) => d[columns[_idx]] = x)
+        d.PernamentNumber = d.Number === 1 ? d.LastKnownDriverNumber : d.Number
+        basicInfo.driverMap[r[0]] = d;
       }
 
       [{ columns, values }] = db.exec("select * from Player");

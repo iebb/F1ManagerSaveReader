@@ -231,7 +231,7 @@ export default function DriverView(ctx) {
                     const haveDriverNumber = !(driverNumber === "N/A" || driverNumber === "");
                     const _driverNumber = haveDriverNumber ? driverNumber : "";
                     if (haveDriverNumber) {
-                      if (_driverNumber !== 1) {
+                      if (_driverNumber != 1) {
                         database.exec(`UPDATE Staff_DriverData SET LastKnownDriverNumber = "${_driverNumber}" WHERE StaffID = ${editRow.StaffID}`);
                       }
                       database.exec(`UPDATE Staff_DriverNumbers SET CurrentHolder = NULL WHERE CurrentHolder = ${editRow.StaffID}`);

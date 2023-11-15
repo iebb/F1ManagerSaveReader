@@ -27,6 +27,7 @@ export const getDrivers = (ctx) => {
     val.map((x, _idx) => {
       if (x !== null) row[columns[_idx]] = x;
     })
+    row.PernamentNumber = row.CurrentNumber === 1 ? row.LastKnownDriverNumber : row.CurrentNumber;
     row.performanceStats = PerformanceStats[row.StaffID];
     return row;
   })

@@ -21,6 +21,7 @@ export default function RaceResults({ database, basicInfo, version }) {
 
   const {driverMap, player } = basicInfo;
 
+  const [championDriverID, setChampionDriverID] = useState(0);
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
@@ -73,12 +74,24 @@ export default function RaceResults({ database, basicInfo, version }) {
     let driverStandings = [];
     let fastestLapOfRace = {};
     try {
+
+      [{ columns, values }] = database.exec(
+        version === 3 ?
+          `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND RaceFormula = 1 AND Position = 1` :
+
+          `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND Position = 1`
+      );
+
+
+      let [championDriverID] = values[0]; // for Car Number 1
       [{ columns, values }] = database.exec(
         version === 3 ?
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY Position ASC` :
-
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} ORDER BY Position ASC`
       );
+      setChampionDriverID(championDriverID);
+
+
 
       for(const r of values) {
         let driverStanding = {};
@@ -206,7 +219,9 @@ export default function RaceResults({ database, basicInfo, version }) {
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
                   <TableCell component="th" scope="row" sx={{ py: 0.2 }}>
-                    {getDriverCode(driverMap[row.DriverID])} #{driverMap[row.DriverID].Number}
+                    {getDriverCode(driverMap[row.DriverID])} #{
+                      (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber
+                    }
                     <br />
                     <sub>{getDriverName(driverMap[row.DriverID])}</sub>
                   </TableCell>
@@ -240,10 +255,10 @@ export default function RaceResults({ database, basicInfo, version }) {
                         sx={{ p: 0.25, width: 40 }}
                         style={
                           basicInfo.player.TeamID === result.TeamID ? {
-                            background: `repeating-linear-gradient(45deg, 
+                            background: `repeating-linear-gradient(0deg, 
                             ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 15px, ${teamColors(result.TeamID)}20 100%)`
                           } : {
-                            background: `repeating-linear-gradient(45deg,
+                            background: `repeating-linear-gradient(0deg,
                             ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 10px, transparent 20px, transparent 100%)`
                           }
                         }
@@ -260,7 +275,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                           </span>
                         </div>
                         <div style={{display: "block"}}>
-                          <sub>{result.Points > 0 ? `+${result.Points}`: "-"}</sub>
+                          <span style={{ fontSize: "80%" }}>{result.Points > 0 ? `+${result.Points}`: " "}</span>
                         </div>
                       </TableCell>
                     })
