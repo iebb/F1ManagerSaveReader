@@ -197,6 +197,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                     </TableCell>
                   })
                 }
+                <TableCell></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Driver</TableCell>
@@ -223,7 +224,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                       (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber
                     }
                     <br />
-                    <sub>{getDriverName(driverMap[row.DriverID])}</sub>
+                    <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
                   </TableCell>
                   <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
                   {
@@ -256,18 +257,18 @@ export default function RaceResults({ database, basicInfo, version }) {
                         style={
                           basicInfo.player.TeamID === result.TeamID ? {
                             background: `repeating-linear-gradient(0deg, 
-                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 15px, ${teamColors(result.TeamID)}20 100%)`
+                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 8px, ${teamColors(result.TeamID)}20 100%)`
                           } : {
                             background: `repeating-linear-gradient(0deg,
-                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 10px, transparent 20px, transparent 100%)`
+                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 6px, ${teamColors(result.TeamID)}30 13px, transparent 20px, transparent 100%)`
                           }
                         }
                       >
                         <div style={{borderTop: `4px solid ${color}`, display: "block"}}>
                           {fastest && (
-                            <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "75%", padding: "0 3px", marginRight: 2}}>F</span>
+                            <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "75%", padding: "0 3px", margin: "3px 0 0 2px", float: "left"}}>F</span>
                           )}
-                          <span style={{ color: result.Points > 0 ? "#fff" : "#999" }}>
+                          <span style={{ color: result.Points > 0 ? "#fff" : "#777" }}>
                             <span style={{ fontSize: "80%" }}>{result.DNF ? "DNF" : "P"}</span>
                             {
                               !result.DNF && result.FinishingPos
@@ -275,6 +276,9 @@ export default function RaceResults({ database, basicInfo, version }) {
                           </span>
                         </div>
                         <div style={{display: "block"}}>
+                          {result.StartingPos === 1 && (
+                            <span style={{ background: "#ff0059" , borderRadius: 2, fontSize: "75%", padding: "0 3px", margin: "3px 0 0 2px", float: "left"}}>P</span>
+                          )}
                           <span style={{ fontSize: "80%" }}>{result.Points > 0 ? `+${result.Points}`: " "}</span>
                         </div>
                       </TableCell>
