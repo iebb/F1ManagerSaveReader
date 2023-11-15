@@ -10,6 +10,7 @@ import * as React from "react";
 import {useEffect, useState} from "react";
 import Image from "next/image";
 import TableBody from "@mui/material/TableBody";
+import {getCountryFlag, getCountryShort} from "../../js/countries";
 import {getDriverCode, getDriverName} from "../../js/localization";
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -220,6 +221,11 @@ export default function RaceResults({ database, basicInfo, version }) {
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
                   <TableCell component="th" scope="row" sx={{ py: 0.2 }}>
+                    <img
+                      src={getCountryFlag(driverMap[row.DriverID].Nationality)}
+                      style={{ width: 24, margin: "-7px 4px -7px 0" }}
+                      alt={driverMap[row.DriverID].Nationality}
+                    />
                     {getDriverCode(driverMap[row.DriverID])} #{
                       (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber
                     }

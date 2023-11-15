@@ -1,17 +1,20 @@
-import {getDriverCode, getDriverName, resolveDriverCode, resolveName, unresolveDriverCode, unresolveName, teamNames} from "@/js/localization";
+import {
+  getDriverCode,
+  getDriverName,
+  resolveDriverCode,
+  resolveName,
+  teamColors,
+  teamNames,
+  unresolveDriverCode,
+  unresolveName
+} from "@/js/localization";
 import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useEffect, useState} from "react";
+import {getCountryFlag, getCountryShort} from "../../js/countries";
 import {countries} from "../../js/staffNames";
-import {assignRandomRaceNumber, getDrivers, swapDriverContracts} from "./commons/drivers";
+import {getDrivers} from "./commons/drivers";
 import ContractSwapper from "./subcomponents/ContractSwapper";
 
 const StaffPerformance = [
@@ -364,6 +367,17 @@ export default function DriverView(ctx) {
             }
           },
           {
+            field: 'Nationality',
+            headerName: 'Nat',
+            valueGetter: ({ row }) => getCountryShort(row.Nationality),
+            width: 30,
+            renderCell: ({ row }) => {
+              return (
+                <img src={getCountryFlag(row.Nationality)} style={{ width: 24 }}/>
+              )
+            }
+          },
+          {
             field: 'StaffID',
             headerName: 'Name',
             width: 150,
@@ -429,11 +443,18 @@ export default function DriverView(ctx) {
             field: 'TeamID',
             headerName: 'Team',
             width: 200,
-            valueGetter: ({ row }) => row.TeamID || 99999,
+            valueGetter: ({ row }) => {
+              if (row.TeamID <= 10) {
+                return row.PosInTeam < 3 ? row.TeamID * 2 + row.PosInTeam : 50 + row.TeamID * 2
+              }
+              return row.TeamID ? 100 + row.TeamID * 3 + row.PosInTeam : 99999
+            },
             renderCell: ({ row }) => {
               return row.TeamID ? (
-                <div>
-                  {teamNames(row.TeamID, metadata.version)}<br /><sub>Driver {row.PosInTeam}</sub>
+                <div style={row.TeamID <= 10 ? {color: teamColors(row.TeamID, 3)} : {}}>
+                  {teamNames(row.TeamID, metadata.version)}
+                  <br />
+                  <sub>Driver {row.PosInTeam}</sub>
                 </div>
               ) : (
                 "-"
