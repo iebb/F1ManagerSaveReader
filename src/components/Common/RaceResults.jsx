@@ -74,6 +74,7 @@ export default function RaceResults({ database, basicInfo, version }) {
     let driverResults = {};
     let driverStandings = [];
     let fastestLapOfRace = {};
+    let polePositionPoints = {};
     try {
 
       [{ columns, values }] = database.exec(
@@ -102,6 +103,18 @@ export default function RaceResults({ database, basicInfo, version }) {
         driverStandings.push(driverStanding);
       }
 
+
+      results = database.exec(
+        `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND ChampionshipPoints > 0 ORDER BY RaceID ASC` // only F1 has Q3
+      );
+      if (results.length) {
+        [{ columns, values }] = results;
+        for(const [RaceID, DriverID, ChampionshipPoints] of values) {
+          polePositionPoints[RaceID] = [DriverID, ChampionshipPoints]
+          console.log(polePositionPoints);
+        }
+      }
+
       results = database.exec(
         `SELECT * FROM 'Races_Results' WHERE Season = ${season} ORDER BY RaceID ASC`
       );
@@ -120,6 +133,10 @@ export default function RaceResults({ database, basicInfo, version }) {
               race: {},
               sprint: {},
             }
+          }
+          if (polePositionPoints[raceResult.RaceID] && polePositionPoints[raceResult.RaceID][0] === raceResult.DriverID) {
+            raceResult.PolePositionPoints = polePositionPoints[raceResult.RaceID][1];
+            raceResult.Points += polePositionPoints[raceResult.RaceID][1];
           }
           driverResults[raceResult.DriverID].race[raceResult.RaceID] = raceResult;
         }
@@ -149,6 +166,8 @@ export default function RaceResults({ database, basicInfo, version }) {
         }
 
       }
+
+
 
       setRaceSchedule(raceSchedule);
       setDriverStandings(driverStandings);
@@ -188,7 +207,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                 <TableCell sx={{ py: 0.2 }}>Race</TableCell>
                 {
                   raceSchedule.map(({type, race}) => {
-                    return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0 }}>
+                    return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0, minWidth: 40, width: 40 }}>
                       <Image
                         src={require(`../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
                         key={race.TrackID}
@@ -220,7 +239,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                   key={`${row.DriverID}`}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
-                  <TableCell component="th" scope="row" sx={{ py: 0.2 }}>
+                  <TableCell component="th" scope="row" sx={{ py: 0.2, minWidth: 150 }}>
                     <img
                       src={getCountryFlag(driverMap[row.DriverID].Nationality)}
                       style={{ width: 24, margin: "-7px 4px -7px 0" }}
@@ -232,7 +251,7 @@ export default function RaceResults({ database, basicInfo, version }) {
                     <br />
                     <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
                   </TableCell>
-                  <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
+                  <TableCell sx={{ py: 0.2, minWidth: 40, width: 40 }}>{row.Points}</TableCell>
                   {
                     raceSchedule.map(({type, race}) => {
                       if (!driverResults[row.DriverID] || !driverResults[row.DriverID][type][race.RaceID]) {
@@ -283,7 +302,11 @@ export default function RaceResults({ database, basicInfo, version }) {
                         </div>
                         <div style={{display: "block"}}>
                           {result.StartingPos === 1 && (
-                            <span style={{ background: "#ff0059" , borderRadius: 2, fontSize: "75%", padding: "0 3px", margin: "3px 0 0 2px", float: "left"}}>P</span>
+                            <span style={{
+                              background: result.PolePositionPoints ? "#ff0059" : "#777" ,
+                              borderRadius: 2, fontSize: "75%", padding: "0 3px",
+                              margin: "3px 0 0 2px", float: "left"
+                            }}>P</span>
                           )}
                           <span style={{ fontSize: "80%" }}>{result.Points > 0 ? `+${result.Points}`: " "}</span>
                         </div>
