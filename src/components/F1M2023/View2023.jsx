@@ -1,4 +1,5 @@
 import Modding from "../Common/Modding";
+import RaceResultsF2 from "../Common/RaceResultsF2";
 import CarSetup from "./CarSetup";
 import {circuitNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
 import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
@@ -163,7 +164,8 @@ export default function DataView2023({ db, metadata }) {
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
       <VTabs options={[
         {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
-        {name: "Race Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
+        {name: "F2 & F3", tab: <RaceResultsF2 database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},
         {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
       ]} />

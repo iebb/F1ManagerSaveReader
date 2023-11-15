@@ -19,15 +19,17 @@ import Select from '@mui/material/Select';
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
-export default function RaceResults({ database, basicInfo, version }) {
+export default function RaceResultsF2({ database, basicInfo, version }) {
 
-  const {driverMap, player } = basicInfo;
+  const { driverMap, player } = basicInfo;
 
   const [championDriverID, setChampionDriverID] = useState(0);
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
+
+  const [formulae, setFormulae] = useState(2);
 
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
@@ -43,10 +45,6 @@ export default function RaceResults({ database, basicInfo, version }) {
 
   // const [currentSeason, setCurrentSeason] = useState(2023);
 
-  const handleChange = (event) => {
-    setSeason(event.target.value);
-  };
-
 
 
 
@@ -59,17 +57,15 @@ export default function RaceResults({ database, basicInfo, version }) {
 
     let raceSchedule = [];
     [{ columns, values }] = database.exec(
-      `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
+      `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} AND IsF${formulae}Race = 1 order by Day ASC`
     );
     for(const r of values) {
       let race = {};
       r.map((x, _idx) => {
         race[columns[_idx]] = x;
       })
-      if (version === 3 && race.WeekendType === 1) {
-        raceSchedule.push({ type: "sprint", race })
-      } // 2 is ATA
-      raceSchedule.push({ type: "race", race })
+      raceSchedule.push({ type: "sprint", race })
+      raceSchedule.push({ type: "feature", race })
     }
 
     let driverResults = {};
@@ -80,7 +76,7 @@ export default function RaceResults({ database, basicInfo, version }) {
 
       [{ columns, values }] = database.exec(
         version === 3 ?
-          `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND RaceFormula = 1 AND Position = 1` :
+          `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND RaceFormula = ${formulae} AND Position = 1` :
 
           `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND Position = 1`
       );
@@ -89,7 +85,7 @@ export default function RaceResults({ database, basicInfo, version }) {
       let [championDriverID] = values[0]; // for Car Number 1
       [{ columns, values }] = database.exec(
         version === 3 ?
-          `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY Position ASC` :
+          `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY Position ASC` :
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} ORDER BY Position ASC`
       );
       setChampionDriverID(championDriverID);
@@ -106,8 +102,8 @@ export default function RaceResults({ database, basicInfo, version }) {
 
 
       results = database.exec(
-        // `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND ChampionshipPoints > 0 ORDER BY RaceID ASC` // only F1 has Q3
-        `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND FinishingPos = 1 ORDER BY RaceID ASC` // only F1 has Q3
+        `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' 
+WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1 AND ChampionshipPoints > 0 ORDER BY RaceID ASC` // only F1 has Q3
       );
       if (results.length) {
         [{ columns, values }] = results;
@@ -118,7 +114,7 @@ export default function RaceResults({ database, basicInfo, version }) {
       }
 
       results = database.exec(
-        `SELECT * FROM 'Races_Results' WHERE Season = ${season} ORDER BY RaceID ASC`
+        `SELECT * FROM 'Races_FeatureRaceResults' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY RaceID ASC`
       );
       if (results.length) {
         [{ columns, values }] = results;
@@ -132,15 +128,16 @@ export default function RaceResults({ database, basicInfo, version }) {
           }
           if (!driverResults[raceResult.DriverID]) {
             driverResults[raceResult.DriverID] = {
-              race: {},
+              feature: {},
               sprint: {},
             }
           }
+          raceResult.Points = raceResult.ChampionshipPoints
           if (polePositionPoints[raceResult.RaceID] && polePositionPoints[raceResult.RaceID][0] === raceResult.DriverID) {
             raceResult.PolePositionPoints = polePositionPoints[raceResult.RaceID][1];
             raceResult.Points += polePositionPoints[raceResult.RaceID][1];
           }
-          driverResults[raceResult.DriverID].race[raceResult.RaceID] = raceResult;
+          driverResults[raceResult.DriverID].feature[raceResult.RaceID] = raceResult;
         }
       }
 
@@ -148,7 +145,7 @@ export default function RaceResults({ database, basicInfo, version }) {
 
         try {
           [{columns, values}] = database.exec(
-            `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY RaceID ASC`
+            `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY RaceID ASC`
           );
           for (const r of values) {
             let raceResult = {};
@@ -157,7 +154,7 @@ export default function RaceResults({ database, basicInfo, version }) {
             });
             if (!driverResults[raceResult.DriverID]) {
               driverResults[raceResult.DriverID] = {
-                race: {},
+                feature: {},
                 sprint: {},
               }
             }
@@ -181,29 +178,41 @@ export default function RaceResults({ database, basicInfo, version }) {
       console.error(e);
     }
 
-  }, [database, season])
+  }, [database, season, formulae])
 
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Race Results Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+        Results Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
           <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
           <Select
             labelId="demo-simple-select-standard-label"
             id="demo-simple-select-standard"
             value={season}
-            onChange={handleChange}
+            onChange={(event) => setSeason(event.target.value)}
             label="Season"
           >
             {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+          <InputLabel id="demo-simple-select-standard-label">Formulae</InputLabel>
+          <Select
+            labelId="demo-simple-select-standard-label"
+            id="demo-simple-select-standard"
+            value={formulae}
+            onChange={(event) => setFormulae(event.target.value)}
+            label="Season"
+          >
+            <MenuItem value={2} key={2}>Formula 2</MenuItem>
+            <MenuItem value={3} key={3}>Formula 3</MenuItem>
           </Select>
         </FormControl>
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <ResultsTable
-          formulae={1}
-          {...{ basicInfo, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace, driverMap }}
+          {...{ formulae, basicInfo, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace, driverMap }}
         />
       </div>
     </div>
