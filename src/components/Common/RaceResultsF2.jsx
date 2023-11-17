@@ -32,6 +32,7 @@ export default function RaceResultsF2() {
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
+  const [driverTeams, setDriverTeams] = useState([]);
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
 
   const [formulae, setFormulae] = useState(2);
@@ -69,8 +70,8 @@ export default function RaceResultsF2() {
       r.map((x, _idx) => {
         race[columns[_idx]] = x;
       })
-      raceSchedule.push({ type: "sprint", race })
-      raceSchedule.push({ type: "feature", race })
+      raceSchedule.push({ type: "sprint", race, span: 0 })
+      raceSchedule.push({ type: "feature", race, span: 2 })
     }
 
     let driverResults = {};
@@ -143,6 +144,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
             raceResult.Points += polePositionPoints[raceResult.RaceID][1];
           }
           driverResults[raceResult.DriverID].feature[raceResult.RaceID] = raceResult;
+          driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
       }
 
@@ -163,6 +165,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
             }
           }
           driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
+          driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
       } catch (e) {
 
@@ -173,6 +176,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
       setRaceSchedule(raceSchedule);
       setDriverStandings(driverStandings);
       setDriverResults(driverResults);
+      setDriverTeams(driverTeams);
       setFastestLapOfRace(fastestLapOfRace);
 
 
@@ -215,7 +219,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
       <div style={{ overflowX: "auto" }}>
         <ResultsTable
           version={version}
-          {...{ formulae, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
+          {...{ driverTeams, formulae, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
         />
       </div>
     </div>

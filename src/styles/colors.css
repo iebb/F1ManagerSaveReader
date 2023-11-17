@@ -1,16 +1,20 @@
-.game_v3 {
+/*
+    26, 26, 26 => 66, 66, 66
+    1A1A1A => 424242
+ */
+body {
     --team1: #F91536;
     --team1-triplet: 249, 21, 54;
     --team1-fanfare1: #D61634;
     --team1-fanfare1-triplet: 214, 22, 52;
-    --team1-fanfare2: #1A1A1A;
-    --team1-fanfare2-triplet: 26, 26, 26;
+    --team1-fanfare2: #424242;
+    --team1-fanfare2-triplet: 66, 66, 66;
     --team2: #F58020;
     --team2-triplet: 245, 128, 32;
     --team2-fanfare1: #F58020;
     --team2-fanfare1-triplet: 245, 128, 32;
-    --team2-fanfare2: #1A1A1A;
-    --team2-fanfare2-triplet: 26, 26, 26;
+    --team2-fanfare2: #424242;
+    --team2-fanfare2-triplet: 66, 66, 66;
     --team3: #3671C6;
     --team3-triplet: 54, 113, 198;
     --team3-fanfare1: #1E4A98;
@@ -21,8 +25,71 @@
     --team4-triplet: 108, 211, 191;
     --team4-fanfare1: #6CD3BF;
     --team4-fanfare1-triplet: 108, 211, 191;
-    --team4-fanfare2: #1A1A1A;
-    --team4-fanfare2-triplet: 26, 26, 26;
+    --team4-fanfare2: #424242;
+    --team4-fanfare2-triplet: 66, 66, 66;
+    --team5: #2293D1;
+    --team5-triplet: 34, 147, 209;
+    --team5-fanfare1: #2293D1;
+    --team5-fanfare1-triplet: 34, 147, 209;
+    --team5-fanfare2: #F696EF;
+    --team5-fanfare2-triplet: 246, 150, 239;
+    --team6: #37BEDD;
+    --team6-triplet: 55, 190, 221;
+    --team6-fanfare1: #219BB7;
+    --team6-fanfare1-triplet: 33, 155, 183;
+    --team6-fanfare2: #37BEDD;
+    --team6-fanfare2-triplet: 55, 190, 221;
+    --team7: #B6BABD;
+    --team7-triplet: 182, 186, 189;
+    --team7-fanfare1: #0024A9;
+    --team7-fanfare1-triplet: 0, 36, 169;
+    --team7-fanfare2: #D4E1E7;
+    --team7-fanfare2-triplet: 212, 225, 231;
+    --team8: #5E8FAA;
+    --team8-triplet: 94, 143, 170;
+    --team8-fanfare1: #1F648A;
+    --team8-fanfare1-triplet: 31, 100, 138;
+    --team8-fanfare2: #5E8FAA;
+    --team8-fanfare2-triplet: 94, 143, 170;
+    --team9: #C92D4B;
+    --team9-triplet: 201, 45, 75;
+    --team9-fanfare1: #C92D4B;
+    --team9-fanfare1-triplet: 201, 45, 75;
+    --team9-fanfare2: #D4E1E7;
+    --team9-fanfare2-triplet: 212, 225, 231;
+    --team10: #358C75;
+    --team10-triplet: 53, 140, 117;
+    --team10-fanfare1: #358C75;
+    --team10-fanfare1-triplet: 53, 140, 117;
+    --team10-fanfare2: #CEDD86;
+    --team10-fanfare2-triplet: 206, 221, 134;
+}
+
+.game_v3 {
+    --team1: #F91536;
+    --team1-triplet: 249, 21, 54;
+    --team1-fanfare1: #D61634;
+    --team1-fanfare1-triplet: 214, 22, 52;
+    --team1-fanfare2: #424242;
+    --team1-fanfare2-triplet: 66, 66, 66;
+    --team2: #F58020;
+    --team2-triplet: 245, 128, 32;
+    --team2-fanfare1: #F58020;
+    --team2-fanfare1-triplet: 245, 128, 32;
+    --team2-fanfare2: #424242;
+    --team2-fanfare2-triplet: 66, 66, 66;
+    --team3: #3671C6;
+    --team3-triplet: 54, 113, 198;
+    --team3-fanfare1: #1E4A98;
+    --team3-fanfare1-triplet: 30, 74, 152;
+    --team3-fanfare2: #3566BC;
+    --team3-fanfare2-triplet: 53, 102, 188;
+    --team4: #6CD3BF;
+    --team4-triplet: 108, 211, 191;
+    --team4-fanfare1: #6CD3BF;
+    --team4-fanfare1-triplet: 108, 211, 191;
+    --team4-fanfare2: #424242;
+    --team4-fanfare2-triplet: 66, 66, 66;
     --team5: #2293D1;
     --team5-triplet: 34, 147, 209;
     --team5-fanfare1: #2293D1;

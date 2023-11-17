@@ -32,6 +32,7 @@ export default function RaceResults() {
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
+  const [driverTeams, setDriverTeams] = useState({});
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
 
   const [season, setSeason] = useState(player.CurrentSeason);
@@ -72,11 +73,14 @@ export default function RaceResults() {
         race[columns[_idx]] = x;
       })
       if (version === 3 && race.WeekendType === 1) {
-        raceSchedule.push({ type: "sprint", race })
-      } // 2 is ATA
-      raceSchedule.push({ type: "race", race })
+        raceSchedule.push({ type: "sprint", race, span: 2 })
+        raceSchedule.push({ type: "race", race, span: 0 })
+      } else {// 2 is ATA
+        raceSchedule.push({ type: "race", race, span: 1 })
+      }
     }
 
+    let driverTeams = {};
     let driverResults = {};
     let driverStandings = [];
     let fastestLapOfRace = {};
@@ -149,6 +153,7 @@ export default function RaceResults() {
             raceResult.Points += polePositionPoints[raceResult.RaceID][1];
           }
           driverResults[raceResult.DriverID].race[raceResult.RaceID] = raceResult;
+          driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
       }
 
@@ -170,6 +175,7 @@ export default function RaceResults() {
               }
             }
             driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
+            driverTeams[raceResult.DriverID] = raceResult.TeamID;
           }
         } catch (e) {
 
@@ -182,6 +188,7 @@ export default function RaceResults() {
       setRaceSchedule(raceSchedule);
       setDriverStandings(driverStandings);
       setDriverResults(driverResults);
+      setDriverTeams(driverTeams);
       setFastestLapOfRace(fastestLapOfRace);
 
 
@@ -212,7 +219,7 @@ export default function RaceResults() {
         <ResultsTable
           formulae={1}
           version={version}
-          {...{ championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
+          {...{ driverTeams, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
         />
       </div>
     </div>

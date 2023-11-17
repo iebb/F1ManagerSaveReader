@@ -9,7 +9,7 @@ import Image from "next/image";
 import {useContext} from "react";
 import * as React from "react";
 import {getCountryFlag} from "../../../js/countries";
-import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamColors} from "../../../js/localization";
+import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamColors, teamNames} from "../../../js/localization";
 import {BasicInfoContext, DatabaseContext, VersionContext} from "../../Contexts";
 
 export default function ResultsTable(ctx) {
@@ -19,41 +19,57 @@ export default function ResultsTable(ctx) {
 
   const { driverMap } = basicInfo;
 
-  const { formulae, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
+  const { formulae, driverTeams, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
 
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell></TableCell>
-            <TableCell sx={{ py: 0.2 }}>Race</TableCell>
+            <TableCell
+              className={`race_header_cell`}
+              sx={{ py: 0.2 }}
+              colSpan={3}
+            >Race</TableCell>
             {
-              raceSchedule.map(({type, race}) => {
-                return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0, minWidth: 42, width: 42 }}>
+              raceSchedule.map(({type, race, span}) => {
+                if (span === 0) return null;
+                return <TableCell
+                  align="center"
+                  key={race.RaceID + type}
+                  className={`nopad race_header_cell`}
+                  colSpan={ span }
+                >
                   <Image
                     src={require(`../../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
                     key={race.TrackID}
-                    width={24} height={18}
+                    width={20} height={15}
                     alt={race.Name}
                   />
+                  <br />
+                  <span style={{ fontSize: 12 }}>{raceAbbrevs[race.TrackID]}</span>
                 </TableCell>
               })
             }
             <TableCell></TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>Driver</TableCell>
-            <TableCell sx={{ py: 0.2 }}>pts</TableCell>
+            <TableCell sx={{ py: 0.25 }}>Driver</TableCell>
+            <TableCell sx={{ py: 0.25 }}>Team</TableCell>
+            <TableCell sx={{ py: 0 }}>pts</TableCell>
             {
               raceSchedule.map(({type, race}) => {
-                return <TableCell align="right" key={race.RaceID + type} sx={{ p: 0, fontSize: 12, fontFamily: "monospace" }}>
-                  {raceAbbrevs[race.TrackID]}
-                  <br/>{type.substring(0, 3)}
+                return <TableCell
+                  align="center"
+                  key={race.RaceID + type}
+                  className={`race_cell_${type}`}
+                  sx={{ p: 0, fontSize: 12 }}
+                >
+                  {type.substring(0, 3)}
                 </TableCell>
               })
             }
-            <TableCell sx={{ py: 0.2 }}>pts</TableCell>
+            <TableCell sx={{ py: 0 }}>pts</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -62,7 +78,7 @@ export default function ResultsTable(ctx) {
               key={`${row.DriverID}`}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
-              <TableCell component="th" scope="row" sx={{ py: 0.2, minWidth: 150 }}>
+              <TableCell component="th" scope="row" sx={{ py: 0.2, minWidth: 100 }}>
                 <img
                   src={getCountryFlag(driverMap[row.DriverID].Nationality)}
                   style={{ width: 24, margin: "-7px 4px -7px 0" }}
@@ -77,7 +93,27 @@ export default function ResultsTable(ctx) {
                 <br />
                 <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
               </TableCell>
-              <TableCell sx={{ py: 0.2, minWidth: 40, width: 40 }}>{row.Points}</TableCell>
+              <TableCell sx={{ py: 0.2, minWidth: 100 }}>
+                <div>
+                  <div style={{
+                    width: 12, height: 12, borderRadius: 6,
+                    display: "inline-block", marginRight: 3,
+                    background: `var(--team${driverTeams[row.DriverID]})`,
+                  }} />
+                  {/*<div style={{*/}
+                  {/*  width: 12, height: 12, borderRadius: 6,*/}
+                  {/*  display: "inline-block", marginRight: 3,*/}
+                  {/*  background: `var(--team${driverTeams[row.DriverID]}-fanfare1)`,*/}
+                  {/*}} />*/}
+                  <div style={{
+                    width: 12, height: 12, borderRadius: 6,
+                    display: "inline-block", marginRight: 3,
+                    background: `var(--team${driverTeams[row.DriverID]}-fanfare2)`,
+                  }} />
+                </div>
+                <span style={{ fontSize: "90%" }}>{teamNames(driverTeams[row.DriverID], version)}</span>
+              </TableCell>
+              <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
               {
                 raceSchedule.map(({type, race}) => {
                   if (!driverResults[row.DriverID] || !driverResults[row.DriverID][type][race.RaceID]) {
@@ -104,20 +140,25 @@ export default function ResultsTable(ctx) {
                   return <TableCell
                     align="right"
                     key={race.RaceID + type}
-                    sx={{ p: 0.25, width: 40 }}
+                    sx={{ p: 0.25 }}
                     style={
                       basicInfo.player.TeamID === result.TeamID ? {
                         background: `repeating-linear-gradient(0deg, 
-                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, rgba(var(--team${result.TeamID}-triplet), 0.15) 100%)`
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.15) 100%)`
                       } : {
                         background: `repeating-linear-gradient(0deg,
-                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, rgba(var(--team${result.TeamID}-triplet), 0.15) 13px, transparent 20px, transparent 100%)`
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.15) 13px, transparent 20px, transparent 100%)`
                       }
                     }
                   >
                     <div style={{borderTop: `4px solid ${color}`, display: "block"}}>
                       {fastest && (
-                        <span style={{ background: "#9700ff" , borderRadius: 2, fontSize: "75%", padding: "0 3px", margin: "3px 0 0 2px", float: "left"}}>F</span>
+                        <span style={{
+                          background: "#9700ff",
+                          borderRadius: 2, fontSize: "75%", padding: "0 2px",
+                          margin: "3px 0 0 1px", float: "left"}}>F</span>
                       )}
                       <span style={{ color: result.Points > 0 ? "#fff" : "#777" }}>
                             <span style={{ fontSize: "80%" }}>{result.DNF ? "DNF" : "P"}</span>
@@ -130,8 +171,8 @@ export default function ResultsTable(ctx) {
                       { ((result.PolePositionPoints !== undefined ) || (version === 2 && result.StartingPos === 1)) && (
                         <span style={{
                           background: result.PolePositionPoints ? "#f05" : "#804054" ,
-                          borderRadius: 2, fontSize: "75%", padding: "0 3px",
-                          margin: "3px 0 0 2px", float: "left"
+                          borderRadius: 2, fontSize: "75%", padding: "0 2px",
+                          margin: "3px 0 0 1px", float: "left"
                         }}>P</span>
                       )}
                       <span style={{ fontSize: "80%" }}>{result.Points > 0 ? `+${result.Points}`: " "}</span>

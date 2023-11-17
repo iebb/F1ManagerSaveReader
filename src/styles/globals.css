@@ -8,8 +8,8 @@
     'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
 
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 22, 22, 22;
-  --background-end-rgb: 0, 0, 0;
+  --background-start-rgb: 44, 44, 44;
+  --background-end-rgb: 33, 33, 33;
 
   --primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
   --secondary-glow: linear-gradient(
@@ -153,4 +153,28 @@ html {
     flex-basis: 200px;
     gap: 2px;
   }
+}
+
+
+.nopad {
+  padding: 0;
+}
+
+.race_header_cell {
+  border-right: 1px solid #777;
+}
+
+.race_cell_sprint {
+  min-width: 32px!important;
+  width: 32px;
+}
+
+.race_cell_race {
+  min-width: 40px!important;
+  width: 40px;
+}
+
+.race_cell_feature {
+  min-width: 40px!important;
+  width: 40px;
 }

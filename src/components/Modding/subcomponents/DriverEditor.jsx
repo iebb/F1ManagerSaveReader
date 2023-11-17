@@ -93,9 +93,16 @@ export default function DriverEditor(props) {
 
     }
     try {
-      [{ values }] = database.exec(
-        "SELECT FirstName, LastName FROM Staff_BasicData ORDER BY StaffID DESC"
-      );
+      if (version === 2) {
+        [{ values }] = database.exec(
+          "SELECT FirstName, LastName FROM Staff_BasicData ORDER BY StaffID DESC"
+        );
+      } else {
+        [{ values }] = database.exec(
+          "SELECT FirstName, LastName FROM Staff_CommonData ORDER BY StaffID DESC"
+        );
+      }
+
       for(const row of values) {
         names.push(resolveName(row[0]));
         names.push(resolveName(row[1]));
@@ -182,7 +189,12 @@ export default function DriverEditor(props) {
               const _lastName = unresolveName(lastName);
               const _driverCode = unresolveDriverCode(driverCode);
 
-              database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
+              if (version === 2) {
+                database.exec(`UPDATE Staff_CommonData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
+              } else {
+                database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
+              }
+
               database.exec(`UPDATE Staff_DriverData SET DriverCode = "${_driverCode}" WHERE StaffID = ${editRow.StaffID}`);
 
 

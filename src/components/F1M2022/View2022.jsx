@@ -1,13 +1,12 @@
-import Modding from "../Common/Modding";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import CarSetup from "./CarSetup";
-import {circuitNames, raceAbbrevs, raceFlags, weekendStagesAbbrev, dayToDate, formatDate} from "@/js/localization";
-import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import {Typography} from "@mui/material";
 import {useContext, useEffect, useState} from "react";
-import Image from "next/image";
-import {VTabs} from "../Tabs";
-import RaceResults from "../Common/RaceResults";
 import CostCap from "../Common/CostCap";
+import Modding from "../Common/Modding";
+import RaceResults from "../Common/RaceResults";
+import {Header} from "../Common/subcomponents/Header";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {VTabs} from "../Tabs";
+import CarSetup from "./CarSetup";
 
 export default function DataView2022() {
   const [basicInfo, setBasicInfo] = useState({});
@@ -133,51 +132,13 @@ export default function DataView2022() {
     );
   }
 
-  const { player, teamMap, weekend, races, currentSeasonRaces } = basicInfo;
-
-  const team = teamMap[player.TeamID];
-
-  const currentRaceIdx = currentSeasonRaces.map(x => x.RaceID).indexOf(weekend.RaceID);
-
 
 
 
   return (
     <div>
-      <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
-        Playing as {player.FirstName} {player.LastName} for {team.TeamName} in 2022 Game.
-        <br />
-        It's {formatDate(dayToDate(player.Day))} in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
-      </Typography>
-      <div style={{ overflowX: "auto" }}>
-        <Stepper
-          activeStep={currentRaceIdx}
-          alternativeLabel
-          key={player.Day}
-        >
-          {currentSeasonRaces.map((race) => (
-            <Step key={race.RaceID}>
-              <StepLabel
-                StepIconComponent={() => <Image
-                  src={require(`../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
-                  width={24} height={18}
-                  alt={race.Name}
-                  style={{ opacity: race.Day >= player.Day ? 1 : 0.3 }}
-                />}
-              >
-                {raceAbbrevs[race.TrackID]}
-                <br />
-                {
-                  race.RaceID === weekend.RaceID ? weekendStagesAbbrev[weekend.WeekendStage] :
-                    race.Day < player.Day ? "✅" : `${(race.Day - player.Day)}d`
-                }
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </div>
-      <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
       <BasicInfoContext.Provider value={basicInfo}>
+        <Header />
         <VTabs options={[
           {name: "Car Setup Viewer", tab: <CarSetup />},
           {name: "Race Results", tab: <RaceResults />},
