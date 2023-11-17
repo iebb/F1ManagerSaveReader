@@ -1,20 +1,20 @@
 /*
-    26, 26, 26 => 66, 66, 66
-    1A1A1A => 424242
+    26, 26, 26 => 36, 36, 36
+    1A1A1A => 242424
  */
 body {
     --team1: #F91536;
     --team1-triplet: 249, 21, 54;
     --team1-fanfare1: #D61634;
     --team1-fanfare1-triplet: 214, 22, 52;
-    --team1-fanfare2: #424242;
-    --team1-fanfare2-triplet: 66, 66, 66;
+    --team1-fanfare2: #242424;
+    --team1-fanfare2-triplet: 36, 36, 36;
     --team2: #F58020;
     --team2-triplet: 245, 128, 32;
     --team2-fanfare1: #F58020;
     --team2-fanfare1-triplet: 245, 128, 32;
-    --team2-fanfare2: #424242;
-    --team2-fanfare2-triplet: 66, 66, 66;
+    --team2-fanfare2: #242424;
+    --team2-fanfare2-triplet: 36, 36, 36;
     --team3: #3671C6;
     --team3-triplet: 54, 113, 198;
     --team3-fanfare1: #1E4A98;
@@ -25,8 +25,8 @@ body {
     --team4-triplet: 108, 211, 191;
     --team4-fanfare1: #6CD3BF;
     --team4-fanfare1-triplet: 108, 211, 191;
-    --team4-fanfare2: #424242;
-    --team4-fanfare2-triplet: 66, 66, 66;
+    --team4-fanfare2: #242424;
+    --team4-fanfare2-triplet: 36, 36, 36;
     --team5: #2293D1;
     --team5-triplet: 34, 147, 209;
     --team5-fanfare1: #2293D1;
@@ -70,14 +70,14 @@ body {
     --team1-triplet: 249, 21, 54;
     --team1-fanfare1: #D61634;
     --team1-fanfare1-triplet: 214, 22, 52;
-    --team1-fanfare2: #424242;
-    --team1-fanfare2-triplet: 66, 66, 66;
+    --team1-fanfare2: #242424;
+    --team1-fanfare2-triplet: 36, 36, 36;
     --team2: #F58020;
     --team2-triplet: 245, 128, 32;
     --team2-fanfare1: #F58020;
     --team2-fanfare1-triplet: 245, 128, 32;
-    --team2-fanfare2: #424242;
-    --team2-fanfare2-triplet: 66, 66, 66;
+    --team2-fanfare2: #242424;
+    --team2-fanfare2-triplet: 36, 36, 36;
     --team3: #3671C6;
     --team3-triplet: 54, 113, 198;
     --team3-fanfare1: #1E4A98;
@@ -88,8 +88,8 @@ body {
     --team4-triplet: 108, 211, 191;
     --team4-fanfare1: #6CD3BF;
     --team4-fanfare1-triplet: 108, 211, 191;
-    --team4-fanfare2: #424242;
-    --team4-fanfare2-triplet: 66, 66, 66;
+    --team4-fanfare2: #242424;
+    --team4-fanfare2-triplet: 36, 36, 36;
     --team5: #2293D1;
     --team5-triplet: 34, 147, 209;
     --team5-fanfare1: #2293D1;
