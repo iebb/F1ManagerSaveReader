@@ -22,7 +22,7 @@ export default function ResultsTable(ctx) {
   const { formulae, driverTeams, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper} className={`table_f${formulae}`}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
@@ -54,8 +54,14 @@ export default function ResultsTable(ctx) {
             <TableCell></TableCell>
           </TableRow>
           <TableRow>
-            <TableCell sx={{ py: 0.25 }}>Driver</TableCell>
-            <TableCell sx={{ py: 0.25 }}>Team</TableCell>
+            <TableCell
+              sx={{ py: 0.25 }}
+              className={`race_cell_driver`}
+            >Driver</TableCell>
+            <TableCell
+              sx={{ py: 0.25 }}
+              className={`race_cell_team`}
+            >Team</TableCell>
             <TableCell sx={{ py: 0 }}>pts</TableCell>
             {
               raceSchedule.map(({type, race}) => {
@@ -78,7 +84,12 @@ export default function ResultsTable(ctx) {
               key={`${row.DriverID}`}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
-              <TableCell component="th" scope="row" sx={{ py: 0.2, minWidth: 100 }}>
+              <TableCell
+                component="th"
+                scope="row"
+                sx={{ py: 0.2 }}
+                className={`race_cell_driver`}
+              >
                 <img
                   src={getCountryFlag(driverMap[row.DriverID].Nationality)}
                   style={{ width: 24, margin: "-7px 4px -7px 0" }}
@@ -94,7 +105,10 @@ export default function ResultsTable(ctx) {
                 <br />
                 <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
               </TableCell>
-              <TableCell sx={{ py: 0.2, minWidth: 100 }}>
+              <TableCell
+                sx={{ py: 0.2 }}
+                className={`race_cell_team`}
+              >
                 <div>
                   <div style={{
                     width: 12, height: 12, borderRadius: 6,
@@ -112,7 +126,7 @@ export default function ResultsTable(ctx) {
                     background: `var(--team${driverTeams[row.DriverID]}-fanfare2)`,
                   }} />
                 </div>
-                <span style={{ fontSize: "90%" }}>{teamNames(driverTeams[row.DriverID], version)}</span>
+                <span style={{ fontSize: 12 }}>{teamNames(driverTeams[row.DriverID], version)}</span>
               </TableCell>
               <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
               {

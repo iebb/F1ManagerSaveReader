@@ -1,6 +1,4 @@
 import {Head, Html, Main, NextScript} from 'next/document'
-import Footer from "../components/UI/Footer";
-import Header from "../components/UI/Header";
 
 export default function Document() {
   return (
