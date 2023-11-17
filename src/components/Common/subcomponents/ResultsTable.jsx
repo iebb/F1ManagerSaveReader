@@ -37,7 +37,7 @@ export default function ResultsTable(ctx) {
                 return <TableCell
                   align="center"
                   key={race.RaceID + type}
-                  className={`nopad race_header_cell`}
+                  className={`nopad race_header_cell race_cell_${type}`}
                   colSpan={ span }
                 >
                   <Image
