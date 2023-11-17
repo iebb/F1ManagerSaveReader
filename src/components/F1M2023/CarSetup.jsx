@@ -7,10 +7,11 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import {Meta} from "next/dist/lib/metadata/generate/meta";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {repack} from "../../js/fileAnalyzer";
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 
 
 export const CarSetupParams = [
@@ -76,6 +77,7 @@ export default function CarSetup() {
 
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
+  const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 
   const [rows, setRows] = useState([]);
