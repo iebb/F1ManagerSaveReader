@@ -84,12 +84,13 @@ export default function ResultsTable(ctx) {
                   style={{ width: 24, margin: "-7px 4px -7px 0" }}
                   alt={driverMap[row.DriverID].Nationality}
                 />
-                {getDriverCode(driverMap[row.DriverID])}
                 {
-                  formulae === 1 && (` #${
+                  formulae === 1 ? (` ${
                     (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber
-                  }`)
-                }
+                  }`) : (
+                    `${row.DriverAssignedNumber}`
+                  )
+                }. {getDriverCode(driverMap[row.DriverID])}
                 <br />
                 <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
               </TableCell>

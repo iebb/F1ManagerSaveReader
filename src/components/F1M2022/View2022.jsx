@@ -4,12 +4,13 @@ import CostCap from "../Common/CostCap";
 import Modding from "../Common/Modding";
 import RaceResults from "../Common/RaceResults";
 import {Header} from "../Common/subcomponents/Header";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext, MiscContext} from "../Contexts";
 import {VTabs} from "../Tabs";
 import CarSetup from "./CarSetup";
 
 export default function DataView2022() {
   const [basicInfo, setBasicInfo] = useState({});
+  const [misc, setMisc] = useState({});
   const db = useContext(DatabaseContext);
   const metadata = useContext(MetadataContext);
 
@@ -65,6 +66,12 @@ export default function DataView2022() {
         let d = {};
         r.map((x, _idx) => d[columns[_idx]] = x)
         d.PernamentNumber = d.Number === 1 ? d.LastKnownDriverNumber : d.Number
+        if (d.LastName === "[StaffName_Surname_Bianchi]") {
+          setMisc({...misc, has_bianchi: 1});
+        }
+        if (d.LastName === "[StaffName_Forename_Male_Hubert]" || d.LastName === "[StaffName_Surname_Hubert]") {
+          setMisc({...misc, has_hubert: 1});
+        }
         basicInfo.driverMap[r[0]] = d;
       }
 
@@ -137,15 +144,17 @@ export default function DataView2022() {
 
   return (
     <div>
-      <BasicInfoContext.Provider value={basicInfo}>
-        <Header />
-        <VTabs options={[
-          {name: "Car Setup Viewer", tab: <CarSetup />},
-          {name: "Race Results", tab: <RaceResults />},
-          {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={2}/>},
-          {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={2}/>},
-        ]} />
-      </BasicInfoContext.Provider>
+      <MiscContext.Provider value={misc}>
+        <BasicInfoContext.Provider value={basicInfo}>
+          <Header />
+          <VTabs options={[
+            {name: "Car Setup Viewer", tab: <CarSetup />},
+            {name: "Race Results", tab: <RaceResults />},
+            {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={2}/>},
+            {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={2}/>},
+          ]} />
+        </BasicInfoContext.Provider>
+      </MiscContext.Provider>
     </div>
   )
 }

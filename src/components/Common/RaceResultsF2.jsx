@@ -16,7 +16,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MiscContext, VersionContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
@@ -25,6 +25,7 @@ export default function RaceResultsF2() {
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
   const basicInfo = useContext(BasicInfoContext);
+  const misc = useContext(MiscContext);
 
   const { driverMap, player } = basicInfo;
 
@@ -49,7 +50,48 @@ export default function RaceResultsF2() {
     setSeason(player.CurrentSeason);
   }, [player.CurrentSeason, player.StartSeason]);
 
-  // const [currentSeason, setCurrentSeason] = useState(2023);
+  const teamNumbers = (
+    formulae === 2
+  ) ? (
+    misc.has_hubert ? [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+      [7, 8],
+      [9, 10],
+      [11, 12],
+      [14, 15],
+      [16, 17],
+      [18, 19],
+      [20, 21],
+      [22, 23],
+    ] : [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+      [7, 8],
+      [9, 10],
+      [11, 12],
+      [14, 15],
+      [16, 17],
+      [20, 21],
+      [22, 23],
+      [24, 25],
+    ]
+  ) : (
+    [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+      [10, 11, 12],
+      [14, 15, 16],
+      [17, 18, 19],
+      [20, 21, 22],
+      [23, 24, 25],
+      [26, 27, 28],
+      [29, 30, 31],
+    ]
+  )
 
 
 
@@ -78,23 +120,23 @@ export default function RaceResultsF2() {
     let driverStandings = [];
     let fastestLapOfRace = {};
     let polePositionPoints = {};
+    let teamStandings = {};
     try {
 
       [{ columns, values }] = database.exec(
-        version === 3 ?
-          `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND RaceFormula = ${formulae} AND Position = 1` :
-
-          `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND Position = 1`
+        `SELECT TeamID, Position FROM 'Races_TeamStandings' WHERE SeasonID = ${season - 1} AND RaceFormula = ${formulae}`
       );
 
+      for(const [TeamID, Position] of values) {
+        teamStandings[TeamID] = Position;
+      }
 
-      let [championDriverID] = values[0]; // for Car Number 1
+
       [{ columns, values }] = database.exec(
         version === 3 ?
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY Position ASC` :
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} ORDER BY Position ASC`
       );
-      setChampionDriverID(championDriverID);
 
 
 
@@ -115,7 +157,6 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
         [{ columns, values }] = results;
         for(const [RaceID, DriverID, ChampionshipPoints] of values) {
           polePositionPoints[RaceID] = [DriverID, ChampionshipPoints]
-          console.log(polePositionPoints);
         }
       }
 
@@ -167,6 +208,19 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
           driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
           driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
+
+        const teamDrivers = {};
+        for(const d of driverStandings) {
+          const team = teamStandings[driverTeams[d.DriverID]] - 1;
+          if (season === player.CurrentSeason) {
+            const car = season === player.CurrentSeason ? driverMap[d.DriverID].AssignedCarNumber - 1 : 1;
+            d.DriverAssignedNumber = teamNumbers[team][car]
+          } else {
+            if (!teamDrivers[team]) teamDrivers[team] = 0;
+            d.DriverAssignedNumber = teamNumbers[team][teamDrivers[team]]
+            teamDrivers[team] += 1;
+          }
+        }
       } catch (e) {
 
       }
@@ -190,17 +244,17 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
     <div>
       <Typography variant="h5" component="h5">
         Results Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-          <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
-          <Select
-            labelId="demo-simple-select-standard-label"
-            id="demo-simple-select-standard"
-            value={season}
-            onChange={(event) => setSeason(event.target.value)}
-            label="Season"
-          >
-            {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
-          </Select>
-        </FormControl>
+        <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
+        <Select
+          labelId="demo-simple-select-standard-label"
+          id="demo-simple-select-standard"
+          value={season}
+          onChange={(event) => setSeason(event.target.value)}
+          label="Season"
+        >
+          {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
+        </Select>
+      </FormControl>
         <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
           <InputLabel id="demo-simple-select-standard-label">Formulae</InputLabel>
           <Select
