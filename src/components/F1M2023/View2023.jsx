@@ -1,16 +1,19 @@
 import Modding from "../Common/Modding";
 import RaceResultsF2 from "../Common/RaceResultsF2";
+import {DatabaseContext, MetadataContext, BasicInfoContext} from "../Contexts";
 import CarSetup from "./CarSetup";
 import {circuitNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
 import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import Image from "next/image";
 import RaceResults from "../Common/RaceResults";
 import {VTabs} from "../Tabs";
 import CostCap from "../Common/CostCap";
 
-export default function DataView2023({ db, metadata }) {
+export default function DataView2023() {
   const [basicInfo, setBasicInfo] = useState({});
+  const db = useContext(DatabaseContext);
+  const metadata = useContext(MetadataContext);
 
 
   useEffect(() => {
@@ -104,9 +107,11 @@ export default function DataView2023({ db, metadata }) {
         };
       }
 
-      setBasicInfo(basicInfo);
-    } catch {
+      console.log(basicInfo);
 
+      setBasicInfo(basicInfo);
+    } catch (e) {
+      console.log(e);
     }
   }, [db])
 
@@ -162,13 +167,15 @@ export default function DataView2023({ db, metadata }) {
         </Stepper>
       </div>
       <Divider variant="fullWidth" sx={{ mt: 3, mb: 3 }} />
-      <VTabs options={[
-        {name: "Car Setup Viewer", tab: <CarSetup database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
-        {name: "Results", tab: <RaceResults database={db} basicInfo={basicInfo} version={3}/>},
-        {name: "F2 & F3", tab: <RaceResultsF2 database={db} basicInfo={basicInfo} version={3}/>},
-        {name: "Cost Cap", tab: <CostCap database={db} basicInfo={basicInfo} version={3}/>},
-        {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
-      ]} />
+      <BasicInfoContext.Provider value={basicInfo}>
+        <VTabs options={[
+          {name: "Car Setup Viewer", tab: <CarSetup />},
+          {name: "Results", tab: <RaceResults />},
+          {name: "F2 & F3", tab: <RaceResultsF2 />},
+          {name: "Cost Cap", tab: <CostCap />},
+          {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
+        ]} />
+      </BasicInfoContext.Provider>
     </div>
   )
 }

@@ -1,9 +1,9 @@
 
 export const getDrivers = (ctx) => {
-
-  const { database } = ctx;
+  const {database, version} = ctx;
 
   const PerformanceStats = {};
+
   let [{ columns, values }] = database.exec(
     "SELECT * FROM Staff_PerformanceStats"
   );
@@ -14,13 +14,22 @@ export const getDrivers = (ctx) => {
     PerformanceStats[row[0]][row[1]] = row[2];
   }
 
-  [{ columns, values }] = database.exec(
-    "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
-    "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
-    "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
-    "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
-    "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
-  );
+  if (version === 2) {
+    [{ columns, values }] = database.exec(
+      "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
+      "LEFT JOIN Staff_CommonData on Staff_CommonData.StaffID = Staff_DriverData.StaffID\n" +
+      "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
+      "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
+    );
+  } else if (version === 3) {
+    [{ columns, values }] = database.exec(
+      "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
+      "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
+      "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
+      "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
+      "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
+    );
+  }
 
   return values.map(val => {
     let row = {};

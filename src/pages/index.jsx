@@ -4,6 +4,7 @@ import {useEffect, useState} from "react";
 import Dropzone from 'react-dropzone'
 import DataView from "../components/DataView";
 import {analyzeFileToDatabase} from "../js/fileAnalyzer";
+import {MetadataContext, DatabaseContext, DatabaseUpdaterContext, VersionContext} from "../components/Contexts";
 
 export default function Home() {
   const [loaded, setLoaded] = useState(false);
@@ -80,7 +81,15 @@ export default function Home() {
                   </div>
                 </Container>
                 <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
-                  <DataView db={db} version={version} metadata={metadata} />
+                  <VersionContext.Provider value={version}>
+                    <DatabaseContext.Provider value={db}>
+                      <DatabaseUpdaterContext.Provider value={setDb}>
+                        <MetadataContext.Provider value={metadata}>
+                          <DataView />
+                        </MetadataContext.Provider>
+                      </DatabaseUpdaterContext.Provider>
+                    </DatabaseContext.Provider>
+                  </VersionContext.Provider>
                 </Container>
               </div>
             )}

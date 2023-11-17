@@ -7,7 +7,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import Image from "next/image";
 import TableBody from "@mui/material/TableBody";
 import {getCountryFlag, getCountryShort} from "../../js/countries";
@@ -16,12 +16,17 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
-export default function RaceResults({ database, basicInfo, version }) {
+export default function RaceResults() {
 
-  const {driverMap, player } = basicInfo;
+  const database = useContext(DatabaseContext);
+  const version = useContext(VersionContext);
+  const basicInfo = useContext(BasicInfoContext);
+
+  const { driverMap, player } = basicInfo;
 
   const [championDriverID, setChampionDriverID] = useState(0);
   const [raceSchedule, setRaceSchedule] = useState([]);
@@ -104,18 +109,21 @@ export default function RaceResults({ database, basicInfo, version }) {
         driverStandings.push(driverStanding);
       }
 
-
-      results = database.exec(
-        // `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND ChampionshipPoints > 0 ORDER BY RaceID ASC` // only F1 has Q3
-        `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND FinishingPos = 1 ORDER BY RaceID ASC` // only F1 has Q3
-      );
-      if (results.length) {
-        [{ columns, values }] = results;
-        for(const [RaceID, DriverID, ChampionshipPoints] of values) {
-          polePositionPoints[RaceID] = [DriverID, ChampionshipPoints]
-          console.log(polePositionPoints);
+      if (version === 3) {
+        results = database.exec(
+          // `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND ChampionshipPoints > 0 ORDER BY RaceID ASC` // only F1 has Q3
+          `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND FinishingPos = 1 ORDER BY RaceID ASC` // only F1 has Q3
+        );
+        if (results.length) {
+          [{ columns, values }] = results;
+          for(const [RaceID, DriverID, ChampionshipPoints] of values) {
+            polePositionPoints[RaceID] = [DriverID, ChampionshipPoints]
+            // console.log(polePositionPoints);
+          }
         }
+
       }
+
 
       results = database.exec(
         `SELECT * FROM 'Races_Results' WHERE Season = ${season} ORDER BY RaceID ASC`
@@ -203,7 +211,8 @@ export default function RaceResults({ database, basicInfo, version }) {
       <div style={{ overflowX: "auto" }}>
         <ResultsTable
           formulae={1}
-          {...{ basicInfo, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace, driverMap }}
+          version={version}
+          {...{ championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
         />
       </div>
     </div>

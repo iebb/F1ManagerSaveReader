@@ -7,7 +7,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import Image from "next/image";
 import TableBody from "@mui/material/TableBody";
 import {getCountryFlag, getCountryShort} from "../../js/countries";
@@ -16,10 +16,15 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
-export default function RaceResultsF2({ database, basicInfo, version }) {
+export default function RaceResultsF2() {
+
+  const database = useContext(DatabaseContext);
+  const version = useContext(VersionContext);
+  const basicInfo = useContext(BasicInfoContext);
 
   const { driverMap, player } = basicInfo;
 
@@ -141,28 +146,25 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
         }
       }
 
-      if (version === 3) {
 
-        try {
-          [{columns, values}] = database.exec(
-            `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY RaceID ASC`
-          );
-          for (const r of values) {
-            let raceResult = {};
-            r.map((x, _idx) => {
-              raceResult[columns[_idx]] = x;
-            });
-            if (!driverResults[raceResult.DriverID]) {
-              driverResults[raceResult.DriverID] = {
-                feature: {},
-                sprint: {},
-              }
+      try {
+        [{columns, values}] = database.exec(
+          `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY RaceID ASC`
+        );
+        for (const r of values) {
+          let raceResult = {};
+          r.map((x, _idx) => {
+            raceResult[columns[_idx]] = x;
+          });
+          if (!driverResults[raceResult.DriverID]) {
+            driverResults[raceResult.DriverID] = {
+              feature: {},
+              sprint: {},
             }
-            driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
           }
-        } catch (e) {
-
+          driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
         }
+      } catch (e) {
 
       }
 
@@ -212,7 +214,8 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <ResultsTable
-          {...{ formulae, basicInfo, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace, driverMap }}
+          version={version}
+          {...{ formulae, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
         />
       </div>
     </div>

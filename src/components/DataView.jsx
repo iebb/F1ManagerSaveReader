@@ -1,11 +1,12 @@
 import {analyzeFileToDatabase} from "@/js/fileAnalyzer";
 import {Typography} from "@mui/material";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
+import {DatabaseContext, MetadataContext, VersionContext} from "./Contexts";
 import DataView2023 from "./F1M2023/View2023";
 import DataView2022 from "./F1M2022/View2022";
 
-export default function DataView({db, version, metadata}) {
-
+export default function DataView() {
+  const version = useContext(VersionContext);
   if (!version) {
     return (
       <div>
@@ -16,11 +17,18 @@ export default function DataView({db, version, metadata}) {
     );
   }
 
-  if (version === 2) {
-    return <DataView2022 db={db} metadata={metadata} />;
+  const VersionMapping = {
+    2: DataView2022,
+    3: DataView2023,
   }
-  if (version === 3) {
-    return <DataView2023 db={db} metadata={metadata} />;
+  const V = VersionMapping[version];
+
+  if (V !== null) {
+    return (
+      <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
+        <V />
+      </div>
+    )
   }
 
   return (

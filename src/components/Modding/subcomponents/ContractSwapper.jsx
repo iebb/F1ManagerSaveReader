@@ -1,15 +1,49 @@
 import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
-import {useState} from "react";
+import {useContext, useState} from "react";
 import * as React from "react";
 import {getDriverName} from "../../../js/localization";
+import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../../Contexts";
 import {assignRandomRaceNumber, fireDriverContract, getDrivers, swapDriverContracts} from "../commons/drivers";
 
-export default function ContractSwapper(ctx) {
-  const { database, basicInfo, metadata, swapRow, setSwapRow, refresh } = ctx;
+export default function ContractSwapper(props) {
+  const { swapRow, setSwapRow, refresh } = props;
+  const database = useContext(DatabaseContext);
+  const version = useContext(VersionContext);
+  const metadata = useContext(MetadataContext);
+  const basicInfo = useContext(BasicInfoContext);
+
+  const ctx = { database, version, basicInfo };
   const [swapDriver, setSwapDriver] = useState(null);
   if (!swapRow) return null;
 
   const _drivers = getDrivers(ctx);
+
+  if (version === 2) {
+    return (
+      <Modal
+        open={swapRow}
+        onClose={() => setSwapRow(null)}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: '#333',
+          border: '2px solid #000',
+          boxShadow: 24,
+          padding: 15,
+          borderRadius: 20,
+        }}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Contract Swap is not supported for 2022 game.
+          </Typography>
+        </Box>
+      </Modal>
+    )
+  }
 
   return (
     <Modal
@@ -58,7 +92,7 @@ export default function ContractSwapper(ctx) {
               value={swapDriver}
               sx={{ width: 240, m: 0, display: "inline-block" }}
               onChange={ (e, nv) => setSwapDriver(nv)}
-              renderInput={(params) => <TextField {...params} label="Swap with" autocomplete="off" />}
+              renderInput={(params) => <TextField {...params} label="Swap with" autoComplete="off" />}
             />
           </Grid>
         </Grid>

@@ -6,13 +6,20 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Image from "next/image";
+import {useContext} from "react";
 import * as React from "react";
 import {getCountryFlag} from "../../../js/countries";
 import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamColors} from "../../../js/localization";
+import {BasicInfoContext, DatabaseContext, VersionContext} from "../../Contexts";
 
 export default function ResultsTable(ctx) {
+  const version = useContext(VersionContext);
+  const database = useContext(DatabaseContext);
+  const basicInfo = useContext(BasicInfoContext);
 
-  const { formulae, basicInfo, driverMap, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
+  const { driverMap } = basicInfo;
+
+  const { formulae, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
 
   return (
     <TableContainer component={Paper}>
@@ -101,10 +108,10 @@ export default function ResultsTable(ctx) {
                     style={
                       basicInfo.player.TeamID === result.TeamID ? {
                         background: `repeating-linear-gradient(0deg, 
-                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 8px, ${teamColors(result.TeamID)}20 100%)`
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, rgba(var(--team${result.TeamID}-triplet), 0.15) 100%)`
                       } : {
                         background: `repeating-linear-gradient(0deg,
-                            ${teamColors(result.TeamID)}70, ${teamColors(result.TeamID)}50 6px, ${teamColors(result.TeamID)}30 13px, transparent 20px, transparent 100%)`
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, rgba(var(--team${result.TeamID}-triplet), 0.15) 13px, transparent 20px, transparent 100%)`
                       }
                     }
                   >
@@ -120,9 +127,9 @@ export default function ResultsTable(ctx) {
                           </span>
                     </div>
                     <div style={{display: "block"}}>
-                      { (result.PolePositionPoints !== undefined ) && (
+                      { ((result.PolePositionPoints !== undefined ) || (version === 2 && result.StartingPos === 1)) && (
                         <span style={{
-                          background: result.PolePositionPoints ? "#ff0059" : "#777" ,
+                          background: result.PolePositionPoints ? "#f05" : "#804054" ,
                           borderRadius: 2, fontSize: "75%", padding: "0 3px",
                           margin: "3px 0 0 2px", float: "left"
                         }}>P</span>

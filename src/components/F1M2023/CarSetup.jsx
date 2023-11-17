@@ -8,8 +8,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {repack} from "../../js/fileAnalyzer";
+import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 
 
 export const CarSetupParams = [
@@ -71,7 +72,11 @@ export const CarSetupParams = [
     render: x => `${x.toFixed(2)}°`,
   },
 ];
-export default function CarSetup({ database, basicInfo, metadata }) {
+export default function CarSetup() {
+
+  const database = useContext(DatabaseContext);
+  const version = useContext(VersionContext);
+  const basicInfo = useContext(BasicInfoContext);
 
   const [rows, setRows] = useState([]);
   const [teamOnly, setTeamOnly] = useState(true);

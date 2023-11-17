@@ -1,10 +1,15 @@
 import {Button, Container, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
+import {useContext} from "react";
 import * as React from "react";
 import Dropzone from "react-dropzone";
 import {dump} from "../../js/fileAnalyzer";
+import {BasicInfoContext, DatabaseContext, DatabaseUpdaterContext, MetadataContext, VersionContext} from "../Contexts";
 
-export default function ReplaceDB({ database, basicInfo, metadata }) {
+export default function ReplaceDB() {
+  const metadata = useContext(MetadataContext);
+  const replaceDatabase = useContext(DatabaseUpdaterContext);
+
   const { enqueueSnackbar } = useSnackbar();
 
   return (
@@ -23,11 +28,11 @@ export default function ReplaceDB({ database, basicInfo, metadata }) {
                   `Hello ${values[0][0]} ${values[0][1]}!`,
                   { variant: "success" }
                 );
+                replaceDatabase(db);
                 enqueueSnackbar(
-                  `The replaced savefile will begin downloading, but the database in website won't be replaced.`,
+                  `The database has been replaced. Use at your own risk!`,
                   { variant: "warning" }
                 );
-                dump(db, metadata);
               } catch (ex) {
                 enqueueSnackbar(
                   "Is it a valid database file? Error:" + ex,

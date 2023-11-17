@@ -6,11 +6,16 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {dayToDate, teamColors, teamNames} from "../../js/localization";
+import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 
 
-export default function CostCap({ database, basicInfo, version }) {
+export default function CostCap() {
+
+  const database = useContext(DatabaseContext);
+  const version = useContext(VersionContext);
+  const basicInfo = useContext(BasicInfoContext);
 
   const { player } = basicInfo;
 
@@ -118,10 +123,11 @@ export default function CostCap({ database, basicInfo, version }) {
         if (totalCostCapForTeam[i] > calcYMax) {
           calcYMax = totalCostCapForTeam[i];
         }
+        const color = getComputedStyle(window.vc).getPropertyValue(`--team${i}`);
         seriesList.push( {
           name: teamNames(i, version),
           type: 'line',
-          itemStyle: {color: teamColors(i, version)},
+          itemStyle: {color},
           data: costCapHistoryForTeam[i]
         })
       }

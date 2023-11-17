@@ -1,37 +1,56 @@
 import {Button, FormControl, Divider, MenuItem, Select, TextField, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
+import {useSnackbar} from "notistack";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
+import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {getBasicDataTable} from "./commons/drivers";
 
-export default function DataBrowser({ database, basicInfo, metadata }) {
+export default function DataBrowser() {
+
+  const database = useContext(DatabaseContext);
+  const version = useContext(VersionContext);
+  const metadata = useContext(MetadataContext);
+  const basicInfo = useContext(BasicInfoContext);
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const [tables, setTables] = useState([]);
-  const [currentTable, setCurrentTable] = useState("Staff_BasicData");
+  const [currentTable, setCurrentTable] = useState("Player");
 
   const [columns, setColumns] = useState([]);
   const [maxSizes, setMaxSizes] = useState([]);
   const [values, setValues] = useState([]);
-  const [stmt, setStmt] = useState("SELECT * from Staff_BasicData");
+  const [stmt, setStmt] = useState("SELECT * from Player");
 
   const exec = stmt => {
     try {
       let r = database.exec(stmt);
-      let [{ columns, values }] = r;
-      let maxSizes = columns.map(x => 0);
-      setColumns(columns);
-      setValues(values.map(val => {
-        let row = {};
-        val.map((x, _idx) => {
-          if (x !== null) {
-            row[columns[_idx]] = x;
-            if (x.length > maxSizes[_idx]) maxSizes[_idx] = x.length;
-          }
-        })
-        return row;
-      }));
-      setMaxSizes(maxSizes);
-    } catch {
-
+      if (r.length) {
+        let [{ columns, values }] = r;
+        let maxSizes = columns.map(x => 0);
+        setColumns(columns);
+        setValues(values.map(val => {
+          let row = {};
+          val.map((x, _idx) => {
+            if (x !== null) {
+              row[columns[_idx]] = x;
+              if (x.length > maxSizes[_idx]) maxSizes[_idx] = x.length;
+            }
+          })
+          return row;
+        }));
+        setMaxSizes(maxSizes);
+      }
+      enqueueSnackbar(
+        `Executed successfully`,
+        { variant: "success" }
+      );
+    } catch (e) {
+      enqueueSnackbar(
+        `Error: ${e}`,
+        { variant: "danger" }
+      );
     }
   }
 
