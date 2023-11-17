@@ -180,8 +180,9 @@ html {
 }
 
 .race_cell_driver {
-  min-width: 130px!important;
-  width: 130px;
+  min-width: 140px!important;
+  width: 140px;
+  padding-right: 0;
 }
 
 .race_cell_team {
