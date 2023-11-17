@@ -153,6 +153,7 @@ export default function ResultsTable(ctx) {
                   let fastest =
                     result.FastestLap === fastestLapOfRace[race.RaceID];
                   return <TableCell
+                    className={`race_cell_${type}`}
                     align="right"
                     key={race.RaceID + type}
                     sx={{ p: 0.25 }}
