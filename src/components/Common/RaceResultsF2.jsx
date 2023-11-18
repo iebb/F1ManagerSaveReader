@@ -11,7 +11,7 @@ import {useContext, useEffect, useState} from "react";
 import Image from "next/image";
 import TableBody from "@mui/material/TableBody";
 import {getCountryFlag, getCountryShort} from "../../js/countries";
-import {getDriverCode, getDriverName} from "../../js/localization";
+import {getDriverCode, getDriverName, yearToDateRange} from "../../js/localization";
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -33,7 +33,7 @@ export default function RaceResultsF2() {
   const [raceSchedule, setRaceSchedule] = useState([]);
   const [driverStandings, setDriverStandings] = useState([]);
   const [driverResults, setDriverResults] = useState([]);
-  const [driverTeams, setDriverTeams] = useState([]);
+  const [driverTeams, setDriverTeams] = useState({});
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
 
   const [formulae, setFormulae] = useState(2);
@@ -116,6 +116,7 @@ export default function RaceResultsF2() {
       raceSchedule.push({ type: "feature", race, span: 2 })
     }
 
+    let driverTeams = {};
     let driverResults = {};
     let driverStandings = [];
     let fastestLapOfRace = {};
@@ -130,7 +131,6 @@ export default function RaceResultsF2() {
       for(const [TeamID, Position] of values) {
         teamStandings[TeamID] = Position;
       }
-
 
       [{ columns, values }] = database.exec(
         version === 3 ?
@@ -185,7 +185,6 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
             raceResult.Points += polePositionPoints[raceResult.RaceID][1];
           }
           driverResults[raceResult.DriverID].feature[raceResult.RaceID] = raceResult;
-          driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
       }
 
@@ -206,19 +205,40 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
             }
           }
           driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
-          driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
 
-        const teamDrivers = {};
         for(const d of driverStandings) {
-          const team = teamStandings[driverTeams[d.DriverID]] - 1;
+
+          let [sd, ed] = yearToDateRange(season);
+
+          d.DriverAssignedNumber = "N/A";
+
           if (season === player.CurrentSeason) {
-            const car = season === player.CurrentSeason ? driverMap[d.DriverID].AssignedCarNumber - 1 : 1;
-            d.DriverAssignedNumber = teamNumbers[team][car]
+            try {
+              [{ columns, values }] = database.exec(
+                `SELECT TeamID, PosInTeam FROM 'Staff_Contracts' WHERE StaffID = ${d.DriverID} AND ContractType = 0 AND StartDay <= ${sd} AND EndSeason >= ${season} ORDER BY StartDay DESC`
+              );
+              // console.log(`SELECT TeamID, PosInTeam FROM 'Staff_CareerHistory' WHERE StaffID = ${d.DriverID} AND EndDay <= ${e} ORDER BY StartDay DESC`);
+              const [TeamID, Position] = values[0];
+              const teamOrder = teamStandings[TeamID] - 1;
+              d.DriverAssignedNumber = teamNumbers[teamOrder][Position - 1];
+              driverTeams[d.DriverID] = TeamID;
+            } catch (e) {
+
+            }
           } else {
-            if (!teamDrivers[team]) teamDrivers[team] = 0;
-            d.DriverAssignedNumber = teamNumbers[team][teamDrivers[team]]
-            teamDrivers[team] += 1;
+            try {
+              [{ columns, values }] = database.exec(
+                `SELECT TeamID, PosInTeam FROM 'Staff_CareerHistory' WHERE StaffID = ${d.DriverID} AND StartDay <= ${sd} AND EndDay >= ${ed} ORDER BY StartDay DESC`
+              );
+              // console.log(`SELECT TeamID, PosInTeam FROM 'Staff_CareerHistory' WHERE StaffID = ${d.DriverID} AND EndDay <= ${e} ORDER BY StartDay DESC`);
+              const [TeamID, Position] = values[0];
+              const teamOrder = teamStandings[TeamID] - 1;
+              d.DriverAssignedNumber = teamNumbers[teamOrder][Position - 1];
+              driverTeams[d.DriverID] = TeamID;
+            } catch (e) {
+
+            }
           }
         }
       } catch (e) {

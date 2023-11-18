@@ -4,6 +4,10 @@ import {staffNames, driverCodes} from "./staffNames";
 
 
 export const dayToDate = d => new Date((d - 2)*86400000 - 2208988800000)
+export const yearToDateRange = y => [
+  (+new Date(`${y}-01-01 00:00+00:00`) + 2208988800000 ) / 86400000 + 2,
+  (+new Date(`${y+1}-01-01 00:00+00:00`) + 2208988800000 ) / 86400000 + 2,
+]
 export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
 
 export const teamColors =  (x) => {
