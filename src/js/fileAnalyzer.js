@@ -38,7 +38,6 @@ export const analyzeFileToDatabase = async (file) => {
         const db = new window.SQL.Database(database_file);
 
         const metadata = {
-          filepath: file.path,
           filename: file.name,
           version,
           chunk0: Uint8Array.from(
@@ -120,7 +119,7 @@ export const repack = (db, metadata) => {
       detail: {
         data: finalData,
         filename: metadata.filename,
-        filepath: metadata.filepath,
+        filepath: window.file_path,
       }
     }))
   } else {
