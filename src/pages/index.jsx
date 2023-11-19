@@ -36,6 +36,7 @@ export default function Home() {
       setLoaded(true);
     });
     window.document.addEventListener('loadFile', e => {
+      e.detail.file.path = e.detail.path;
       openFile(e.detail.file);
       setFilePath(e.detail.path);
       setInApp(true);
