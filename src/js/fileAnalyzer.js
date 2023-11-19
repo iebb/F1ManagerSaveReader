@@ -38,6 +38,7 @@ export const analyzeFileToDatabase = async (file) => {
         const db = new window.SQL.Database(database_file);
 
         const metadata = {
+          filepath: file.path,
           filename: file.name,
           version,
           chunk0: Uint8Array.from(
@@ -114,7 +115,17 @@ export const repack = (db, metadata) => {
   finalData.writeInt32LE(s2, meta_length + 12);
   finalData.set(compressed, meta_length + 16);
 
-  saveAs(new Blob([finalData], {type: "application/binary"}), metadata.filename);
+  if (window.mode === "app") {
+    window.parent.contentDocument.dispatchEvent( new CustomEvent('export-file', {
+      detail: {
+        data: finalData,
+        filename: metadata.filename,
+        filepath: metadata.filepath,
+      }
+    }))
+  } else {
+    saveAs(new Blob([finalData], {type: "application/binary"}), metadata.filename);
+  }
 }
 export const dump = (db, metadata) => {
   saveAs(new Blob([db.export()], {type: "application/vnd.sqlite3"}), metadata.filename + ".db");
