@@ -4,13 +4,20 @@ import {useEffect, useState} from "react";
 import Dropzone from 'react-dropzone'
 import DataView from "../components/DataView";
 import {analyzeFileToDatabase} from "../js/fileAnalyzer";
-import {MetadataContext, DatabaseContext, DatabaseUpdaterContext, VersionContext} from "../components/Contexts";
+import {
+  MetadataContext,
+  DatabaseContext,
+  DatabaseUpdaterContext,
+  VersionContext,
+  EnvContext
+} from "../components/Contexts";
 
 export default function Home() {
   const [loaded, setLoaded] = useState(false);
   const [db, setDb] = useState(null);
   const [version, setVersion] = useState(null);
   const [metadata, setMetadata] = useState(null);
+  const [inApp, setInApp] = useState(false);
   const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, version, metadata}) => {
       setDb(db);
@@ -27,7 +34,10 @@ export default function Home() {
       window.SQL = SQL;
       setLoaded(true);
     });
-    window.openFile = openFile
+    window.document.addEventListener('openFile', e => {
+      openFile(e.file);
+      setInApp(true);
+    }, false)
   }, []);
 
   return (
@@ -86,7 +96,9 @@ export default function Home() {
                     <DatabaseContext.Provider value={db}>
                       <DatabaseUpdaterContext.Provider value={setDb}>
                         <MetadataContext.Provider value={metadata}>
-                          <DataView />
+                          <EnvContext.Provider value={{ inApp }}>
+                            <DataView />
+                          </EnvContext.Provider>
                         </MetadataContext.Provider>
                       </DatabaseUpdaterContext.Provider>
                     </DatabaseContext.Provider>

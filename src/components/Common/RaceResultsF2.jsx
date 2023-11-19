@@ -1,21 +1,11 @@
-import {raceAbbrevs, raceFlags, teamColors} from "@/js/localization";
 import {Divider, Typography} from "@mui/material";
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import * as React from "react";
-import {useContext, useEffect, useState} from "react";
-import Image from "next/image";
-import TableBody from "@mui/material/TableBody";
-import {getCountryFlag, getCountryShort} from "../../js/countries";
-import {getDriverCode, getDriverName, yearToDateRange} from "../../js/localization";
+import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import * as React from "react";
+import {useContext, useEffect, useState} from "react";
+import {yearToDateRange} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MiscContext, VersionContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 

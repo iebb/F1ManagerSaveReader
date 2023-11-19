@@ -6,10 +6,10 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Image from "next/image";
-import {useContext} from "react";
 import * as React from "react";
+import {useContext} from "react";
 import {getCountryFlag} from "../../../js/countries";
-import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamColors, teamNames} from "../../../js/localization";
+import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamNames} from "../../../js/localization";
 import {BasicInfoContext, DatabaseContext, VersionContext} from "../../Contexts";
 
 export default function ResultsTable(ctx) {
