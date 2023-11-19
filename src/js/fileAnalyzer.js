@@ -116,7 +116,7 @@ export const repack = (db, metadata) => {
   finalData.set(compressed, meta_length + 16);
 
   if (window.mode === "app") {
-    window.parent.contentDocument.dispatchEvent( new CustomEvent('export-file', {
+    window.parent.document.dispatchEvent( new CustomEvent('export-file', {
       detail: {
         data: finalData,
         filename: metadata.filename,
