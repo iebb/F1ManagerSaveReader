@@ -3,7 +3,7 @@ import {useContext} from "react";
 import * as React from "react";
 import Dropzone from "react-dropzone";
 import {dump, repack} from "../../js/fileAnalyzer";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, EnvContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import DataView from "../DataView";
 import ContractView from "../Modding/Contracts";
 import ReplaceDB from "../Modding/ReplaceDB";
@@ -19,6 +19,7 @@ export default function Modding() {
   const version = useContext(VersionContext);
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
+  const env = useContext(EnvContext);
 
   let opt = [];
 
