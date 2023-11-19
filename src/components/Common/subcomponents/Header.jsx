@@ -7,6 +7,7 @@ import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 export const Header = () => {
   const basicInfo = useContext(BasicInfoContext);
   const version = useContext(VersionContext);
+  const metadata = useContext(MetadataContext);
 
   const { player, teamMap, weekend, races, currentSeasonRaces } = basicInfo;
 
@@ -19,8 +20,8 @@ export const Header = () => {
       <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
         Playing as {player.FirstName} {player.LastName} for <span style={{
         color: `var(--team${team.TeamID})`,
-        borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`,
-      }}>{team.TeamName}</span> in {version + 2020} Game.
+        borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
+      }}>{team.TeamName}</span> in {version + 2020} Game, savefile {metadata.filename}
         <br />
         It's {formatDate(dayToDate(player.Day))} in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
       </Typography>

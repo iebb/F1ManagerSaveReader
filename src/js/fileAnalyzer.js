@@ -87,7 +87,7 @@ export const analyzeFileToDatabase = async (file) => {
   });
 }
 
-export const repack = (db, metadata) => {
+export const repack = (db, metadata, overwrite = false) => {
   const db_data = db.export();
   const db_size = db_data.length;
 
@@ -114,7 +114,7 @@ export const repack = (db, metadata) => {
   finalData.writeInt32LE(s2, meta_length + 12);
   finalData.set(compressed, meta_length + 16);
 
-  if (window.mode === "app") {
+  if (window.mode === "app" && overwrite) {
     window.parent.document.dispatchEvent( new CustomEvent('export-file', {
       detail: {
         data: finalData,

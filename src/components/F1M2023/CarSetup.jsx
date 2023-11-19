@@ -75,6 +75,7 @@ export const CarSetupParams = [
 export default function CarSetup() {
 
   const database = useContext(DatabaseContext);
+  const env = useContext(EnvContext);
   const version = useContext(VersionContext);
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
@@ -133,9 +134,12 @@ export default function CarSetup() {
                   "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
                   `WHERE TeamID = ${basicInfo.player.TeamID}`
                 );
-
-                repack(database, metadata);
-              }}>Export Optimal Savefile</Button>
+                repack(database, metadata, true);
+              }}>
+                {
+                  env.inApp ? "Modify Savefile to Optimal" : "Export Optimal Savefile"
+                }
+              </Button>
               Download a modified save file where setup is Optimal.
             </Typography>
             <Divider variant="fullWidth" sx={{ my: 2 }} />

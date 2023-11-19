@@ -48,8 +48,17 @@ export default function Modding() {
         Use at your own risk. Always make a backup before changing anything.
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
+      {
+        env.inApp && (
+          <Button color="danger" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
+            Overwrite Database
+          </Button>
+        )
+      }
       <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata)}>Re-export Savefile</Button>
-      <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>Dump Database</Button>
+      <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>
+        Dump Database
+      </Button>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <VTabs options={opt} />
 
