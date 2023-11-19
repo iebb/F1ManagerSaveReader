@@ -1,13 +1,10 @@
-import {Button, Container, Divider, Typography} from "@mui/material";
-import {useContext} from "react";
+import {Button, Divider, Typography} from "@mui/material";
 import * as React from "react";
-import Dropzone from "react-dropzone";
+import {useContext} from "react";
 import {dump, repack} from "../../js/fileAnalyzer";
-import {BasicInfoContext, EnvContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import DataView from "../DataView";
-import ContractView from "../Modding/Contracts";
-import ReplaceDB from "../Modding/ReplaceDB";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
 import DriverView from "../Modding/Drivers";
+import ReplaceDB from "../Modding/ReplaceDB";
 import DataBrowser from "../Modding/SQL";
 import Toolbox from "../Modding/Toolbox";
 import {VTabs} from "../Tabs";
@@ -51,12 +48,12 @@ export default function Modding() {
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       {
         env.inApp && (
-          <Button color="danger" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
+          <Button color="error" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
             Overwrite Database
           </Button>
         )
       }
-      <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata)}>Re-export Savefile</Button>
+      <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, false)}>Re-export Savefile</Button>
       <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>
         Dump Database
       </Button>
