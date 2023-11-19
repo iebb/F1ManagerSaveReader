@@ -34,8 +34,8 @@ export default function Home() {
       window.SQL = SQL;
       setLoaded(true);
     });
-    window.document.addEventListener('openFile', e => {
-      openFile(e.file);
+    window.document.addEventListener('fil', e => {
+      openFile(e.detail);
       setInApp(true);
     }, false)
   }, []);
