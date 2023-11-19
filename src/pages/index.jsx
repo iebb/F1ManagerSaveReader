@@ -18,6 +18,7 @@ export default function Home() {
   const [version, setVersion] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [inApp, setInApp] = useState(false);
+  const [filePath, setFilePath] = useState("");
   const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, version, metadata}) => {
       setDb(db);
@@ -34,8 +35,9 @@ export default function Home() {
       window.SQL = SQL;
       setLoaded(true);
     });
-    window.document.addEventListener('fil', e => {
-      openFile(e.detail);
+    window.document.addEventListener('loadFile', e => {
+      openFile(e.detail.file);
+      setFilePath(e.detail.path);
       setInApp(true);
     }, false)
   }, []);
