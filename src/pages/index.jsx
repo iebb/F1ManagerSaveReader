@@ -11,7 +11,7 @@ export default function Home() {
   const [db, setDb] = useState(null);
   const [version, setVersion] = useState(null);
   const [metadata, setMetadata] = useState(null);
-  const setFile = (f) => {
+  const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, version, metadata}) => {
       setDb(db);
       setVersion(version);
@@ -27,6 +27,7 @@ export default function Home() {
       window.SQL = SQL;
       setLoaded(true);
     });
+    window.openFile = openFile
   }, []);
 
   return (
@@ -41,7 +42,7 @@ export default function Home() {
       {
         loaded ? (
           <Dropzone
-            onDropAccepted={files => setFile(files[0])}
+            onDropAccepted={files => openFile(files[0])}
             noClick
             multiple={false}
           >
