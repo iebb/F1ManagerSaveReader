@@ -213,7 +213,11 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
               // console.log(`SELECT TeamID, PosInTeam FROM 'Staff_CareerHistory' WHERE StaffID = ${d.DriverID} AND EndDay <= ${e} ORDER BY StartDay DESC`);
               const [TeamID, Position] = values[0];
               const teamOrder = teamStandings[TeamID] - 1;
-              d.DriverAssignedNumber = teamNumbers[teamOrder][Position - 1];
+              if (!Position) {
+                d.DriverAssignedNumber = teamNumbers[teamOrder].join("/");
+              } else {
+                d.DriverAssignedNumber = teamNumbers[teamOrder][Position - 1];
+              }
               driverTeams[d.DriverID] = TeamID;
             } catch (e) {
               const TeamID = driverTeams[d.DriverID];
@@ -227,7 +231,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
               );
               // console.log(`SELECT TeamID, PosInTeam FROM 'Staff_CareerHistory' WHERE StaffID = ${d.DriverID} AND EndDay <= ${e} ORDER BY StartDay DESC`);
               const [TeamID, Position] = values[0];
-              const teamOrder = teamStandings[TeamID] - 1;1
+              const teamOrder = teamStandings[TeamID] - 1;
               if (!Position) {
                 d.DriverAssignedNumber = teamNumbers[teamOrder].join("/");
               } else {

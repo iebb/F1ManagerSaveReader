@@ -207,11 +207,11 @@ export default function DriverView() {
               return (
                 <div>
                   <a onClick={
-                    () => setEditRow(row)
+                    () => setEditRow({...row})
                   }>edit driver</a><br />
                   {
                     row.TeamID && <a onClick={
-                      () => setSwapRow(row)
+                      () => setSwapRow({...row})
                     }>swap contracts</a>
                   }
                 </div>

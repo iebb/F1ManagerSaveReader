@@ -78,6 +78,9 @@ export default function Home() {
                               <Typography variant="h5" component="h5">
                                 Drag your F1 Manager 2022/2023 savefile here to get started.
                               </Typography>
+                              <Typography variant="h5" component="h5">
+                                Or... use our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which supports Xbox saves out-of-the-box.
+                              </Typography>
                               <Typography variant="p" component="p" sx={{ mt: 2 }}>
                                 F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames
                                 <br />
@@ -86,7 +89,7 @@ export default function Home() {
                                 If you are playing Xbox Store version, please use <a
                                 href="https://github.com/Fr33dan/GPSaveConverter/releases">
                                 GPSaveConverter
-                              </a> to convert the savefile into original format.
+                              </a> to convert the savefile into original format, or use the Windows App.
                                 <br />
                                 Support for F1 Manager 2022 might be limited.
                               </Typography>

@@ -51,8 +51,8 @@ export default function DriverEditor(props) {
       setStats({...editRow.performanceStats, 0: editRow.Improvability, 1: editRow.Aggression});
       setFirstName(resolveName(editRow.FirstName));
       setLastName(resolveName(editRow.LastName));
-      setDriverCode(resolveDriverCode(editRow.DriverCode));
       setCountry(editRow.Nationality);
+      setDriverCode(resolveDriverCode(editRow.DriverCode));
       setDriverNumber(editRow.CurrentNumber ? editRow.CurrentNumber : "N/A");
     }
   }, [editRow])

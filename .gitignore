@@ -34,4 +34,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-/src/styles/_gamefiles/
+
+/src/styles/_gamefiles
