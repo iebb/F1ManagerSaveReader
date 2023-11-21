@@ -8,8 +8,9 @@ import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from
 
 const driverNumbers = ["N/A"];
 for(let i = 0; i < 100; i++) {
-  driverNumbers.push(i);
+  driverNumbers.push(`${i}`);
 }
+
 const StaffPerformanceLong = [
   "Improvability",
   "Aggression", // hack
@@ -28,17 +29,13 @@ export default function DriverEditor(props) {
   const { editRow, setEditRow, refresh } = props;
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
-  const metadata = useContext(MetadataContext);
-  const basicInfo = useContext(BasicInfoContext);
-
-  const ctx = { database, version, basicInfo };
 
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [driverCode, setDriverCode] = useState("");
-  const [country, setCountry] = useState("");
-  const [driverNumber, setDriverNumber] = useState("");
+  const [firstName, setFirstName] = useState("Lando");
+  const [lastName, setLastName] = useState("Norris");
+  const [driverCode, setDriverCode] = useState("NOR");
+  const [country, setCountry] = useState("UnitedKingdom");
+  const [driverNumber, setDriverNumber] = useState("4");
   const [stats, setStats] = useState({});
 
   const [namePool, setNamePool] = useState([]);
@@ -49,11 +46,16 @@ export default function DriverEditor(props) {
   useEffect(() => {
     if (editRow) {
       setStats({...editRow.performanceStats, 0: editRow.Improvability, 1: editRow.Aggression});
+
       setFirstName(resolveName(editRow.FirstName));
       setLastName(resolveName(editRow.LastName));
       setCountry(editRow.Nationality);
+
       setDriverCode(resolveDriverCode(editRow.DriverCode));
-      setDriverNumber(editRow.CurrentNumber ? editRow.CurrentNumber : "N/A");
+      setDriverNumber(editRow.CurrentNumber ? `${editRow.CurrentNumber}` : "N/A");
+    } else {
+      setDriverCode("");
+      setDriverNumber("");
     }
   }, [editRow])
 
@@ -122,6 +124,7 @@ export default function DriverEditor(props) {
   return (
     <Modal
       open={editRow}
+      key={editRow.StaffID}
       onClose={() => setEditRow(null)}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
@@ -175,9 +178,7 @@ export default function DriverEditor(props) {
             value={driverCode}
             sx={{ width: 160, m: 1, display: "inline-block" }}
             onInputChange={ (e, nv) => {
-              if (nv) {
-                setDriverCode(nv);
-              }
+              if (nv) setDriverCode(nv)
             }}
             renderInput={(params) => <TextField {...params} label="Code" autoComplete="off" />}
           />
@@ -221,9 +222,7 @@ export default function DriverEditor(props) {
               value={country}
               sx={{ width: 200, m: 1, display: "inline-block" }}
               onChange={ (e, nv) => {
-                if (nv) {
-                  setCountry(nv);
-                }
+                if (nv) setCountry(nv)
               }}
               renderInput={(params) => <TextField {...params} label="Country" autoComplete="off" />}
             />
@@ -233,9 +232,7 @@ export default function DriverEditor(props) {
               value={driverNumber}
               sx={{ width: 160, m: 1, display: "inline-block" }}
               onInputChange={ (e, nv) => {
-                if (nv) {
-                  setDriverNumber(nv);
-                }
+                if (nv) setDriverNumber(nv)
               }}
               renderInput={(params) => <TextField {...params} label="Number" autoComplete="off" />}
             />
