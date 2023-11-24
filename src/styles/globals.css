@@ -210,3 +210,7 @@ html {
   min-width: 220px!important;
   width: 220px;
 }
+
+.noselect {
+  user-select: none;
+}

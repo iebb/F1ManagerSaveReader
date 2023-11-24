@@ -1,8 +1,8 @@
 import {circuitNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
-import {useContext} from "react";
-import {DatabaseContext, MetadataContext, VersionContext, BasicInfoContext} from "../../Contexts";
 
 import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import {useContext} from "react";
+import {BasicInfoContext, MetadataContext, VersionContext} from "../../Contexts";
 
 export const Header = () => {
   const basicInfo = useContext(BasicInfoContext);

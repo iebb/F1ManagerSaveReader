@@ -3,6 +3,7 @@ import * as React from "react";
 import {useContext} from "react";
 import {dump, repack} from "../../js/fileAnalyzer";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
+import CustomCalendar from "../Modding/Calendar";
 import DriverView from "../Modding/Drivers";
 import ReplaceDB from "../Modding/ReplaceDB";
 import DataBrowser from "../Modding/SQL";
@@ -23,6 +24,7 @@ export default function Modding() {
   if (version === 3) {
     opt = [
       {name: "Driver Database", tab: <DriverView />},
+      {name: "Custom Calendar", tab: <CustomCalendar />},
       // {name: "Contracts", tab: <ContractView database={database} metadata={metadata} basicInfo={basicInfo} />},
       {name: "Tools / Cheats", tab: <Toolbox database={database} metadata={metadata} basicInfo={basicInfo} />},
       {name: "SQL Browser", tab: <DataBrowser />},

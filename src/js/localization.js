@@ -1,7 +1,17 @@
 import {teamColors2023, teams2023} from "./localization_2023";
 import {staffNames, driverCodes} from "./staffNames";
 
-
+Date.prototype.getWeek = function() {
+  var date = new Date(this.getTime());
+  date.setHours(0, 0, 0, 0);
+  // Thursday in current week decides the year.
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  // January 4 is always in week 1.
+  var week1 = new Date(date.getFullYear(), 0, 4);
+  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
+    - 3 + (week1.getDay() + 6) % 7) / 7);
+}
 
 export const dayToDate = d => new Date((d - 2)*86400000 - 2208988800000)
 export const yearToDateRange = y => [
@@ -9,6 +19,7 @@ export const yearToDateRange = y => [
   (+new Date(`${y+1}-01-01 00:00+00:00`) + 2208988800000 ) / 86400000 + 2,
 ]
 export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+
 
 export const teamColors =  (x) => {
   return teamColors2023[x];
