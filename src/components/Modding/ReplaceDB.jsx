@@ -1,10 +1,9 @@
-import {Button, Container, Typography} from "@mui/material";
+import {Container, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
-import {useContext} from "react";
 import * as React from "react";
+import {useContext} from "react";
 import Dropzone from "react-dropzone";
-import {dump} from "../../js/fileAnalyzer";
-import {BasicInfoContext, DatabaseContext, DatabaseUpdaterContext, MetadataContext, VersionContext} from "../Contexts";
+import {DatabaseUpdaterContext, MetadataContext} from "../Contexts";
 
 export default function ReplaceDB() {
   const metadata = useContext(MetadataContext);
@@ -47,7 +46,7 @@ export default function ReplaceDB() {
       >
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
-            <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+            <Container maxWidth={false} component="main">
               <input {...getInputProps()} hidden />
               <div className="dropzone">
                 <Typography variant="h5" component="h5">

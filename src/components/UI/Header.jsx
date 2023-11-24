@@ -3,7 +3,7 @@ import KofiButton from "../Kofi/Kofi";
 
 export default function Header() {
   return (
-    <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+    <Container maxWidth={false} component="main">
       <div className="headerContainer">
         <div className="headerTitle" >
           <Typography variant="h3" component="h3">

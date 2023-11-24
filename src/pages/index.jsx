@@ -63,7 +63,7 @@ export default function Home() {
               <div {...getRootProps()}>
                 {
                   !inApp && (
-                    <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+                    <Container maxWidth={false} component="main">
                       <input {...getInputProps()} hidden />
                       <div id="dropzone">
                         {
@@ -101,7 +101,7 @@ export default function Home() {
                     </Container>
                   )
                 }
-                <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+                <Container maxWidth={false} component="main">
                   <VersionContext.Provider value={version}>
                     <DatabaseContext.Provider value={db}>
                       <DatabaseUpdaterContext.Provider value={setDb}>
@@ -121,7 +121,7 @@ export default function Home() {
             )}
           </Dropzone>
         ) : (
-          <Container maxWidth="xl" component="main" sx={{ pt: 1, pb: 1 }}>
+          <Container maxWidth={false} component="main">
             <Typography variant="h5" component="h5">
               Loading Database parser. Please wait.
             </Typography>

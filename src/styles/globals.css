@@ -214,3 +214,15 @@ html {
 .noselect {
   user-select: none;
 }
+
+main {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  max-width: 90%;
+}
+
+@media (min-width: 1920px) {
+  main {
+    max-width: 1728px;
+  }
+}

@@ -4,7 +4,6 @@ import * as React from "react";
 export default function ContractView({ database, basicInfo, metadata }) {
 
 
-
   return (
     <div>
     </div>

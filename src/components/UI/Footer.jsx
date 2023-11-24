@@ -3,7 +3,7 @@ import GoogleAd from "./GoogleAd";
 
 export default function Footer() {
   return (
-    <Container  maxWidth="xl" component="main" sx={{ pt: 2, pb: 3 }}>
+    <Container maxWidth={false} component="main">
       <Divider variant="fullWidth" />
       <div style={{ padding: 20 }}>
         <GoogleAd
