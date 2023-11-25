@@ -35,14 +35,9 @@ const weathers = {
 export default function CustomCalendar() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
-  const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 
   const {player} = basicInfo;
-  const {CurrentSeason} = player;
-
-  const { enqueueSnackbar } = useSnackbar();
 
   const [races, setRaces] = useState([]);
   const [weeks, setWeeks] = useState({});
@@ -53,20 +48,25 @@ export default function CustomCalendar() {
   useEffect(() => {
     let races = [];
     let weeks = {};
-    let [{ columns, values }] = database.exec(
-      `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${CurrentSeason} order by Day ASC`
-    );
-    for(const r of values) {
-      let race = {};
-      r.map((x, _idx) => {
-        race[columns[_idx]] = x;
-      })
-      race.week = dayToDate(race.Day).getWeek()
-      weeks[race.week] = race.RaceID;
-      races.push(race)
+    const {CurrentSeason} = player;
+    try {
+      let [{ columns, values }] = database.exec(
+        `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${CurrentSeason} order by Day ASC`
+      );
+      for(const r of values) {
+        let race = {};
+        r.map((x, _idx) => {
+          race[columns[_idx]] = x;
+        })
+        race.week = dayToDate(race.Day).getWeek()
+        weeks[race.week] = race.RaceID;
+        races.push(race)
+      }
+      setRaces(races);
+      setWeeks(weeks);
+    } catch {
+
     }
-    setRaces(races);
-    setWeeks(weeks);
 
   }, [database, updated])
 

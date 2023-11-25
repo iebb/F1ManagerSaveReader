@@ -76,10 +76,10 @@ export default function Home() {
                           ) : (
                             <>
                               <Typography variant="h5" component="h5">
-                                Drag your F1 Manager 2022/2023 savefile here to get started.
+                                Try our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which could directly reads Steam and Xbox saves.
                               </Typography>
                               <Typography variant="h5" component="h5">
-                                Or... use our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which supports Xbox saves out-of-the-box.
+                                Or... drag your F1 Manager 2022/2023 savefile here to get started.
                               </Typography>
                               <Typography variant="p" component="p" sx={{ mt: 2 }}>
                                 F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames

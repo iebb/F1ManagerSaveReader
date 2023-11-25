@@ -79,7 +79,7 @@ export const circuitNames = [
   "Budapest",
   "Spa-Francorchamps",
   "Monza",
-  "Singapore",
+  "Marina Bay",
   "Sochi",
   "Suzuka",
   "Mexico City",
