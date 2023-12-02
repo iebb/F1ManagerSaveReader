@@ -1,18 +1,9 @@
 import {Container, Divider, Typography} from "@mui/material";
-import GoogleAd from "./GoogleAd";
 
 export default function Footer() {
   return (
     <Container maxWidth={false} component="main">
       <Divider variant="fullWidth" />
-      <div style={{ padding: 20 }}>
-        <GoogleAd
-          style={{ display: 'block' }}
-          googleAdId="ca-pub-3253159471656308"
-          format="autorelaxed"
-          slot="1185564246"
-        />
-      </div>
       <Typography>
         Another ieb Project &middot; {' '}
         Bug & Feedbacks: <a href="https://discord.gg/u46QWWaNfV">Discord</a>  &middot; {' '}
