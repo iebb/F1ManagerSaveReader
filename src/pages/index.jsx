@@ -76,7 +76,7 @@ export default function Home() {
                           ) : (
                             <>
                               <Typography variant="h5" component="h5">
-                                Try our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which could directly reads Steam and Xbox saves.
+                                Try our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which is able to read Steam and Xbox saves directly.
                               </Typography>
                               <Typography variant="h5" component="h5">
                                 Or... drag your F1 Manager 2022/2023 savefile here to get started.
