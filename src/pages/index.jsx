@@ -30,7 +30,7 @@ export default function Home() {
 
   useEffect(() => {
     require('sql.js')({
-      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${f}`
+      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
     }).then(SQL => {
       window.SQL = SQL;
       setLoaded(true);
