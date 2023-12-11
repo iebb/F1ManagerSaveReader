@@ -113,13 +113,8 @@ export default function ResultsTable(ctx) {
                   <div style={{
                     width: 12, height: 12, borderRadius: 6,
                     display: "inline-block", marginRight: 3,
-                    background: `var(--team${driverTeams[row.DriverID]})`,
+                    background: `var(--team${driverTeams[row.DriverID]}-fanfare1)`,
                   }} />
-                  {/*<div style={{*/}
-                  {/*  width: 12, height: 12, borderRadius: 6,*/}
-                  {/*  display: "inline-block", marginRight: 3,*/}
-                  {/*  background: `var(--team${driverTeams[row.DriverID]}-fanfare1)`,*/}
-                  {/*}} />*/}
                   <div style={{
                     width: 12, height: 12, borderRadius: 6,
                     display: "inline-block", marginRight: 3,

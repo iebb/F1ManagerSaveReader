@@ -19,7 +19,7 @@ export const Header = () => {
     <div>
       <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
         Playing as {player.FirstName} {player.LastName} for <span style={{
-        color: `var(--team${team.TeamID})`,
+        color: `var(--team${team.TeamID}-fanfare1)`,
         borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
       }}>{team.TeamName}</span> in {version + 2020} Game, savefile {metadata.filename}
         <br />
