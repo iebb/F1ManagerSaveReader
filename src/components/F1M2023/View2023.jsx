@@ -140,11 +140,11 @@ export default function DataView2023() {
         <BasicInfoContext.Provider value={basicInfo}>
           <Header />
           <VTabs options={[
-            {name: "Car Setup Viewer", tab: <CarSetup />},
+            {name: "Setup", tab: <CarSetup />},
             {name: "Results", tab: <RaceResults />},
             {name: "F2 & F3", tab: <RaceResultsF2 />},
             {name: "Cost Cap", tab: <CostCap />},
-            {name: "Modding", tab: <Modding database={db} basicInfo={basicInfo} metadata={metadata} version={3}/>},
+            {name: "Modding", tab: <Modding />},
           ]} />
         </BasicInfoContext.Provider>
       </MiscContext.Provider>

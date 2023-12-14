@@ -5,6 +5,7 @@ import {dump, repack} from "../../js/fileAnalyzer";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
 import CustomCalendar from "../Modding/Calendar";
 import DriverView from "../Modding/Drivers";
+import ExpertiseView from "../Modding/Expertise";
 import PitcrewView from "../Modding/Pitcrew";
 import ReplaceDB from "../Modding/ReplaceDB";
 import DataBrowser from "../Modding/SQL";
@@ -26,6 +27,7 @@ export default function Modding() {
     opt = [
       {name: "Drivers", tab: <DriverView />},
       {name: "Pit Crew", tab: <PitcrewView />},
+      {name: "Design", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       // {name: "Contracts", tab: <ContractView database={database} metadata={metadata} basicInfo={basicInfo} />},
       {name: "Tools / Cheats", tab: <Toolbox />},
@@ -36,6 +38,7 @@ export default function Modding() {
     opt = [
       {name: "Drivers", tab: <DriverView />},
       {name: "Pit Crew", tab: <PitcrewView />},
+      {name: "Design", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       {name: "SQL Browser", tab: <DataBrowser />},
       {name: "Replace Database", tab: <ReplaceDB />},
