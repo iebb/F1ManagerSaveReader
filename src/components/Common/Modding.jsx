@@ -27,7 +27,7 @@ export default function Modding() {
     opt = [
       {name: "Drivers", tab: <DriverView />},
       {name: "Pit Crew", tab: <PitcrewView />},
-      {name: "Design", tab: <ExpertiseView />},
+      {name: "Design Expertise", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       // {name: "Contracts", tab: <ContractView database={database} metadata={metadata} basicInfo={basicInfo} />},
       {name: "Tools / Cheats", tab: <Toolbox />},
@@ -38,7 +38,7 @@ export default function Modding() {
     opt = [
       {name: "Drivers", tab: <DriverView />},
       {name: "Pit Crew", tab: <PitcrewView />},
-      {name: "Design", tab: <ExpertiseView />},
+      {name: "Design Expertise", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       {name: "SQL Browser", tab: <DataBrowser />},
       {name: "Replace Database", tab: <ReplaceDB />},
