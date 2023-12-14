@@ -2,11 +2,15 @@ import {Button, FormControl, Divider, MenuItem, Select, TextField, Typography} f
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
+import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 
-export default function Toolbox({ database, basicInfo, metadata }) {
+export default function Toolbox() {
 
+  const database = useContext(DatabaseContext);
+  const metadata = useContext(MetadataContext);
+  const basicInfo = useContext(BasicInfoContext);
   const myTeam = basicInfo.player.TeamID;
   let columns, values;
   const { enqueueSnackbar } = useSnackbar();

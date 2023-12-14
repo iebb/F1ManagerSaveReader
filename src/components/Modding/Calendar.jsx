@@ -81,6 +81,7 @@ export default function CustomCalendar() {
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <DataGrid
         rows={races.map((x, _idx) => ({id: _idx + 1, ...x}))}
+        hideFooter
         columns={[
           {
           field: 'CurrentNumber',
@@ -341,10 +342,6 @@ export default function CustomCalendar() {
           },
         ]}
         density="compact"
-        initialState={{
-          pagination: { paginationModel: { pageSize: 30 } },
-        }}
-        pageSizeOptions={[10, 20, 30]}
       />
     </div>
   );

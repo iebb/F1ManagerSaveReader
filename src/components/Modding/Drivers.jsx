@@ -118,6 +118,8 @@ export default function DriverView() {
           ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => (
             {
               field: 'performanceStats.' + x , headerName: StaffPerformance[x], width: 25,
+              editable: true,
+             // type: 'number',
               renderCell: ({ row }) => row.performanceStats[x],
             }
           )),
@@ -140,7 +142,11 @@ export default function DriverView() {
                     <span style={{ color: "#ff7777" }}>retired</span>
                     <br />
                     <a style={{ color: "lightblue" }} onClick={() => {
-                      database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${row.StaffID}`);
+                      if (version === 2) {
+                        database.exec(`UPDATE Staff_CommonData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${row.StaffID}`);
+                      } else {
+                        database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${row.StaffID}`);
+                      }
                       setUpdated(+new Date());
                     }}>unretire</a>
                   </div>
@@ -153,7 +159,11 @@ export default function DriverView() {
                     {
                       retirementInYears < 5 && (
                         <a style={{ color: "lightblue" }} onClick={() => {
-                          database.exec(`UPDATE Staff_GameData SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
+                          if (version === 2) {
+                            database.exec(`UPDATE Staff_CommonData SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
+                          } else {
+                            database.exec(`UPDATE Staff_GameData SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
+                          }
                           setUpdated(+new Date());
                         }}>postpone</a>
                       )

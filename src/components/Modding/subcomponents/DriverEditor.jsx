@@ -287,12 +287,22 @@ export default function DriverEditor(props) {
           {
             editRow.Retired ? (
               <Button color="error" variant="contained" onClick={() => {
-                database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
+                const retirementInYears = Math.ceil(row.RetirementAge - (basicInfo.player.Day - row.DOB) / 365.25);
+                const extendedRetirementAge = retirementInYears < 5 ? row.RetirementAge + 5 - retirementInYears : row.RetirementAge;
+                if (version === 2) {
+                  database.exec(`UPDATE Staff_CommonData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
+                } else {
+                  database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
+                }
                 refresh();
               }}>Unretire</Button>
             ) : (
               <Button color="error" variant="contained" onClick={() => {
-                database.exec(`UPDATE Staff_GameData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
+                if (version === 2) {
+                  database.exec(`UPDATE Staff_CommonData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
+                } else {
+                  database.exec(`UPDATE Staff_GameData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
+                }
                 refresh();
               }}>Retire</Button>
             )

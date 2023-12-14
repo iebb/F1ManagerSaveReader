@@ -115,7 +115,7 @@ html {
 }
 
 .headerUser {
-  flex: 0 1 360px;
+  flex: 0 1 250px;
   gap: 10px;
   text-align: right;
   display: flex;
