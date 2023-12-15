@@ -172,8 +172,6 @@ export default function RaceResults() {
 
       }
 
-
-
       setRaceSchedule(raceSchedule);
       setDriverStandings(driverStandings);
       setDriverResults(driverResults);
@@ -190,7 +188,7 @@ export default function RaceResults() {
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Race Results Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+        Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
           <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
           <Select
             labelId="demo-simple-select-standard-label"

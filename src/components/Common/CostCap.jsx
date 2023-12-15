@@ -157,6 +157,9 @@ export default function CostCap() {
         </Select>
       </FormControl>
       </Typography>
+      <Typography variant="p" component="p" sx={{ color: "orange", marginTop: 2 }}>
+        Note: AI Teams doesn't follow the cost cap, it's only for informative purposes.
+      </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <ReactECharts

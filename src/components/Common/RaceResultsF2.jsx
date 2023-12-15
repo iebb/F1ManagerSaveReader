@@ -268,7 +268,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Results Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+        Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
         <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
         <Select
           labelId="demo-simple-select-standard-label"

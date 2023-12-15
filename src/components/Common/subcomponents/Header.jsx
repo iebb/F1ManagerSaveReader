@@ -1,13 +1,16 @@
 import {circuitNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
 
-import {Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import {Button, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext, MetadataContext, VersionContext} from "../../Contexts";
+import {dump, repack} from "../../../js/fileAnalyzer";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../../Contexts";
 
 export const Header = () => {
   const basicInfo = useContext(BasicInfoContext);
   const version = useContext(VersionContext);
   const metadata = useContext(MetadataContext);
+  const env = useContext(EnvContext);
 
   const { player, teamMap, weekend, races, currentSeasonRaces } = basicInfo;
 
@@ -17,14 +20,31 @@ export const Header = () => {
 
   return (
     <div>
-      <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, marginBottom: 24 }}>
-        Playing as {player.FirstName} {player.LastName} for <span style={{
-        color: `var(--team${team.TeamID}-fanfare1)`,
-        borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
-      }}>{team.TeamName}</span> in {version + 2020} Game, savefile {metadata.filename}
-        <br />
-        It's {formatDate(dayToDate(player.Day))} in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
-      </Typography>
+      <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 24, gap: 24 }}>
+        <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, flex: 1, flexBasis: 720 }}>
+          Playing as {player.FirstName} {player.LastName} for <span style={{
+          color: `var(--team${team.TeamID}-fanfare1)`,
+          borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
+        }}>{team.TeamName}</span> in {version + 2020} Game, savefile {metadata.filename}
+          <br />
+          It's {formatDate(dayToDate(player.Day))} in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
+        </Typography>
+        <div style={{ textAlign: "right" }}>
+          <div>
+            {
+              env.inApp && (
+                <Button color="error" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
+                  Overwrite Database
+                </Button>
+              )
+            }
+            <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, false)}>Re-export Savefile</Button>
+            <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>
+              Dump Database
+            </Button>
+          </div>
+        </div>
+      </div>
       <div style={{ overflowX: "auto" }}>
         <Stepper
           activeStep={currentRaceIdx}

@@ -140,7 +140,21 @@ export default function CarSetup() {
                   env.inApp ? "Modify Savefile to Optimal" : "Export Optimal Savefile"
                 }
               </Button>
-              Download a modified save file where setup is Optimal.
+              <Button color="secondary" variant="contained" sx={{ mr: 2 }} onClick={() => {
+                database.exec(
+                  "Update Save_CarConfig SET " +
+                  "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
+                  "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
+                  "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
+                  "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
+                  "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
+                  `WHERE TeamID = ${basicInfo.player.TeamID}`
+                );
+              }}>
+                {
+                  "Update to Optimal without Exporting"
+                }
+              </Button>
             </Typography>
             <Divider variant="fullWidth" sx={{ my: 2 }} />
             <TableContainer component={Paper}>
