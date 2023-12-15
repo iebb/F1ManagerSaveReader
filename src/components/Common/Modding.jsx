@@ -2,7 +2,7 @@ import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
 import CustomCalendar from "../Modding/Calendar";
-import ExpertiseView from "../Modding/Expertise";
+import ExpertiseView from "../Parts/Expertise";
 import ReplaceDB from "../Modding/ReplaceDB";
 import DataBrowser from "../Modding/SQL";
 import Toolbox from "../Modding/Toolbox";
@@ -22,7 +22,6 @@ export default function Modding() {
 
   if (version === 3) {
     opt = [
-      {name: "Design Expertise", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       {name: "Tools / Cheats", tab: <Toolbox />},
       {name: "SQL Browser", tab: <DataBrowser />},
@@ -30,7 +29,6 @@ export default function Modding() {
     ];
   } else {
     opt = [
-      {name: "Design Expertise", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       {name: "SQL Browser", tab: <DataBrowser />},
       {name: "Replace Database", tab: <ReplaceDB />},

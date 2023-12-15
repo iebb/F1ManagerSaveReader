@@ -1,8 +1,8 @@
 import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
-import PitcrewView from "../Staff/Pitcrew";
-import StaffGeneric from "../Staff/StaffGeneric";
+import PitcrewView from "./Pitcrew";
+import StaffGeneric from "./StaffGeneric";
 import {VTabs} from "../Tabs";
 
 

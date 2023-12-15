@@ -59,7 +59,7 @@ export const weekendStagesAbbrev = [
   "Race",
   "End",
   "End",
-  "End",
+  "Sprint",
 ]
 
 

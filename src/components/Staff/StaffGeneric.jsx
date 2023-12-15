@@ -148,7 +148,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
               )
             }
           },
-          ...StaffType === 0 ? ([
+          ...(StaffType < 5) ? ([
             {
               field: 'Overall' , headerName: "Overall",
               valueGetter: ({value}) => Number(value).toFixed(2),

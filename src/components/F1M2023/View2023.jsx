@@ -4,7 +4,8 @@ import CostCap from "../Common/CostCap";
 import Modding from "../Common/Modding";
 import RaceResults from "../Common/RaceResults";
 import RaceResultsF2 from "../Common/RaceResultsF2";
-import Staff from "../Common/Staff";
+import Parts from "../Parts/Parts";
+import Staff from "../Staff/Staff";
 import {Header} from "../Common/subcomponents/Header";
 import {BasicInfoContext, DatabaseContext, MetadataContext, MiscContext} from "../Contexts";
 import {VTabs} from "../Tabs";
@@ -146,6 +147,7 @@ export default function DataView2023() {
             {name: "F2 & F3", tab: <RaceResultsF2 />},
             {name: "Cost Cap", tab: <CostCap />},
             {name: "Staff", tab: <Staff />},
+            {name: "Parts", tab: <Parts />},
             {name: "Modding", tab: <Modding />},
           ]} />
         </BasicInfoContext.Provider>
