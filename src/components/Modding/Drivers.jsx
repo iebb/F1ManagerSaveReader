@@ -1,8 +1,7 @@
-import {getDriverCode, resolveName, teamColors, teamNames} from "@/js/localization";
+import {getDriverCode, resolveName, teamNames} from "@/js/localization";
 import {Divider, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
-import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getCountryFlag, getCountryShort} from "../../js/countries";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
@@ -118,8 +117,8 @@ export default function DriverView() {
           ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => (
             {
               field: 'performanceStats.' + x , headerName: StaffPerformance[x], width: 25,
-              editable: true,
-             // type: 'number',
+              // editable: true,
+              type: 'number',
               renderCell: ({ row }) => row.performanceStats[x],
             }
           )),

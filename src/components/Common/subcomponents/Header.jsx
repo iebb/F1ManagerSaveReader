@@ -73,7 +73,7 @@ export const Header = () => {
         </Stepper>
       </div>
       <Divider variant="fullWidth" sx={{
-        mt: 2, mb: 2, py: 0.5,
+        mt: 2, mb: 2, py: 0.25,
         background: `repeating-linear-gradient(135deg, 
                             rgba(var(--team${team.TeamID}-triplet), 1), rgba(var(--team${team.TeamID}-triplet), 1) 8px, 
                             rgba(var(--team${team.TeamID}-fanfare2-triplet), 1) 8px, rgba(var(--team${team.TeamID}-fanfare2-triplet), 1) 12px)`,
