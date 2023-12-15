@@ -5,7 +5,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartNames, PartStats2023, statRenderer, valueToDeltaUnitValue} from "./consts";
+import {PartNames, PartStats2023, statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts";
 
 
 const PartStatsList = {
@@ -126,19 +126,32 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           for (const stat of PartStatsListPage) {
             const [partType, partStat] = stat.id.split("_");
             const part = newRow.Part[partType]
-            const deltaFactor = stat.valueToDeltaUnitValue || valueToDeltaUnitValue[partStat];
-            const resultValue = oldRow['val_' + stat.id] + (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor;
+            // const deltaFactor = stat.valueToDeltaUnitValue || valueToDeltaUnitValue[partStat];
+            // const resultValue = oldRow['val_' + stat.id] + (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor;
+            const resultValue = (stat.unitValueToValue || unitValueToValue[partStat])(newRow['unit_' + stat.id]);
             database.exec(
               version === 2 ? (
-                `UPDATE Parts_DesignStatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
+                `UPDATE Parts_DesignStatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
               ) : (
-                `UPDATE Parts_Designs_StatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
+                `UPDATE Parts_Designs_StatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
               ), {
-                ":duvalue": newRow['unit_' + stat.id] - oldRow['unit_' + stat.id],
-                ":dvalue": (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor,
+                ":uvalue": newRow['unit_' + stat.id],
+                ":value": resultValue,
                 ":designID": part.DesignID,
                 ":partStat": partStat,
               })
+
+            // database.exec(
+            //   version === 2 ? (
+            //     `UPDATE Parts_DesignStatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
+            //   ) : (
+            //     `UPDATE Parts_Designs_StatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
+            //   ), {
+            //     ":duvalue": newRow['unit_' + stat.id] - oldRow['unit_' + stat.id],
+            //     ":dvalue": (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor,
+            //     ":designID": part.DesignID,
+            //     ":partStat": partStat,
+            //   })
           }
           refresh();
           return newRow;
