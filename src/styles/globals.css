@@ -8,8 +8,8 @@
     'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
 
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 44, 44, 44;
-  --background-end-rgb: 33, 33, 33;
+  --background-start-rgb: 22, 22, 22;
+  --background-end-rgb: 22, 22, 22;
 
   --primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
   --secondary-glow: linear-gradient(
@@ -226,4 +226,9 @@ main {
   main {
     max-width: 1728px;
   }
+}
+
+.MuiDataGrid-editInputCell input[type="number"] {
+  padding: 0;
+  text-align: right;
 }

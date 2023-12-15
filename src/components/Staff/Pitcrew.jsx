@@ -6,24 +6,24 @@ import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from
 
 const PitCrewStatsList = {
   2: [
-    {id: 32, digits: 4, displayDigits: 4, name: "Jacks"},
-    {id: 33, digits: 4, displayDigits: 4, name: "Tyres"},
-    {id: 34, digits: 4, displayDigits: 4, name: "Wings"},
-    {id: 35, digits: 4, displayDigits: 4, name: "Car Release"},
+    {id: 32, digits: 6, displayDigits: 6, name: "Jacks"},
+    {id: 33, digits: 6, displayDigits: 6, name: "Tyres"},
+    {id: 34, digits: 6, displayDigits: 6, name: "Wings"},
+    {id: 35, digits: 6, displayDigits: 6, name: "Car Release"},
   ],
   3: [
-    {id: 32, digits: 4, displayDigits: 4, name: "Jacks"},
-    {id: 41, digits: 4, displayDigits: 4, name: "Tyres Off"},
-    {id: 42, digits: 4, displayDigits: 4, name: "Tyres On"},
-    {id: 40, digits: 4, displayDigits: 4, name: "Wheel Gun"},
-    {id: 35, digits: 4, displayDigits: 4, name: "Car Release"},
-    {id: 39, digits: 4, displayDigits: 4, name: "Car Building"},
+    {id: 32, digits: 6, displayDigits: 6, name: "Jacks"},
+    {id: 41, digits: 6, displayDigits: 6, name: "Tyres Off"},
+    {id: 42, digits: 6, displayDigits: 6, name: "Tyres On"},
+    {id: 40, digits: 6, displayDigits: 6, name: "Wheel Gun"},
+    {id: 35, digits: 6, displayDigits: 6, name: "Car Release"},
+    {id: 39, digits: 6, displayDigits: 6, name: "Car Building"},
     // {id: 33,	name: "Tyres"},
     {id: 34, digits: 0, displayDigits: 0, name: "Wings"},
     //  {id: 37,	name: "Consistency"},
 
-    {id: 36, digits: 4, displayDigits: 4, name: "Speed"},
-    {id: 38, digits: 4, displayDigits: 4, negative: true, name: "Fatigue"},
+    {id: 36, digits: 6, displayDigits: 6, name: "Speed"},
+    {id: 38, digits: 6, displayDigits: 6, negative: true, name: "Fatigue"},
   ]
 }
 
@@ -136,7 +136,7 @@ export default function PitcrewView() {
             field: `stat_` + stat.id,
             headerName: stat.name,
             type: 'number',
-            width: version === 2 ? 150 : 100,
+            flex: 1,
             valueGetter: ({value}) => Number(value).toFixed(stat.digits),
             renderCell: ({row, value}) => {
               const delta = value - row["month_start_stat_" + stat.id];

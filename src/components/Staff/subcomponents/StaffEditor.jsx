@@ -11,21 +11,7 @@ for(let i = 0; i < 100; i++) {
   driverNumbers.push(`${i}`);
 }
 
-const StaffPerformanceLong = [
-  "Improvability",
-  "Aggression", // hack
-  "Cornering",
-  "Braking",
-  "Control",
-  "Smoothness",
-  "Adaptability",
-  "Overtaking",
-  "Defence",
-  "Acceleration",
-  "Accuracy",
-]
-
-export default function DriverEditor(props) {
+export default function StaffEditor(props) {
   const { editRow, setEditRow, refresh } = props;
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
@@ -36,7 +22,6 @@ export default function DriverEditor(props) {
   const [driverCode, setDriverCode] = useState("NOR");
   const [country, setCountry] = useState("UnitedKingdom");
   const [driverNumber, setDriverNumber] = useState("4");
-  const [stats, setStats] = useState({});
 
   const [namePool, setNamePool] = useState([]);
   const [driverCodePool, setDriverCodePool] = useState([]);
@@ -45,14 +30,13 @@ export default function DriverEditor(props) {
 
   useEffect(() => {
     if (editRow) {
-      setStats({...editRow.performanceStats, 0: editRow.Improvability, 1: editRow.Aggression});
-
       setFirstName(resolveName(editRow.FirstName));
       setLastName(resolveName(editRow.LastName));
       setCountry(editRow.Nationality);
-
-      setDriverCode(resolveDriverCode(editRow.DriverCode));
-      setDriverNumber(editRow.CurrentNumber ? `${editRow.CurrentNumber}` : "N/A");
+      if (editRow.StaffType === 0) {
+        setDriverCode(resolveDriverCode(editRow.DriverCode));
+        setDriverNumber(editRow.CurrentNumber ? `${editRow.CurrentNumber}` : "N/A");
+      }
     } else {
       setDriverCode("");
       setDriverNumber("");
@@ -99,7 +83,7 @@ export default function DriverEditor(props) {
         [{ values }] = database.exec(
           "SELECT FirstName, LastName FROM Staff_BasicData ORDER BY StaffID DESC"
         );
-      } else {
+      } else if (version === 3) {
         [{ values }] = database.exec(
           "SELECT FirstName, LastName FROM Staff_CommonData ORDER BY StaffID DESC"
         );
@@ -172,16 +156,20 @@ export default function DriverEditor(props) {
             } }
             renderInput={(params) => <TextField {...params} label="Last Name" autoComplete="off" />}
           />
-          <Autocomplete
-            disablePortal
-            options={driverCodePool}
-            value={driverCode}
-            sx={{ width: 160, m: 1, display: "inline-block" }}
-            onInputChange={ (e, nv) => {
-              if (nv) setDriverCode(nv)
-            }}
-            renderInput={(params) => <TextField {...params} label="Code" autoComplete="off" />}
-          />
+          {
+            editRow.StaffType === 0 && (
+              <Autocomplete
+                disablePortal
+                options={driverCodePool}
+                value={driverCode}
+                sx={{ width: 160, m: 1, display: "inline-block" }}
+                onInputChange={ (e, nv) => {
+                  if (nv) setDriverCode(nv)
+                }}
+                renderInput={(params) => <TextField {...params} label="Code" autoComplete="off" />}
+              />
+            )
+          }
         </div>
         <Grid direction="row-reverse" container spacing={1}>
           <Grid item>
@@ -192,23 +180,25 @@ export default function DriverEditor(props) {
 
               if (version === 2) {
                 database.exec(`UPDATE Staff_CommonData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
-              } else {
+              } else if (version === 3) {
                 database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}" WHERE StaffID = ${editRow.StaffID}`);
               }
 
-              database.exec(`UPDATE Staff_DriverData SET DriverCode = "${_driverCode}" WHERE StaffID = ${editRow.StaffID}`);
 
+              if (editRow.StaffType === 0) {
+                database.exec(`UPDATE Staff_DriverData SET DriverCode = "${_driverCode}" WHERE StaffID = ${editRow.StaffID}`);
 
-              const haveDriverNumber = !(driverNumber === "N/A" || driverNumber === "");
-              const _driverNumber = haveDriverNumber ? driverNumber : "";
-              if (haveDriverNumber) {
-                if (_driverNumber != 1) {
-                  database.exec(`UPDATE Staff_DriverData SET LastKnownDriverNumber = "${_driverNumber}" WHERE StaffID = ${editRow.StaffID}`);
+                const haveDriverNumber = !(driverNumber === "N/A" || driverNumber === "");
+                const _driverNumber = haveDriverNumber ? driverNumber : "";
+                if (haveDriverNumber) {
+                  if (_driverNumber != 1) {
+                    database.exec(`UPDATE Staff_DriverData SET LastKnownDriverNumber = "${_driverNumber}" WHERE StaffID = ${editRow.StaffID}`);
+                  }
+                  database.exec(`UPDATE Staff_DriverNumbers SET CurrentHolder = NULL WHERE CurrentHolder = ${editRow.StaffID}`);
+                  database.exec(`INSERT OR REPLACE INTO Staff_DriverNumbers VALUES(${_driverNumber}, ${editRow.StaffID})`);
+                } else {
+                  database.exec(`UPDATE Staff_DriverNumbers SET CurrentHolder = NULL WHERE CurrentHolder = ${editRow.StaffID}`);
                 }
-                database.exec(`UPDATE Staff_DriverNumbers SET CurrentHolder = NULL WHERE CurrentHolder = ${editRow.StaffID}`);
-                database.exec(`INSERT OR REPLACE INTO Staff_DriverNumbers VALUES(${_driverNumber}, ${editRow.StaffID})`);
-              } else {
-                database.exec(`UPDATE Staff_DriverNumbers SET CurrentHolder = NULL WHERE CurrentHolder = ${editRow.StaffID}`);
               }
               refresh();
             }}>Save Profile</Button>
@@ -226,60 +216,23 @@ export default function DriverEditor(props) {
               }}
               renderInput={(params) => <TextField {...params} label="Country" autoComplete="off" />}
             />
-            <Autocomplete
-              disablePortal
-              options={driverNumbers}
-              value={driverNumber}
-              sx={{ width: 160, m: 1, display: "inline-block" }}
-              onInputChange={ (e, nv) => {
-                if (nv) setDriverNumber(nv)
-              }}
-              renderInput={(params) => <TextField {...params} label="Number" autoComplete="off" />}
-            />
+
+            {
+              editRow.StaffType === 0 && (
+                <Autocomplete
+                  disablePortal
+                  options={driverNumbers}
+                  value={driverNumber}
+                  sx={{ width: 160, m: 1, display: "inline-block" }}
+                  onInputChange={ (e, nv) => {
+                    if (nv) setDriverNumber(nv)
+                  }}
+                  renderInput={(params) => <TextField {...params} label="Number" autoComplete="off" />}
+                />
+              )
+            }
           </Grid>
         </Grid>
-
-
-        <Divider variant="fullWidth" sx={{ my: 2 }} />
-
-        <div style={{ display: "grid",
-          gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 1].map(x => (
-            <div key={x} style={{ margin: 10 }}>
-              <TextField
-                sx={{ width: 90 }}
-                label={StaffPerformanceLong[x]}
-                type="number"
-                value={stats[x]}
-                variant="standard"
-                inputProps={{ inputMode: 'numeric', pattern: '[0-9]+', step: 1, max: 100, min: 0 }}
-                onChange={
-                  (e) => {
-                    if (e.target.value <= 100 && e.target.value >= 0) {
-                      stats[x] = Number(e.target.value);
-                    } else if (e.target.value > 100) {
-                      stats[x] = 100;
-                    } else {
-                      stats[x] = 0;
-                    }
-                    setStats({...stats});
-                  }
-                }
-              />
-            </div>
-          ))}
-
-          <div style={{ margin: 10 }}>
-            <Button variant="contained" sx={{ m: 1 }} onClick={() => {
-              [2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => {
-                database.exec(`UPDATE Staff_PerformanceStats SET Val = ${stats[x]} WHERE StaffID = ${editRow.StaffID} AND StatID = ${x}`);
-              })
-
-              database.exec(`UPDATE Staff_DriverData SET Improvability = ${stats[0]}, Aggression = ${stats[1]} WHERE StaffID = ${editRow.StaffID}`);
-              refresh();
-            }}>Save Stats</Button>
-          </div>
-        </div>
 
         <Divider variant="fullWidth" sx={{ my: 2 }} />
 
@@ -291,7 +244,7 @@ export default function DriverEditor(props) {
                 const extendedRetirementAge = retirementInYears < 5 ? row.RetirementAge + 5 - retirementInYears : row.RetirementAge;
                 if (version === 2) {
                   database.exec(`UPDATE Staff_CommonData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
-                } else {
+                } else if (version === 3) {
                   database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
                 }
                 refresh();
@@ -300,7 +253,7 @@ export default function DriverEditor(props) {
               <Button color="error" variant="contained" onClick={() => {
                 if (version === 2) {
                   database.exec(`UPDATE Staff_CommonData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
-                } else {
+                } else if (version === 3) {
                   database.exec(`UPDATE Staff_GameData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
                 }
                 refresh();

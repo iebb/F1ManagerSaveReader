@@ -3,7 +3,7 @@ import {useContext, useState} from "react";
 import * as React from "react";
 import {getDriverName} from "../../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../../Contexts";
-import {assignRandomRaceNumber, fireDriverContract, getDrivers, swapDriverContracts} from "../commons/drivers";
+import {assignRandomRaceNumber, fireDriverContract, getStaff, swapDriverContracts} from "../commons/drivers";
 
 export default function ContractSwapper(props) {
   const { swapRow, setSwapRow, refresh } = props;
@@ -16,7 +16,7 @@ export default function ContractSwapper(props) {
   const [swapDriver, setSwapDriver] = useState(null);
   if (!swapRow) return null;
 
-  const _drivers = getDrivers(ctx);
+  const [_, _drivers] = getStaff(ctx, swapRow.StaffType);
 
   if (version === 2) {
     return (
@@ -73,7 +73,7 @@ export default function ContractSwapper(props) {
           <Grid item>
             <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
               if (swapDriver && (swapRow.StaffID !== swapDriver.id)) {
-                if (!swapDriver.number) {
+                if (swapRow.StaffType === 0 && !swapDriver.number) {
                   assignRandomRaceNumber(ctx, swapDriver.id);
                 }
                 swapDriverContracts(ctx, swapRow.StaffID, swapDriver.id);

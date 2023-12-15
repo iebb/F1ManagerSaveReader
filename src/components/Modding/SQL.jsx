@@ -4,7 +4,7 @@ import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {getBasicDataTable} from "./commons/drivers";
+import {getBasicDataTable} from "../Staff/commons/drivers";
 
 export default function DataBrowser() {
 

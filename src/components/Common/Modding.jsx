@@ -2,12 +2,11 @@ import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
 import CustomCalendar from "../Modding/Calendar";
-import DriverView from "../Modding/Drivers";
 import ExpertiseView from "../Modding/Expertise";
-import PitcrewView from "../Modding/Pitcrew";
 import ReplaceDB from "../Modding/ReplaceDB";
 import DataBrowser from "../Modding/SQL";
 import Toolbox from "../Modding/Toolbox";
+import PitcrewView from "../Staff/Pitcrew";
 import {VTabs} from "../Tabs";
 
 
@@ -23,8 +22,6 @@ export default function Modding() {
 
   if (version === 3) {
     opt = [
-      {name: "Drivers", tab: <DriverView />},
-      {name: "Pit Crew", tab: <PitcrewView />},
       {name: "Design Expertise", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       {name: "Tools / Cheats", tab: <Toolbox />},
@@ -33,8 +30,6 @@ export default function Modding() {
     ];
   } else {
     opt = [
-      {name: "Drivers", tab: <DriverView />},
-      {name: "Pit Crew", tab: <PitcrewView />},
       {name: "Design Expertise", tab: <ExpertiseView />},
       {name: "Calendar", tab: <CustomCalendar />},
       {name: "SQL Browser", tab: <DataBrowser />},
