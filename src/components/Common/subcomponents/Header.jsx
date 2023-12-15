@@ -8,6 +8,7 @@ import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionC
 
 export const Header = () => {
   const basicInfo = useContext(BasicInfoContext);
+  const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
   const metadata = useContext(MetadataContext);
   const env = useContext(EnvContext);
