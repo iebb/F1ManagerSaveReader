@@ -10,7 +10,7 @@ export const valueToUnitValue = {
 
   7: x => Number((0.002 * x + 3).toFixed(3)),
   8: x => Number((0.002 * x + 5).toFixed(3)),
-  9: x => Number((0.002 * x + 7).toFixed(3)),
+  9: x => Number((0.001 * x + 7).toFixed(3)),
 
   10: x => Number((90 + x / 1000 * 10).toFixed(2)),
   11: x => Number((85 - x / 1000 * 20).toFixed(2)),
@@ -31,7 +31,7 @@ export const valueToDeltaUnitValue = {
 
   7: 0.002,
   8: 0.002,
-  9: 0.002,
+  9: 0.001,
 
   10: 0.01,
   11: -0.02,

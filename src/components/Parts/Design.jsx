@@ -101,6 +101,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         }
       </Tabs>
       <DataGrid
+        key={partPanel}
         rows={partStats}
         getRowId={r => r.id}
         onProcessRowUpdateError={e => console.error(e)}
@@ -127,19 +128,17 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             const part = newRow.Part[partType]
             const deltaFactor = stat.valueToDeltaUnitValue || valueToDeltaUnitValue[partStat];
             const resultValue = oldRow['val_' + stat.id] + (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor;
-            if (resultValue >= -1 && resultValue <= 1001) {
-              database.exec(
-                version === 2 ? (
-                  `UPDATE Parts_DesignStatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
-                ) : (
-                  `UPDATE Parts_Designs_StatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
-                ), {
-                  ":duvalue": newRow['unit_' + stat.id] - oldRow['unit_' + stat.id],
-                  ":dvalue": (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor,
-                  ":designID": part.DesignID,
-                  ":partStat": partStat,
-                })
-            }
+            database.exec(
+              version === 2 ? (
+                `UPDATE Parts_DesignStatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
+              ) : (
+                `UPDATE Parts_Designs_StatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
+              ), {
+                ":duvalue": newRow['unit_' + stat.id] - oldRow['unit_' + stat.id],
+                ":dvalue": (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor,
+                ":designID": part.DesignID,
+                ":partStat": partStat,
+              })
           }
           refresh();
           return newRow;
@@ -207,7 +206,6 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             width: 120,
             valueGetter: ({value}) => Number(value).toFixed(stat.digits),
             renderCell: ({row, value}) => {
-              const delta = value - row["season_start_val_" + stat.id];
               return (
                 <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
                   <span>{value ?
@@ -219,7 +217,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                     : ""}</span>
                   <br/>
                   <span style={{
-                    fontSize: "90%", color: "#777"
+                    fontSize: 12, color: "#777"
                   }}>{Number(row[`val_` + stat.id]).toFixed(stat.displayDigits)}</span>
                 </div>
               )
