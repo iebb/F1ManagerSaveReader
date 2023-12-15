@@ -1,10 +1,8 @@
-import {resolveName, teamNames} from "@/js/localization";
-import {Divider, Typography} from "@mui/material";
+import {resolveName, teamNames, dateToDay, dayToDate, getDriverCode} from "@/js/localization";
+import {getCountryFlag, getCountryShort} from "@/js/countries";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import {useContext, useEffect, useState} from "react";
-import {getCountryFlag, getCountryShort} from "../../js/countries";
-import {dateToDay, dayToDate, getDriverCode} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import {getStaff} from "./commons/drivers";
 import {localeStaffStats, mailSenders} from "./commons/staffCommon";
@@ -150,6 +148,19 @@ export default function StaffGeneric({ StaffType = 1 }) {
               )
             }
           },
+          ...StaffType === 0 ? ([
+            {
+              field: 'Overall' , headerName: "Overall",
+              valueGetter: ({value}) => Number(value).toFixed(2),
+              type: 'number',
+              renderCell: ({value}) => {
+                return (
+                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                    {value}
+                  </span>
+                )
+              }
+            }]) : [],
           ...staffStats.map(x => (
             {
               field: 'performance_stats_' + x ,
@@ -157,6 +168,13 @@ export default function StaffGeneric({ StaffType = 1 }) {
               flex: 1,
               editable: true,
               type: 'number',
+              renderCell: ({value}) => {
+                return (
+                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                    {value}
+                  </span>
+                )
+              },
             }
           )),
           ...StaffType === 0 ? ([
@@ -165,12 +183,26 @@ export default function StaffGeneric({ StaffType = 1 }) {
               flex: 1,
               editable: true,
               type: 'number',
+              renderCell: ({value}) => {
+                return (
+                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                    {value}
+                  </span>
+                )
+              },
             },
             {
               field: 'Aggression' , headerName: "Aggr",
               flex: 1,
               editable: true,
               type: 'number',
+              renderCell: ({value}) => {
+                return (
+                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                    {value}
+                  </span>
+                )
+              },
             },
           ]) : [],
           {

@@ -1,4 +1,6 @@
-
+const factors = [
+  0, 0, 20, 15, 15, 10, 5, 5, 5, 10, 15,
+]
 export const getStaff = (ctx, StaffType = 0) => {
   const {basicInfo, database, version} = ctx;
 
@@ -69,9 +71,14 @@ export const getStaff = (ctx, StaffType = 0) => {
     if (basicInfo) {
       row.Age = (basicInfo.player.Day - row.DOB) / 365.2422;
     }
+    let ova = 0;
+    let factor = 0;
     for(const stat of StaffStats) {
+      ova += PerformanceStats[row.StaffID][stat] * (factors[stat] || 1);
+      factor += (factors[stat] || 1);
       row["performance_stats_" + stat] = PerformanceStats[row.StaffID][stat];
     }
+    row.Overall = ova / factor;
     return row;
   });
   return [StaffStats, results]
