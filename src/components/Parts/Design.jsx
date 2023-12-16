@@ -3,7 +3,7 @@ import Tab from "@mui/material/Tab";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {teamNames} from "../../js/localization";
+import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import {PartNames, PartStatsCategorized2023, statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts";
 
@@ -19,6 +19,9 @@ export default function DesignView() {
   const version = useContext(VersionContext);
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
+
+  const {driverMap, teamMap } = basicInfo;
+
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -179,7 +182,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
                   {teamNames(value, metadata.version)}
                   <div>
-                    {row.DesignID ? `Design ${row.DesignID}` : <span style={{ color: "white" }}>
+                    {row.DesignID ? `D-${row.DesignID}` : <span style={{ color: "white" }}>
                       Not Installed
                     </span>}
                   </div>
@@ -194,7 +197,9 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             renderCell: ({ value, row }) => {
               return (
                 <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
-                  Car {row.TeamCarID}
+                  {
+                    getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])
+                  }
                   <div>
                     {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
                   </div>

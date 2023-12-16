@@ -3,19 +3,14 @@ import Tab from "@mui/material/Tab";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {teamNames} from "../../js/localization";
+import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartCalculationStats2023, PartStats2023, PartStatsCategorized2023, PSF2023} from "./consts";
-import {PartCalculationStats2022, PartStats2022, PartStatsCategorized2022, PSF2022} from "./consts_2022";
+import {PartCalculationStats2023, PartStats2023, PSF2023} from "./consts";
+import {PartCalculationStats2022, PartStats2022, PSF2022} from "./consts_2022";
 
 const PartStatsV = {
   2: PartStats2022,
   3: PartStats2023,
-}
-
-const PartStatsListV = {
-  2: PartStatsCategorized2022,
-  3: PartStatsCategorized2023
 }
 
 const PartFactorsV = {
@@ -34,6 +29,8 @@ export default function CarAnalysis() {
   const version = useContext(VersionContext);
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
+  const {driverMap, teamMap } = basicInfo;
+
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -43,10 +40,6 @@ export default function CarAnalysis() {
   const PartCalculationStats = PartCalculationStatsV[version];
 
   const PartStats = PartStatsV[version];
-  const PartStatsList = PartStatsListV[version];
-  const PartInfo = PartStatsList[partPanel];
-  const PartStatsListPage = PartStatsList[partPanel].stats;
-  const PartTypePage = PartStatsList[partPanel].parts;
 
   const PartFactors = PartFactorsV[version];
 
@@ -167,7 +160,9 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
                   {teamNames(value, metadata.version)}
                   <div>
-                    Car {row.TeamCarID}
+                    {
+                      getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])
+                    }
                   </div>
                 </div>
               )
@@ -196,11 +191,15 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`
               headerName: stat.name,
               type: 'number',
               flex: 1,
-              valueGetter: ({value}) => Number(value) * (stat.bounds[1] - stat.bounds[0]) + stat.bounds[0],
               renderCell: ({row, value}) => {
+                const transformedValue = Number(value) * (stat.bounds[1] - stat.bounds[0]) + stat.bounds[0];
                 return (
                   <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
-                    <span>{stat.render ? stat.render(value) : Number(value).toFixed(stat.displayDigits)}</span>
+                    <span>{stat.render ? stat.render(transformedValue) : Number(transformedValue).toFixed(stat.displayDigits)}</span>
+                    <br/>
+                    <span style={{
+                      fontSize: 12, color: "#777"
+                    }}>{Number(value * 100).toFixed(4)}%</span>
                   </div>
                 )
               },
