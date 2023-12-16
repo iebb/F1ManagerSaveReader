@@ -5,12 +5,12 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartStats2023} from "./consts";
+import {PartStatsCategorized2023} from "./consts";
 
 
 const PartStatsList = {
-  2: PartStats2023,
-  3: PartStats2023
+  2: PartStatsCategorized2023,
+  3: PartStatsCategorized2023
 }
 
 export default function ExpertiseView() {

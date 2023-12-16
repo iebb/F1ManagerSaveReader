@@ -150,7 +150,7 @@ export const PartStatNames = [
   "Minimum Lifespan",
 ];
 
-export const PartStats2023 = [
+export const PartStats2022 = [
   { id: 10, name: 'Power' },
   { id: 0, name: 'Airflow Front' },
   { id: 13, name: 'Airflow Middle' },
@@ -166,19 +166,12 @@ export const PartStats2023 = [
   // { id: 11, name: 'Power Loss Threshold' },
   // { id: 12, name: 'Wear Resistance' },
   // { id: 14, name: 'Thermal Resistance' },
-  {
-    id: 15,
-    name: 'Extra Weight',
-    // name: 'Minimum Lifespan',
-    digits: 0, displayDigits: 0,
-    render: (x) => `${(x / 1000 * 2).toFixed(1)} kg`
-  }
 ];
 
-export const PartCalculationStats2023 = [
+export const PartCalculationStats2022 = [
   { id: 0, name: 'Top Speed',
     digits: 5,
-    bounds: [313, 328],
+    bounds: [367.2, 378],
     render: v => `${v.toFixed(4)} kph`,
     contributors: {
       [PartStat_DragReduction]: 1
@@ -186,20 +179,11 @@ export const PartCalculationStats2023 = [
   },
   { id: 1, name: 'Acceleration',
     digits: 5,
-    bounds: [1.8, 1.9],
+    bounds: [1.832, 1.929],
     render: v => `${v.toFixed(4)} G`,
     contributors: {
       [PartStat_Power]: 0.5,
       [PartStat_DragReduction]: 0.5,
-      [PartStat_Inverted_Weight]: 0.15,
-    },
-  },
-  { id: 16, name: 'DRS Effectiveness',
-    digits: 5,
-    bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
-    contributors: {
-      [PartStat_DRSDelta]: 1,
     },
   },
   { id: 7, name: 'Low Speed',
@@ -209,7 +193,6 @@ export const PartCalculationStats2023 = [
     contributors: {
       [PartStat_AirFlowFront]: 0.6,
       [PartStat_LowSpeedDownforce]: 1,
-      [PartStat_Inverted_Weight]: 0.24,
     },
   },
   { id: 8, name: 'Medium Speed',
@@ -220,7 +203,6 @@ export const PartCalculationStats2023 = [
       [PartStat_AirFlowFront]: 0.4,
       [PartStat_AirFlowMiddle]: 0.4,
       [PartStat_MedSpeedDownforce]: 1,
-      [PartStat_Inverted_Weight]: 0.27,
     },
   },
   { id: 9, name: 'High Speed',
@@ -230,7 +212,23 @@ export const PartCalculationStats2023 = [
     contributors: {
       [PartStat_AirFlowMiddle]: 0.6,
       [PartStat_HighSpeedDownforce]: 1,
-      [PartStat_Inverted_Weight]: 0.24,
+    },
+  },
+  /*
+  { id: 16, name: 'DRS Top Speed',
+    digits: 5,
+    bounds: [0, 393.12], // ?
+    render: v => `${v.toFixed(3)}%`,
+    contributors: {
+      [PartStat_DRSDelta]: 1,
+    },
+  },
+  { id: 16, name: 'DRS Acceleration',
+    digits: 5,
+    bounds: [0, 2.006], // ?
+    render: v => `${v.toFixed(3)}%`,
+    contributors: {
+      [PartStat_DRSDelta]: 1,
     },
   },
   { id: 12, name: 'Dirty Air Tolerance',
@@ -239,6 +237,30 @@ export const PartCalculationStats2023 = [
     render: v => `${v.toFixed(3)}%`,
     contributors: {
       [PartStat_AirFlowTolerance]: 1,
+    },
+  },*/
+  { id: 20, name: 'Dirty Corner Low',
+    digits: 5,
+    bounds: [0, 100],
+    render: v => `${v.toFixed(3)}%`,
+    contributors: {
+      [PartStat_BrakeCooling]: 1,
+    },
+  },
+  { id: 21, name: 'Dirty Corner Med',
+    digits: 5,
+    bounds: [0, 100],
+    render: v => `${v.toFixed(3)}%`,
+    contributors: {
+      [PartStat_BrakeCooling]: 1,
+    },
+  },
+  { id: 22, name: 'Dirty Corner High',
+    digits: 5,
+    bounds: [0, 100],
+    render: v => `${v.toFixed(3)}%`,
+    contributors: {
+      [PartStat_BrakeCooling]: 1,
     },
   },
   { id: 14, name: 'Brake Cooling',
@@ -265,7 +287,7 @@ export const PartCalculationStats2023 = [
 )*/
 
 
-export const PartStatsCategorized2023 = [
+export const PartStatsCategorized2022 = [
   {
     id: 0,
     category: "Powertrains",
@@ -292,7 +314,6 @@ export const PartStatsCategorized2023 = [
       {id: "3_13", part: 3, stat: 13, digits: 4, displayDigits: 4},
       {id: "3_15", part: 3, stat: 15, digits: 0, displayDigits: 0,
         hideInExpertise: true,
-        hideInVersions: [2],
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 270 / 100,
         unitValueToValue: x => (x - 3800) * 100 / 270,
@@ -313,7 +334,6 @@ export const PartStatsCategorized2023 = [
       {id: "4_9", part: 4, stat: 9, digits: 4, displayDigits: 4},
       {id: "4_15", part: 4, stat: 15, digits: 0, displayDigits: 0,
         hideInExpertise: true,
-        hideInVersions: [2],
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 375 / 100,
         unitValueToValue: x => (x - 1250) * 100 / 375,
@@ -334,7 +354,6 @@ export const PartStatsCategorized2023 = [
       {id: "5_9", part: 5, stat: 9, digits: 4, displayDigits: 4},
       {id: "5_15", part: 5, stat: 15, digits: 0, displayDigits: 0,
         hideInExpertise: true,
-        hideInVersions: [2],
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 295 / 100,
         unitValueToValue: x => (x - 1650) * 100 / 295,
@@ -353,7 +372,6 @@ export const PartStatsCategorized2023 = [
       {id: "6_13", part: 6, stat: 13, digits: 4, displayDigits: 4},
       {id: "6_15", part: 6, stat: 15, digits: 0, displayDigits: 0,
         hideInExpertise: true,
-        hideInVersions: [2],
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 275 / 100,
         unitValueToValue: x => (x - 2750) * 100 / 275,
@@ -373,7 +391,6 @@ export const PartStatsCategorized2023 = [
       {id: "7_9", part: 7, stat: 9, digits: 4, displayDigits: 4},
       {id: "7_15", part: 7, stat: 15, digits: 0, displayDigits: 0,
         hideInExpertise: true,
-        hideInVersions: [2],
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 290 / 100,
         unitValueToValue: x => (x - 2100) * 100 / 290,
@@ -394,7 +411,6 @@ export const PartStatsCategorized2023 = [
       {id: "8_9", part: 8, stat: 9, digits: 4, displayDigits: 4},
       {id: "8_15", part: 8, stat: 15, digits: 0, displayDigits: 0,
         hideInExpertise: true,
-        hideInVersions: [2],
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 240 / 100,
         unitValueToValue: x => (x - 1700) * 100 / 240,
@@ -413,7 +429,7 @@ export const PartStatsCategorized2023 = [
 );
 
 
-export const PSF2023 =  {
+export const PSF2022 =  {
   [PartStat_FuelEfficiency]: {
     [PartType_Engine]: 1.0
   },

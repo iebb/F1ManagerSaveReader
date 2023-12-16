@@ -8,7 +8,7 @@ import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from
 import {PartNames, PartStatsCategorized2023, statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts";
 
 
-const PartStatsListV = {
+const PartStatsList = {
   2: PartStatsCategorized2023,
   3: PartStatsCategorized2023
 }
@@ -25,18 +25,15 @@ export default function DesignView() {
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
 
-  const PartStatsList = PartStatsListV[version];
-  const PartInfo = PartStatsList[partPanel];
-  const PartStatsListPage = PartStatsList[partPanel].stats;
-  const PartTypePage = PartStatsList[partPanel].parts;
-
+  const PartInfo = PartStatsList[version][partPanel];
+  const PartStatsListPage = PartStatsList[version][partPanel].stats;
+  const PartTypePage = PartStatsList[version][partPanel].parts;
 
 
 
   useEffect(() => {
     const partStats = {};
     try {
-
       let DSVTable =  version === 2 ? "Parts_DesignStatValues" : "Parts_Designs_StatValues";
       let [{ columns, values }] = database.exec(
         `SELECT *, Parts_CarLoadout.TeamID as TeamID, Parts_CarLoadout.LoadOutID as LoadOutID, Parts_CarLoadout.DesignID as CL_DesignID, ${DSVTable}.Value as Value FROM Parts_CarLoadout 
@@ -52,23 +49,21 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
       for(const r of values) {
         let row = {};
         r.map((x, _idx) => {row[columns[_idx]] = x});
-        let carID = row.TeamID * 2 + row.LoadOutID;
-        if (!partStats[carID]) {
-          partStats[carID] = {};
+        if (!partStats[row.TeamID * 2 + row.LoadOutID]) {
+          partStats[row.TeamID * 2 + row.LoadOutID] = {};
         }
         const statId = version === 2 ? row.StatID : row.PartStat;
-        partStats[carID][`val_${row.PartType}_${statId}`] = row.Value;
-        partStats[carID][`unit_${row.PartType}_${statId}`] = row.UnitValue;
-        partStats[carID][`condition_${row.PartType}`] = row.Condition;
-        partStats[carID][`knowledge_${row.PartType}`] = row.PartKnowledge;
+        partStats[row.TeamID * 2 + row.LoadOutID][`val_${row.PartType}_${statId}`] = row.Value;
+        partStats[row.TeamID * 2 + row.LoadOutID][`condition_${row.PartType}`] = row.Condition;
+        partStats[row.TeamID * 2 + row.LoadOutID][`knowledge_${row.PartType}`] = row.PartKnowledge;
         if (row.PartType !== 1 && row.PartType !== 2) {
-          partRow[carID] = {
+          partRow[row.TeamID * 2 + row.LoadOutID] = {
             ...row,
             Part: {},
           };
         }
 
-        partRow[carID].Part[row.PartType] = row;
+        partRow[row.TeamID * 2 + row.LoadOutID].Part[row.PartType] = row;
       }
       let loadouts = [];
       for(let teamId = 1; teamId <= 10; teamId++) {
@@ -76,7 +71,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           loadouts.push({
             id: teamId * 2 + loadout - 2,
             TeamID: teamId,
-            TeamCarID: loadout,
+            CarID: loadout,
             ...partRow[teamId * 2 + loadout],
             ...partStats[teamId * 2 + loadout],
           });
@@ -97,7 +92,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         setPartPanel(newValue);
       }} aria-label="basic tabs example">
         {
-          PartStatsList.map(p => (
+          PartStatsList[version].map(p => (
             <Tab label={p.category} key={p.id} />
           ))
         }
@@ -130,36 +125,19 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             const part = newRow.Part[partType]
 
 
-            if (newRow['unit_' + stat.id] !== oldRow['unit_' + stat.id]) {
-              const fn = (stat.unitValueToValue || unitValueToValue[partStat]);
-              const resultValue = fn(newRow['unit_' + stat.id]);
+            if (newRow['val_' + stat.id] !== oldRow['val_' + stat.id]) {
               database.exec(
                 version === 2 ? (
-                  `UPDATE Parts_DesignStatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND StatID = :partStat`
+                  `UPDATE Parts_DesignStatValues SET Value = :value WHERE DesignID = :designID AND StatID = :partStat`
                 ) : (
-                  `UPDATE Parts_Designs_StatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
+                  `UPDATE Parts_Designs_StatValues SET Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
                 ), {
-                  ":uvalue": newRow['unit_' + stat.id],
-                  ":value": resultValue,
+                  ":value": newRow['val_' + stat.id],
                   ":designID": part.DesignID,
                   ":partStat": partStat,
                 })
 
             }
-
-            // const deltaFactor = stat.valueToDeltaUnitValue || valueToDeltaUnitValue[partStat];
-            // const resultValue = oldRow['val_' + stat.id] + (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor;
-            // database.exec(
-            //   version === 2 ? (
-            //     `UPDATE Parts_DesignStatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
-            //   ) : (
-            //     `UPDATE Parts_Designs_StatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
-            //   ), {
-            //     ":duvalue": newRow['unit_' + stat.id] - oldRow['unit_' + stat.id],
-            //     ":dvalue": (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor,
-            //     ":designID": part.DesignID,
-            //     ":partStat": partStat,
-            //   })
           }
           refresh();
           return newRow;
@@ -179,22 +157,20 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
                   {teamNames(value, metadata.version)}
                   <div>
-                    {row.DesignID ? `Design ${row.DesignID}` : <span style={{ color: "white" }}>
-                      Not Installed
-                    </span>}
+                    {row.DesignID ? `Design ${row.DesignID}` : "Not Installed"}
                   </div>
                 </div>
               )
             }
           },
           {
-            field: 'TeamCarID',
+            field: 'CarID',
             headerName: "Car",
             width: 120,
             renderCell: ({ value, row }) => {
               return (
                 <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
-                  Car {row.TeamCarID}
+                  Car {row.CarID}
                   <div>
                     {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
                   </div>
@@ -202,28 +178,9 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
               )
             }
           },
-          ...PartInfo.parts.map(part => ({
-            field: `condition_` + part,
-            headerName:  (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Condition",
-            type: 'number',
-            width: 120,
-            valueGetter: ({value}) => Number(value),
-            renderCell: ({row, value}) => `${(value * 100).toFixed(2)}%`,
-            editable: true,
-          })),
-
-          ...partPanel === 0 ? [] : PartInfo.parts.map(part => ({
-            field: `knowledge_` + part,
-            headerName:  (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Knowledge",
-            type: 'number',
-            width: 120,
-            valueGetter: ({value}) => Number(value),
-            renderCell: ({row, value}) => `${(value * 100).toFixed(2)}%`,
-            editable: true,
-          })),
 
           ...PartStatsListPage.filter(x => !x.hideInVersions || (!x.hideInVersions.includes(version)) ).map(stat => ({ // engine knowledge is meaningless
-            field: `unit_` + stat.id,
+            field: `val_` + stat.id,
             headerName: stat.name,
             type: 'number',
             width: 120,
@@ -231,17 +188,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             renderCell: ({row, value}) => {
               return (
                 <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
-                  <span>{value ?
-                    stat.statRenderer ? (
-                      stat.statRenderer(Number(value))
-                    ) : (
-                      statRenderer[stat.stat] ? statRenderer[stat.stat](Number(value)) : "" // default renderer
-                    )
-                    : ""}</span>
-                  <br/>
-                  <span style={{
-                    fontSize: 12, color: "#777"
-                  }}>{Number(row[`val_` + stat.id]).toFixed(stat.displayDigits)}</span>
+                  <span>{Number(row[`val_` + stat.id]).toFixed(stat.displayDigits)}</span>
                 </div>
               )
             },
