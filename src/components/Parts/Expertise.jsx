@@ -124,7 +124,7 @@ export default function ExpertiseView() {
               )
             }
           },
-          ...PartStatsListPage.map(stat => ({
+          ...PartStatsListPage.filter(x => !x.hideInExpertise).map(stat => ({
             field: `stat_` + stat.id,
             headerName: stat.name,
             type: 'number',

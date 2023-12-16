@@ -55,8 +55,9 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         if (!partStats[row.TeamID * 2 + row.LoadOutID]) {
           partStats[row.TeamID * 2 + row.LoadOutID] = {};
         }
-        partStats[row.TeamID * 2 + row.LoadOutID][`val_${row.PartType}_${row.PartStat}`] = row.Value;
-        partStats[row.TeamID * 2 + row.LoadOutID][`unit_${row.PartType}_${row.PartStat}`] = row.UnitValue;
+        const statId = version === 2 ? row.StatID : row.PartStat;
+        partStats[row.TeamID * 2 + row.LoadOutID][`val_${row.PartType}_${statId}`] = row.Value;
+        partStats[row.TeamID * 2 + row.LoadOutID][`unit_${row.PartType}_${statId}`] = row.UnitValue;
         partStats[row.TeamID * 2 + row.LoadOutID][`condition_${row.PartType}`] = row.Condition;
         partStats[row.TeamID * 2 + row.LoadOutID][`knowledge_${row.PartType}`] = row.PartKnowledge;
         if (row.PartType !== 1 && row.PartType !== 2) {
@@ -80,6 +81,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           });
         }
       }
+      console.log(loadouts);
 
       setPartStats(loadouts);
 
@@ -126,21 +128,25 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           for (const stat of PartStatsListPage) {
             const [partType, partStat] = stat.id.split("_");
             const part = newRow.Part[partType]
+            if (newRow['unit_' + stat.id] !== oldRow['unit_' + stat.id]) {
+              const fn = (stat.unitValueToValue || unitValueToValue[partStat]);
+              const resultValue = fn(newRow['unit_' + stat.id]);
+              database.exec(
+                version === 2 ? (
+                  `UPDATE Parts_DesignStatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND StatID = :partStat`
+                ) : (
+                  `UPDATE Parts_Designs_StatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
+                ), {
+                  ":uvalue": newRow['unit_' + stat.id],
+                  ":value": resultValue,
+                  ":designID": part.DesignID,
+                  ":partStat": partStat,
+                })
+
+            }
+
             // const deltaFactor = stat.valueToDeltaUnitValue || valueToDeltaUnitValue[partStat];
             // const resultValue = oldRow['val_' + stat.id] + (newRow['unit_' + stat.id] - oldRow['unit_' + stat.id]) / deltaFactor;
-            const resultValue = (stat.unitValueToValue || unitValueToValue[partStat])(newRow['unit_' + stat.id]);
-            database.exec(
-              version === 2 ? (
-                `UPDATE Parts_DesignStatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
-              ) : (
-                `UPDATE Parts_Designs_StatValues SET UnitValue = :uvalue, Value = :value WHERE DesignID = :designID AND PartStat = :partStat`
-              ), {
-                ":uvalue": newRow['unit_' + stat.id],
-                ":value": resultValue,
-                ":designID": part.DesignID,
-                ":partStat": partStat,
-              })
-
             // database.exec(
             //   version === 2 ? (
             //     `UPDATE Parts_DesignStatValues SET UnitValue = UnitValue + :duvalue, Value = Value + :dvalue WHERE DesignID = :designID AND PartStat = :partStat`
@@ -171,7 +177,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
                   {teamNames(value, metadata.version)}
                   <div>
-                    Design {row.DesignID}
+                    {row.DesignID ? `Design ${row.DesignID}` : "Not Installed"}
                   </div>
                 </div>
               )
@@ -186,7 +192,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                 <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
                   Car {row.CarID}
                   <div>
-                    {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Not Installed`}
+                    {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
                   </div>
                 </div>
               )
@@ -212,7 +218,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             editable: true,
           })),
 
-          ...PartStatsListPage.map(stat => ({ // engine knowledge is meaningless
+          ...PartStatsListPage.filter(x => !x.hideInVersions || (!x.hideInVersions.includes(version)) ).map(stat => ({ // engine knowledge is meaningless
             field: `unit_` + stat.id,
             headerName: stat.name,
             type: 'number',
