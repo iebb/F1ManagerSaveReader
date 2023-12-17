@@ -6,18 +6,17 @@ import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {yearToDateRange} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MiscContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
-export default function RaceResultsF2() {
+export default function RaceResultsF2({ formulae = 2 }) {
 
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
   const basicInfo = useContext(BasicInfoContext);
-  const misc = useContext(MiscContext);
 
-  const { driverMap, player } = basicInfo;
+  const { driverMap, player, misc } = basicInfo;
 
   const [championDriverID, setChampionDriverID] = useState(0);
   const [raceSchedule, setRaceSchedule] = useState([]);
@@ -26,7 +25,7 @@ export default function RaceResultsF2() {
   const [driverTeams, setDriverTeams] = useState({});
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
 
-  const [formulae, setFormulae] = useState(2);
+  // const [formulae, setFormulae] = useState(2);
 
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
@@ -43,7 +42,7 @@ export default function RaceResultsF2() {
   const teamNumbers = (
     formulae === 2
   ) ? (
-    misc.has_hubert ? [
+    misc.Formula2Number19Retired ? [
       [1, 2],
       [3, 4],
       [5, 6],
@@ -268,11 +267,11 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-        <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
+        FIA F{formulae} Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+        <InputLabel id="season-label">Season</InputLabel>
         <Select
-          labelId="demo-simple-select-standard-label"
-          id="demo-simple-select-standard"
+          labelId="season-label"
+          id="season"
           value={season}
           onChange={(event) => setSeason(event.target.value)}
           label="Season"
@@ -280,19 +279,6 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
           {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
         </Select>
       </FormControl>
-        <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-          <InputLabel id="demo-simple-select-standard-label">Formulae</InputLabel>
-          <Select
-            labelId="demo-simple-select-standard-label"
-            id="demo-simple-select-standard"
-            value={formulae}
-            onChange={(event) => setFormulae(event.target.value)}
-            label="Season"
-          >
-            <MenuItem value={2} key={2}>Formula 2</MenuItem>
-            <MenuItem value={3} key={3}>Formula 3</MenuItem>
-          </Select>
-        </FormControl>
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>

@@ -88,10 +88,11 @@ export default function CarSetup() {
 
   useEffect(() => {
     let values;
+    let _teamID = (version === 3) ? `TeamID` : basicInfo.player.TeamID;
     try {
 
       [{ values }] = database.exec(
-        "select LoadOutID, TeamID, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig"
+        `select LoadOutID, ${_teamID}, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig`
       );
       const _rows = values.map(val => ({
         LoadOutID: val[0],

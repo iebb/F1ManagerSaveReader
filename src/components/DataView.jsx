@@ -1,12 +1,30 @@
-import {analyzeFileToDatabase} from "@/js/fileAnalyzer";
 import {Typography} from "@mui/material";
 import {useContext, useEffect, useState} from "react";
-import {DatabaseContext, MetadataContext, VersionContext} from "./Contexts";
-import DataView2023 from "./F1M2023/View2023";
-import DataView2022 from "./F1M2022/View2022";
+import {parseBasicInfo} from "../js/basicInfoParser";
+import {BasicInfoContext, DatabaseContext, VersionContext} from "./Contexts";
+import Modding from "./Modding/Modding";
+import Parts from "./Parts/Parts";
+import RaceResults from "./RaceResults/RaceResults";
+import {Header} from "./RaceResults/subcomponents/Header";
+import CarSetup from "./RaceWeekend/CarSetup";
+import CostCap from "./Regulations/CostCap";
+import Staff from "./Staff/Staff";
+import {VTabs} from "./Tabs";
 
 export default function DataView() {
   const version = useContext(VersionContext);
+  const db = useContext(DatabaseContext);
+  const [basicInfo, setBasicInfo] = useState(null);
+
+  useEffect(() => {
+    try {
+      setBasicInfo(parseBasicInfo({ db, version }))
+    } catch (e) {
+      console.error(e);
+      setBasicInfo(null);
+    }
+  }, [version]);
+
   if (!version) {
     return (
       <div>
@@ -17,25 +35,29 @@ export default function DataView() {
     );
   }
 
-  const VersionMapping = {
-    2: DataView2022,
-    3: DataView2023,
-  }
-  const V = VersionMapping[version];
-
-  if (V !== null) {
+  if (!basicInfo) {
     return (
-      <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
-        <V />
+      <div>
+        <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+          This savefile is corrupted or unsupported.
+        </Typography>
       </div>
-    )
+    );
   }
 
   return (
-    <div>
-      <Typography variant="h5" component="h5" sx={{ m: 2 }}>
-        This savefile is not supported.
-      </Typography>
+    <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
+      <BasicInfoContext.Provider value={basicInfo}>
+        <Header />
+        <VTabs options={[
+          {name: "Setup", tab: <CarSetup />},
+          {name: "Results", tab: <RaceResults />},
+          {name: "Cost Cap", tab: <CostCap />},
+          {name: "Staff", tab: <Staff />},
+          {name: "Parts", tab: <Parts />},
+          {name: "Modding", tab: <Modding />},
+        ]} />
+      </BasicInfoContext.Provider>
     </div>
-  );
+  )
 }

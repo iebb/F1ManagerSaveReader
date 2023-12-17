@@ -1,11 +1,11 @@
 import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
-import CustomCalendar from "../Modding/Calendar";
+import CustomCalendar from "./Calendar";
 import ExpertiseView from "../Parts/Expertise";
-import ReplaceDB from "../Modding/ReplaceDB";
-import DataBrowser from "../Modding/SQL";
-import Toolbox from "../Modding/Toolbox";
+import ReplaceDB from "./ReplaceDB";
+import DataBrowser from "./SQL";
+import Toolbox from "./Toolbox";
 import PitcrewView from "../Staff/Pitcrew";
 import {VTabs} from "../Tabs";
 

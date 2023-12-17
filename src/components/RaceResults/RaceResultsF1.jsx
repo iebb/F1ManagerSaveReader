@@ -9,7 +9,7 @@ import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
-export default function RaceResults() {
+export default function RaceResultsF1() {
 
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
