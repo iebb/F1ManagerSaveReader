@@ -319,13 +319,13 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
       {
         version === 3 && (
           <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, flex: 1, flexBasis: 720 }}>
-            Effects per 100 (10%) in {PartInfo.category}: <br/>
+            Effects per 100 attribute (10%) in {PartInfo.category}: <br/>
             {
               PartStatsListPage.filter(
                 stat => reverseContrib[stat.stat === 15 ? 1500 : stat.stat].length
               ).map(stat => (
                 <p key={stat.id}>
-                  {
+                  per {
                     (stat.statRenderer ? stat.statRenderer : statRenderer[stat.stat])(
                       (stat.valueToDeltaUnitValue ? (
                         stat.valueToDeltaUnitValue
