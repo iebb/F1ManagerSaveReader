@@ -7,7 +7,7 @@ import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import {
   PartCalculationStatsV, PartFactorsV,
-  PartStatsListV,
+  PartStatsCategorizedV,
 } from "./consts";
 
 import {
@@ -34,10 +34,10 @@ export default function DesignView() {
   const [reverseContrib, setReverseContrib] = useState([]);
 
   const PartFactor = PartFactorsV[version];
-  const PartStatsList = PartStatsListV[version];
-  const PartInfo = PartStatsList[partPanel];
-  const PartStatsListPage = PartStatsList[partPanel].stats;
-  const PartTypePage = PartStatsList[partPanel].parts;
+  const PartStatsCategorized = PartStatsCategorizedV[version];
+  const PartInfo = PartStatsCategorized[partPanel];
+  const PartStatsCategorizedPage = PartStatsCategorized[partPanel].stats;
+  const PartTypePage = PartStatsCategorized[partPanel].parts;
 
 
   const PartCalculationStats = PartCalculationStatsV[version];
@@ -130,7 +130,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         setPartPanel(newValue);
       }} aria-label="basic tabs example">
         {
-          PartStatsList.map(p => (
+          PartStatsCategorized.map(p => (
             <Tab label={p.category} key={p.id} />
           ))
         }
@@ -158,7 +158,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           }
 
 
-          for (const stat of PartStatsListPage) {
+          for (const stat of PartStatsCategorizedPage) {
             const [partType, partStat] = stat.id.split("_");
             const part = newRow.Part[partType]
 
@@ -257,7 +257,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             editable: true,
           })),
 
-          ...PartStatsListPage.map(stat => ({ // engine knowledge is meaningless
+          ...PartStatsCategorizedPage.map(stat => ({ // engine knowledge is meaningless
             field: `unit_` + stat.id,
             headerName: stat.name,
             type: 'number',
@@ -296,7 +296,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           //       <div>
           //         <Button variant="outlined" color="warning" onClick={
           //           () => {
-          //             for (const stat of PartStatsListPage) {
+          //             for (const stat of PartStatsCategorizedPage) {
           //               const [partType, partStat] = stat.id.split("_");
           //               database.exec(`UPDATE Parts_TeamExpertise SET Expertise = :value WHERE PartType = :partType AND PartStat = :partStat`, {
           //                 ":value": row['val_' + stat.id],
@@ -319,7 +319,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, flex: 1, flexBasis: 720 }}>
             Effects per 100 attribute (10%) in {PartInfo.category}: <br/>
             {
-              PartStatsListPage.filter(
+              PartStatsCategorizedPage.filter(
                 stat => reverseContrib[stat.stat === 15 ? 1500 : stat.stat]?.length && PartFactor[stat.stat][PartInfo.parts[0]]
               ).map(stat => (
                 <p key={stat.id}>

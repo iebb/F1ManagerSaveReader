@@ -5,7 +5,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartStatsListV} from "./consts";
+import {PartStatsCategorizedV} from "./consts";
 
 export default function DesignView() {
 
@@ -19,9 +19,9 @@ export default function DesignView() {
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
 
-  const PartInfo = PartStatsListV[version][partPanel];
-  const PartStatsListPage = PartStatsListV[version][partPanel].stats;
-  const PartTypePage = PartStatsListV[version][partPanel].parts;
+  const PartInfo = PartStatsCategorizedV[version][partPanel];
+  const PartStatsCategorizedPage = PartStatsCategorizedV[version][partPanel].stats;
+  const PartTypePage = PartStatsCategorizedV[version][partPanel].parts;
 
 
 
@@ -86,7 +86,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         setPartPanel(newValue);
       }} aria-label="basic tabs example">
         {
-          PartStatsListV[version].map(p => (
+          PartStatsCategorizedV[version].map(p => (
             <Tab label={p.category} key={p.id} />
           ))
         }
@@ -114,7 +114,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           }
 
 
-          for (const stat of PartStatsListPage) {
+          for (const stat of PartStatsCategorizedPage) {
             const [partType, partStat] = stat.id.split("_");
             const part = newRow.Part[partType]
 
@@ -173,7 +173,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             }
           },
 
-          ...PartStatsListPage.filter(x => !x.hideInVersions || (!x.hideInVersions.includes(version)) ).map(stat => ({ // engine knowledge is meaningless
+          ...PartStatsCategorizedPage.filter(x => !x.hideInVersions || (!x.hideInVersions.includes(version)) ).map(stat => ({ // engine knowledge is meaningless
             field: `val_` + stat.id,
             headerName: stat.name,
             type: 'number',
@@ -202,7 +202,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           //       <div>
           //         <Button variant="outlined" color="warning" onClick={
           //           () => {
-          //             for (const stat of PartStatsListPage) {
+          //             for (const stat of PartStatsCategorizedPage) {
           //               const [partType, partStat] = stat.id.split("_");
           //               database.exec(`UPDATE Parts_TeamExpertise SET Expertise = :value WHERE PartType = :partType AND PartStat = :partStat`, {
           //                 ":value": row['val_' + stat.id],

@@ -5,7 +5,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartStatsListV} from "./consts";
+import {PartStatsCategorizedV} from "./consts";
 
 
 export default function ExpertiseView() {
@@ -20,8 +20,8 @@ export default function ExpertiseView() {
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
 
-  const PartStatsList = PartStatsListV[version];
-  const PartStatsListPage = PartStatsList[partPanel].stats;
+  const PartStatsCategorized = PartStatsCategorizedV[version];
+  const PartStatsCategorizedPage = PartStatsCategorized[partPanel].stats;
 
 
 
@@ -62,7 +62,7 @@ export default function ExpertiseView() {
         setPartPanel(newValue);
       }} aria-label="basic tabs example">
         {
-          PartStatsList.map(p => (
+          PartStatsCategorized.map(p => (
             <Tab label={p.category} key={p.id} />
           ))
         }
@@ -72,20 +72,23 @@ export default function ExpertiseView() {
         getRowId={r => r.TeamID}
         onProcessRowUpdateError={e => console.error(e)}
         processRowUpdate={(newRow, oldRow) => {
-          for (const stat of PartStatsListPage) {
+          for (const stat of PartStatsCategorizedPage) {
             const [partType, partStat] = stat.id.split("_");
 
-            database.exec(
-              version === 2 ? (
-                `UPDATE Parts_TeamExpertise SET Expertise = :value WHERE TeamID = :teamID AND PartType = :partType AND StatID = :partStat`
-              ) : (
-                `UPDATE Parts_TeamExpertise SET Expertise = :value WHERE TeamID = :teamID AND PartType = :partType AND PartStat = :partStat`
-              ), {
-              ":teamID": newRow.TeamID,
-              ":value": newRow['stat_' + stat.id],
-              ":partType": partType,
-              ":partStat": partStat,
-            })
+            if (newRow['stat_' + stat.id]) {
+              database.exec(
+                version === 2 ? (
+                  `UPDATE Parts_TeamExpertise SET Expertise = :value WHERE TeamID = :teamID AND PartType = :partType AND StatID = :partStat`
+                ) : (
+                  `UPDATE Parts_TeamExpertise SET Expertise = :value WHERE TeamID = :teamID AND PartType = :partType AND PartStat = :partStat`
+                ), {
+                  ":teamID": newRow.TeamID,
+                  ":value": newRow['stat_' + stat.id],
+                  ":partType": partType,
+                  ":partStat": partStat,
+                })
+            }
+
           }
           refresh();
           return newRow;
@@ -120,7 +123,7 @@ export default function ExpertiseView() {
               )
             }
           },
-          ...PartStatsListPage.filter(x => !x.hideInExpertise).map(stat => ({
+          ...PartStatsCategorizedPage.filter(x => !x.hideInExpertise).map(stat => ({
             field: `stat_` + stat.id,
             headerName: stat.name,
             type: 'number',
@@ -163,7 +166,7 @@ export default function ExpertiseView() {
                 <div>
                   <Button variant="outlined" color="warning" onClick={
                     () => {
-                      for (const stat of PartStatsListPage) {
+                      for (const stat of PartStatsCategorizedPage) {
                         const [partType, partStat] = stat.id.split("_");
                         database.exec(`UPDATE Parts_TeamExpertise SET Expertise = :value WHERE PartType = :partType AND PartStat = :partStat`, {
                           ":value": row['stat_' + stat.id],

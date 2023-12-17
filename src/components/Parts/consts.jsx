@@ -17,7 +17,7 @@ export const PartCalculationStatsV = {
 }
 
 
-export const PartStatsListV = {
+export const PartStatsCategorizedV = {
   2: PartStatsCategorized2023,
   3: PartStatsCategorized2023
 };
