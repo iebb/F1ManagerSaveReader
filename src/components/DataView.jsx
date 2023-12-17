@@ -1,12 +1,12 @@
 import {Typography} from "@mui/material";
 import {useContext, useEffect, useState} from "react";
 import {parseBasicInfo} from "../js/basicInfoParser";
+import {Header} from "./Common/subcomponents/Header";
 import {BasicInfoContext, DatabaseContext, VersionContext} from "./Contexts";
 import Modding from "./Modding/Modding";
 import Parts from "./Parts/Parts";
 import RaceResults from "./RaceResults/RaceResults";
-import {Header} from "./Common/subcomponents/Header";
-import CarSetup from "./RaceWeekend/CarSetup";
+import RaceWeekend from "./RaceWeekend/Weekend";
 import CostCap from "./Regulations/CostCap";
 import Staff from "./Staff/Staff";
 import {VTabs} from "./Tabs";
@@ -54,7 +54,7 @@ export default function DataView() {
       <BasicInfoContext.Provider value={basicInfo}>
         <Header />
         <VTabs options={[
-          {name: "Setup", tab: <CarSetup />},
+          {name: "Weekend", tab: <RaceWeekend />},
           {name: "Results", tab: <RaceResults />},
           {name: "Cost Cap", tab: <CostCap />},
           {name: "Staff", tab: <Staff />},

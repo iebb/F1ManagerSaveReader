@@ -232,3 +232,11 @@ main {
   padding: 0;
   text-align: right;
 }
+
+.MuiDataGrid-cell--editable {
+  background-image: url("/pencil.png");
+  background-size: 8px;
+  background-position-y: center;
+  background-position-x: right;
+  background-repeat: no-repeat;
+}

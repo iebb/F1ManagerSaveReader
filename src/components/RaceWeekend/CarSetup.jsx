@@ -110,98 +110,84 @@ export default function CarSetup() {
 
   return (
     <div>
-      {
-        weekend.RaceID < 0 ? (
-          <>
-            <span style={{ color: "yellow", fontSize: 18 }}>
-              You are not in a race weekend. Please save inside a race weekend.
-            </span>
-            <br/>
-          </>
-        ) : (
-          <>
-            <Typography variant="h5" component="h5">
-              Perfect Car Setups for {circuitNames[trackId]}, {countryNames[trackId]}
-            </Typography>
-            <Divider variant="fullWidth" sx={{ my: 2 }} />
-            <Typography variant="p" component="p" sx={{ color: "orange" }}>
-              <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => {
-                database.exec(
-                  "Update Save_CarConfig SET " +
-                  "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
-                  "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
-                  "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
-                  "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
-                  "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
-                  `WHERE TeamID = ${basicInfo.player.TeamID}`
-                );
-                repack(database, metadata, true);
-              }}>
+      <Typography variant="h5" component="h5">
+        Perfect Car Setups for {circuitNames[trackId]}, {countryNames[trackId]}
+      </Typography>
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
+      <Typography variant="p" component="p" sx={{ color: "orange" }}>
+        <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => {
+          database.exec(
+            "Update Save_CarConfig SET " +
+            "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
+            "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
+            "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
+            "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
+            "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
+            `WHERE TeamID = ${basicInfo.player.TeamID}`
+          );
+          repack(database, metadata, true);
+        }}>
+          {
+            env.inApp ? "Modify Savefile to Optimal" : "Export Optimal Savefile"
+          }
+        </Button>
+        <Button color="secondary" variant="contained" sx={{ mr: 2 }} onClick={() => {
+          database.exec(
+            "Update Save_CarConfig SET " +
+            "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
+            "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
+            "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
+            "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
+            "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
+            `WHERE TeamID = ${basicInfo.player.TeamID}`
+          );
+        }}>
+          {
+            "Update to Optimal without Exporting"
+          }
+        </Button>
+      </Typography>
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Team / Driver</TableCell>
+              {
+                CarSetupParams.map(p => {
+                  return <TableCell align="right" key={p.index}>{p.name}</TableCell>
+                })
+              }
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.filter(teamOnly ? (row => basicInfo.player.TeamID === row.TeamID) : () => true).map(row => ({
+              ...row,
+              order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
+            })).sort((x, y) => x.order - y.order).map((row) => (
+              <TableRow
+                key={`${row.TeamID}_${row.LoadOutID}`}
+                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                style={basicInfo.player.TeamID === row.TeamID ? { background: "#333333" } : {}}
+              >
+                <TableCell component="th" scope="row">
+                  {
+                    getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
+                  }
+                  <br />
+                  <sub>{row.Team.TeamName}</sub>
+                </TableCell>
                 {
-                  env.inApp ? "Modify Savefile to Optimal" : "Export Optimal Savefile"
+                  CarSetupParams.map(p => {
+                    const val = p.render(p.min + (p.max - p.min) * row.Setups[p.index]);
+                    return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val}</TableCell>
+                  })
                 }
-              </Button>
-              <Button color="secondary" variant="contained" sx={{ mr: 2 }} onClick={() => {
-                database.exec(
-                  "Update Save_CarConfig SET " +
-                  "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
-                  "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
-                  "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
-                  "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
-                  "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
-                  `WHERE TeamID = ${basicInfo.player.TeamID}`
-                );
-              }}>
-                {
-                  "Update to Optimal without Exporting"
-                }
-              </Button>
-            </Typography>
-            <Divider variant="fullWidth" sx={{ my: 2 }} />
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Team / Driver</TableCell>
-                    {
-                      CarSetupParams.map(p => {
-                        return <TableCell align="right" key={p.index}>{p.name}</TableCell>
-                      })
-                    }
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.filter(teamOnly ? (row => basicInfo.player.TeamID === row.TeamID) : () => true).map(row => ({
-                    ...row,
-                    order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
-                  })).sort((x, y) => x.order - y.order).map((row) => (
-                    <TableRow
-                      key={`${row.TeamID}_${row.LoadOutID}`}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                      style={basicInfo.player.TeamID === row.TeamID ? { background: "#333333" } : {}}
-                    >
-                      <TableCell component="th" scope="row">
-                        {
-                          getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
-                        }
-                        <br />
-                        <sub>{row.Team.TeamName}</sub>
-                      </TableCell>
-                      {
-                        CarSetupParams.map(p => {
-                          const val = p.render(p.min + (p.max - p.min) * row.Setups[p.index]);
-                          return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val}</TableCell>
-                        })
-                      }
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </>
-        )
-      }
-
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 }

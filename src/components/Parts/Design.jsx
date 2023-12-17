@@ -124,8 +124,6 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
 
   }, [database, updated, partPanel])
 
-  console.log(reverseContrib);
-
   return (
     <div>
       <Tabs value={partPanel} onChange={(event, newValue) => {

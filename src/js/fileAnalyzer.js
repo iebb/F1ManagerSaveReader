@@ -50,7 +50,11 @@ export const analyzeFileToDatabase = async (file) => {
 
         // @ts-ignore
 
+        if (window.db) {
+          window.db.close();
+        }
         const db = new window.SQL.Database(database_file);
+        window.db = db;
 
 
         const metadata = {
