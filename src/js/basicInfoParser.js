@@ -180,5 +180,6 @@ export const parseBasicInfo = ({db, version}) => {
     }
   }
 
+  console.log(version, basicInfo);
   return basicInfo;
 }

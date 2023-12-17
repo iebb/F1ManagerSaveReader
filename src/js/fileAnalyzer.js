@@ -54,6 +54,7 @@ export const analyzeFileToDatabase = async (file) => {
           }]
         }
 
+        console.log(db, version, metadata)
 
         resolve({
           db,

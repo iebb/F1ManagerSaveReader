@@ -5,7 +5,7 @@ import {BasicInfoContext, DatabaseContext, VersionContext} from "./Contexts";
 import Modding from "./Modding/Modding";
 import Parts from "./Parts/Parts";
 import RaceResults from "./RaceResults/RaceResults";
-import {Header} from "./RaceResults/subcomponents/Header";
+import {Header} from "./Common/subcomponents/Header";
 import CarSetup from "./RaceWeekend/CarSetup";
 import CostCap from "./Regulations/CostCap";
 import Staff from "./Staff/Staff";
@@ -17,13 +17,17 @@ export default function DataView() {
   const [basicInfo, setBasicInfo] = useState(null);
 
   useEffect(() => {
-    try {
-      setBasicInfo(parseBasicInfo({ db, version }))
-    } catch (e) {
-      console.error(e);
+    if (version) {
+      try {
+        setBasicInfo(parseBasicInfo({ db, version }))
+      } catch (e) {
+        console.error(e);
+        setBasicInfo(null);
+      }
+    } else {
       setBasicInfo(null);
     }
-  }, [version]);
+  }, [db, version]);
 
   if (!version) {
     return (
