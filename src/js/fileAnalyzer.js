@@ -7,8 +7,6 @@ const toInteger = (x) => {
     x.charCodeAt(1)) * 256 + x.charCodeAt(0);
 }
 
-const toBuffer = (x) => new Int32Array([n]).buffer
-
 export const analyzeFileToDatabase = async (file) => {
   if (!window.SQL) return;
 
@@ -18,10 +16,27 @@ export const analyzeFileToDatabase = async (file) => {
       let reader = new FileReader();
       reader.onload = async (e) => {
         const data = reader.result;
-        const version = data.charCodeAt(4);
+        const version = toInteger(data.slice(4, 8));
+        const versionStringOffset = version === 3 ? 0x1A : 0x16;
+        const gameVersionStringLength = toInteger(data.slice(versionStringOffset, versionStringOffset + 4));
+        const gameVersionString = data.slice(
+          versionStringOffset + 4,
+          versionStringOffset + 4 + gameVersionStringLength - 1
+        ); // removal of trailing 0x00
+
+        let prettifiedGameVersion;
+        switch (version) {
+          case 3:
+            prettifiedGameVersion = gameVersionString.substring(gameVersionString.indexOf("23+") + 3);
+            break;
+          case 2:
+            prettifiedGameVersion = gameVersionString.substring(gameVersionString.indexOf("22_") + 3);
+            break;
+        }
+
         const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x00\x00\x00\x00") + 19 + 4;
 
-        const size_0 = toInteger(data.slice(metaLength, metaLength + 4));
+        const total_size = toInteger(data.slice(metaLength, metaLength + 4));
         const size_1 = toInteger(data.slice(metaLength + 4, metaLength + 8));
         const size_2 = toInteger(data.slice(metaLength + 8, metaLength + 12));
         const size_3 = toInteger(data.slice(metaLength + 12, metaLength + 16));
@@ -37,9 +52,12 @@ export const analyzeFileToDatabase = async (file) => {
 
         const db = new window.SQL.Database(database_file);
 
+
         const metadata = {
           filename: file.name,
           version,
+          gameVersionRaw: gameVersionString,
+          gameVersion: prettifiedGameVersion,
           chunk0: Uint8Array.from(
             data.slice(0, metaLength), (c) => c.charCodeAt(0)
           ),
@@ -54,11 +72,13 @@ export const analyzeFileToDatabase = async (file) => {
           }]
         }
 
-        console.log(db, version, metadata)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(db, version, metadata)
+          // saveAs(new Blob([metadata.chunk0], {type: "application/binary"}), "chunk0");
+        }
 
         resolve({
           db,
-          version,
           metadata
         });
 

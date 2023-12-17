@@ -26,7 +26,7 @@ export const Header = () => {
           Playing as {player.FirstName} {player.LastName} for <span style={{
           color: `var(--team${team.TeamID}-fanfare1)`,
           borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
-        }}>{team.TeamName}</span> in {version + 2020} Game, savefile {metadata.filename}
+        }}>{team.TeamName}</span> in {version + 2020} Game (v{metadata.gameVersion}), savefile {metadata.filename}
           <br />
           It's {formatDate(dayToDate(player.Day))} in-game{player.LastRaceTrackID ? ` and last raced at ${circuitNames[player.LastRaceTrackID]}` : ""}.
         </Typography>

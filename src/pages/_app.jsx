@@ -39,9 +39,9 @@ export default function App({ Component, pageProps }) {
   const [inApp, setInApp] = useState(false);
   const [filePath, setFilePath] = useState("");
   const openFile = (f) => {
-    analyzeFileToDatabase(f).then(({db, version, metadata}) => {
+    analyzeFileToDatabase(f).then(({db, metadata}) => {
       setDb(db);
-      setVersion(version);
+      setVersion(metadata.version);
       setMetadata(metadata);
     });
   }
