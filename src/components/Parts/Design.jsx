@@ -214,9 +214,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
                   {teamNames(value, metadata.version)}
                   <div>
-                    {row.DesignID ? `D-${row.DesignID}` : <span style={{ color: "white" }}>
-                      Not Installed
-                    </span>}
+                    {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
                   </div>
                 </div>
               )
@@ -233,7 +231,9 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                     getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])
                   }
                   <div>
-                    {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
+                    {row.DesignID ? `Part #${row.ManufactureNumber}` : <span style={{color: "white"}}>
+                      Not Installed
+                    </span>}
                   </div>
                 </div>
               )
@@ -241,7 +241,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           },
           ...PartInfo.parts.map(part => ({
             field: `condition_` + part,
-            headerName:  (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Condition",
+            headerName: (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Condition",
             type: 'number',
             width: 120,
             valueGetter: ({value}) => Number(value),
@@ -322,7 +322,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             Effects per 100 attribute (10%) in {PartInfo.category}: <br/>
             {
               PartStatsListPage.filter(
-                stat => reverseContrib[stat.stat === 15 ? 1500 : stat.stat].length
+                stat => reverseContrib[stat.stat === 15 ? 1500 : stat.stat]?.length && PartFactor[stat.stat][PartInfo.parts[0]]
               ).map(stat => (
                 <p key={stat.id}>
                   per {
