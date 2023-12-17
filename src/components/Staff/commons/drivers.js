@@ -109,12 +109,10 @@ export const assignRandomRaceNumber = (ctx, staff1) => {
 }
 
 
-export const swapDriverContracts = (ctx, staff1, staff2) => {
+export const swapDriverContracts = (ctx, staff1, staff2, staffType = 0) => {
   const { database, basicInfo } = ctx;
   const season = basicInfo.player.CurrentSeason;
   let results;
-
-  if (staff1.StaffType !== staff2.StaffType) return;
 
   /* contracts */
   database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff2} AND ContractType = 0`);
@@ -126,7 +124,8 @@ export const swapDriverContracts = (ctx, staff1, staff2) => {
   database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 1 AND Accepted = 10`);
   database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 1 AND Accepted = 30`);
 
-  if (staff1.StaffType === 0) {
+  if (staffType === 0) {
+    console.log("swapping drivers")
     let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1}`);
     let [{values: [[AssignedCarNumberB]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2}`);
 
@@ -135,7 +134,6 @@ export const swapDriverContracts = (ctx, staff1, staff2) => {
     database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1}`, {":acn": AssignedCarNumberB});
 
     const driverPairs = [[staff1, staff2], [staff2, staff1]]
-
     for(const [A, B] of driverPairs) {
 
       /* race engineers */
@@ -151,7 +149,6 @@ export const swapDriverContracts = (ctx, staff1, staff2) => {
         } else {
           database.exec(`INSERT INTO Staff_RaceEngineerDriverAssignments VALUES (${engineerA}, ${B}, 0, 50, 3)`);
         }
-
       }
 
       /* standings */
@@ -169,12 +166,8 @@ export const swapDriverContracts = (ctx, staff1, staff2) => {
     }
 
     database.exec(`UPDATE Staff_RaceEngineerDriverAssignments SET IsCurrentAssignment = 1 WHERE IsCurrentAssignment = 3`);
-  }
-
-  if (staff1.StaffType === 2) { // race engineer
-
+  } else if (staffType === 2) { // race engineer
     const raceEngineerPairs = [[staff1, staff2], [staff2, staff1]]
-
     for(const [A, B] of raceEngineerPairs) {
       /* race engineers */
       results = database.exec(`SELECT DriverID FROM Staff_RaceEngineerDriverAssignments WHERE IsCurrentAssignment = 1 AND RaceEngineerID = ${A}`);
@@ -190,9 +183,7 @@ export const swapDriverContracts = (ctx, staff1, staff2) => {
         }
       }
     }
-
     database.exec(`UPDATE Staff_RaceEngineerDriverAssignments SET IsCurrentAssignment = 1 WHERE IsCurrentAssignment = 3`);
-    
   }
 }
 export const fireDriverContract = (ctx, staff1) => {

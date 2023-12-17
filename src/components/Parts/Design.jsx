@@ -1,17 +1,21 @@
-import {Button, Tabs} from "@mui/material";
+import {Tabs} from "@mui/material";
 import Tab from "@mui/material/Tab";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartNames, PartStatsCategorized2023, statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts";
+import {
+  PartCalculationStatsV,
+  PartStatsListV,
+} from "./consts";
 
+import {
+  PartNames,
+  statRenderer,
+  unitValueToValue
+} from "./consts_2023";
 
-const PartStatsListV = {
-  2: PartStatsCategorized2023,
-  3: PartStatsCategorized2023
-}
 
 export default function DesignView() {
 
@@ -34,9 +38,32 @@ export default function DesignView() {
   const PartTypePage = PartStatsList[partPanel].parts;
 
 
+  const PartCalculationStats = PartCalculationStatsV[version];
 
 
   useEffect(() => {
+
+
+    const contributions = PartCalculationStats.map(
+      stat => {
+        let totalValue = 0;
+        for(const v of Object.keys(stat.contributors)) {
+          totalValue += stat.contributors[v];
+        }
+        let contributionValue = {};
+        for(const v of Object.keys(stat.contributors)) {
+          contributionValue[v] = stat.contributors[v] / totalValue;
+        }
+        return {
+          ...stat,
+          contributionValue,
+        };
+      }
+    )
+
+    console.log(contributions);
+
+
     const partStats = {};
     try {
 

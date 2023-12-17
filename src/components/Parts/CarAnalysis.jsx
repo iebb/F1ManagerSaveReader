@@ -5,23 +5,16 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartCalculationStats2023, PartStats2023, PSF2023} from "./consts";
+import {
+  PartCalculationStats2023,
+  PartCalculationStatsV,
+  PartFactorsV,
+  PartStats2023,
+  PartStatsV,
+  PSF2023
+} from "./consts";
 import {PartCalculationStats2022, PartStats2022, PSF2022} from "./consts_2022";
 
-const PartStatsV = {
-  2: PartStats2022,
-  3: PartStats2023,
-}
-
-const PartFactorsV = {
-  2: PSF2022,
-  3: PSF2023,
-}
-
-const PartCalculationStatsV = {
-  2: PartCalculationStats2022,
-  3: PartCalculationStats2023,
-}
 
 export default function CarAnalysis() {
 
@@ -38,9 +31,7 @@ export default function CarAnalysis() {
   const [partPanel, setPartPanel] = useState(0);
 
   const PartCalculationStats = PartCalculationStatsV[version];
-
   const PartStats = PartStatsV[version];
-
   const PartFactors = PartFactorsV[version];
 
 

@@ -76,7 +76,9 @@ export default function ContractSwapper(props) {
                 if (swapRow.StaffType === 0 && !swapDriver.number) {
                   assignRandomRaceNumber(ctx, swapDriver.id);
                 }
-                swapDriverContracts(ctx, swapRow.StaffID, swapDriver.id);
+                if (swapRow.StaffType === swapRow.StaffType) {
+                  swapDriverContracts(ctx, swapRow.StaffID, swapDriver.id, swapRow.StaffType);
+                }
                 refresh();
               }
             }} disabled={!swapDriver || (swapRow.StaffID === swapDriver.id)}>Swap</Button>

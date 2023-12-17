@@ -5,13 +5,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartNames, PartStatsCategorized2023, statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts";
-
-
-const PartStatsList = {
-  2: PartStatsCategorized2023,
-  3: PartStatsCategorized2023
-}
+import {PartStatsListV} from "./consts";
 
 export default function DesignView() {
 
@@ -25,9 +19,9 @@ export default function DesignView() {
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
 
-  const PartInfo = PartStatsList[version][partPanel];
-  const PartStatsListPage = PartStatsList[version][partPanel].stats;
-  const PartTypePage = PartStatsList[version][partPanel].parts;
+  const PartInfo = PartStatsListV[version][partPanel];
+  const PartStatsListPage = PartStatsListV[version][partPanel].stats;
+  const PartTypePage = PartStatsListV[version][partPanel].parts;
 
 
 
@@ -92,7 +86,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         setPartPanel(newValue);
       }} aria-label="basic tabs example">
         {
-          PartStatsList[version].map(p => (
+          PartStatsListV[version].map(p => (
             <Tab label={p.category} key={p.id} />
           ))
         }

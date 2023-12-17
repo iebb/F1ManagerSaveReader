@@ -5,13 +5,8 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import {PartStatsCategorized2023} from "./consts";
+import {PartStatsListV} from "./consts";
 
-
-const PartStatsList = {
-  2: PartStatsCategorized2023,
-  3: PartStatsCategorized2023
-}
 
 export default function ExpertiseView() {
 
@@ -25,7 +20,8 @@ export default function ExpertiseView() {
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
 
-  const PartStatsListPage = PartStatsList[version][partPanel].stats;
+  const PartStatsList = PartStatsListV[version];
+  const PartStatsListPage = PartStatsList[partPanel].stats;
 
 
 
@@ -66,7 +62,7 @@ export default function ExpertiseView() {
         setPartPanel(newValue);
       }} aria-label="basic tabs example">
         {
-          PartStatsList[version].map(p => (
+          PartStatsList.map(p => (
             <Tab label={p.category} key={p.id} />
           ))
         }
