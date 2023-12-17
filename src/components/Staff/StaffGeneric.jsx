@@ -137,7 +137,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
           {
             field: 'StaffID',
             headerName: 'Name',
-            width: 150,
+            width: 100,
             renderCell: ({ row }) => {
               return (
                 <div>

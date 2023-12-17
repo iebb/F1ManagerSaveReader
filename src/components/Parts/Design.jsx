@@ -1,4 +1,4 @@
-import {Tabs} from "@mui/material";
+import {Tabs, Typography} from "@mui/material";
 import Tab from "@mui/material/Tab";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
@@ -6,14 +6,14 @@ import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import {
-  PartCalculationStatsV,
+  PartCalculationStatsV, PartFactorsV,
   PartStatsListV,
 } from "./consts";
 
 import {
   PartNames,
   statRenderer,
-  unitValueToValue
+  unitValueToValue, valueToDeltaUnitValue
 } from "./consts_2023";
 
 
@@ -31,7 +31,9 @@ export default function DesignView() {
 
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
+  const [reverseContrib, setReverseContrib] = useState([]);
 
+  const PartFactor = PartFactorsV[version];
   const PartStatsList = PartStatsListV[version];
   const PartInfo = PartStatsList[partPanel];
   const PartStatsListPage = PartStatsList[partPanel].stats;
@@ -43,27 +45,28 @@ export default function DesignView() {
 
   useEffect(() => {
 
-
-    const contributions = PartCalculationStats.map(
-      stat => {
-        let totalValue = 0;
-        for(const v of Object.keys(stat.contributors)) {
-          totalValue += stat.contributors[v];
-        }
-        let contributionValue = {};
-        for(const v of Object.keys(stat.contributors)) {
-          contributionValue[v] = stat.contributors[v] / totalValue;
-        }
-        return {
-          ...stat,
-          contributionValue,
-        };
+    let reverseContribution = {};
+    for (const stat of PartCalculationStats) {
+      let totalValue = 0;
+      for (const v of Object.keys(stat.contributors)) {
+        totalValue += stat.contributors[v];
       }
-    )
+      for (const v of Object.keys(stat.contributors)) {
+        if (!reverseContribution[v]) {
+          reverseContribution[v] = [];
+        }
+        reverseContribution[v].push({
+          ...stat,
+          contribution: stat.contributors[v] / totalValue
+        })
+      }
+    }
 
-    console.log(contributions);
+    setReverseContrib(reverseContribution);
+  }, [version])
 
 
+    useEffect(() => {
     const partStats = {};
     try {
 
@@ -120,6 +123,8 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
     }
 
   }, [database, updated, partPanel])
+
+  console.log(reverseContrib);
 
   return (
     <div>
@@ -254,7 +259,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             editable: true,
           })),
 
-          ...PartStatsListPage.filter(x => !x.hideInVersions || (!x.hideInVersions.includes(version)) ).map(stat => ({ // engine knowledge is meaningless
+          ...PartStatsListPage.map(stat => ({ // engine knowledge is meaningless
             field: `unit_` + stat.id,
             headerName: stat.name,
             type: 'number',
@@ -311,6 +316,38 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         ]}
         hideFooter
       />
+      {
+        version === 3 && (
+          <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, flex: 1, flexBasis: 720 }}>
+            Effects per 100 (10%) in {PartInfo.category}: <br/>
+            {
+              PartStatsListPage.filter(
+                stat => reverseContrib[stat.stat === 15 ? 1500 : stat.stat].length
+              ).map(stat => (
+                <p key={stat.id}>
+                  {
+                    (stat.statRenderer ? stat.statRenderer : statRenderer[stat.stat])(
+                      (stat.valueToDeltaUnitValue ? (
+                        stat.valueToDeltaUnitValue
+                      ) : (
+                        valueToDeltaUnitValue[stat.stat]
+                      )) * 100
+                    )
+                  } {stat.name}: <br />{
+                  reverseContrib[stat.stat === 15 ? 1500 : stat.stat]?.map(r =>
+                      <span key={r.id} style={{ color: '#777', marginRight: 10 }}>
+                  {r.name} {stat.stat === 15 ? "-" : "+"}{r.render(
+                        0.1 * r.contribution * PartFactor[stat.stat][PartInfo.parts[0]] *
+                        (r.bounds[1] - r.bounds[0])
+                      )}
+                </span>
+                  )
+                }</p>
+              ))
+            }
+          </Typography>
+        )
+      }
     </div>
   );
 }
