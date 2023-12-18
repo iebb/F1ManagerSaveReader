@@ -3,11 +3,12 @@ import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@m
 import {Plus_Jakarta_Sans} from 'next/font/google'
 import Head from "next/head";
 import {SnackbarProvider} from "notistack";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
 import {
   DatabaseContext,
   DatabaseUpdaterContext,
+  BasicInfoContext,
   EnvContext,
   MetadataContext,
   VersionContext
@@ -15,6 +16,10 @@ import {
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
 import {analyzeFileToDatabase} from "../js/fileAnalyzer";
+import {parseBasicInfo} from "../js/basicInfoParser";
+import DragBox from "../components/UI/Blocks/DragBox";
+import {BasicInfoHeader} from "../components/Common/subcomponents/BasicInfoHeader";
+import Nav from "../components/UI/Nav";
 
 const pjs = Plus_Jakarta_Sans({ subsets: ['latin'] });
 const theme = createTheme({
@@ -30,6 +35,39 @@ const theme = createTheme({
       'Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
   },
 });
+
+
+
+export function DataView({ children }) {
+  const version = useContext(VersionContext);
+  const basicInfo = useContext(BasicInfoContext);
+
+  if (!version) {
+    return (
+      <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+        Please drag a file first. All processing is done client-side so your savefile won't be uploaded.
+      </Typography>
+    );
+  }
+
+  if (!basicInfo) {
+    return (
+      <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+        This savefile is corrupted or unsupported.
+      </Typography>
+    );
+  }
+
+  return (
+    <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
+      <BasicInfoHeader />
+      <Nav />
+      {children}
+    </div>
+  )
+}
+
+
 export default function App({ Component, pageProps }) {
 
   const [loaded, setLoaded] = useState(false);
@@ -38,17 +76,31 @@ export default function App({ Component, pageProps }) {
   const [metadata, setMetadata] = useState(null);
   const [inApp, setInApp] = useState(false);
   const [filePath, setFilePath] = useState("");
+  const [basicInfo, setBasicInfo] = useState(null);
+
   const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, metadata}) => {
       setDb(db);
       setVersion(metadata.version);
       setMetadata(metadata);
+      if (metadata.version) {
+        try {
+          setBasicInfo(parseBasicInfo({
+            db,
+            version: metadata.version
+          }))
+        } catch (e) {
+          console.error(e);
+          setBasicInfo(null);
+        }
+      } else {
+        setBasicInfo(null);
+      }
     });
   }
 
 
   useEffect(() => {
-
     if (window?.navigator?.userAgent?.includes("MRCHROME") && !inApp) {
       setInApp(true);
     }
@@ -69,6 +121,7 @@ export default function App({ Component, pageProps }) {
     }, false)
   }, []);
 
+
   return (
     <ThemeProvider theme={theme}>
       <Head>
@@ -81,78 +134,43 @@ export default function App({ Component, pageProps }) {
           rel="stylesheet"
         />
       </Head>
-      <SnackbarProvider maxSnack={3} anchorOrigin={{vertical: 'top', horizontal: 'right'}}>
-        <CssBaseline/>
+      <SnackbarProvider
+        maxSnack={10}
+        anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+      >
+        <CssBaseline />
         {
           loaded ? (
-            <Dropzone
-              onDropAccepted={files => openFile(files[0])}
-              noClick
-              multiple={false}
-            >
-              {({ getRootProps, getInputProps }) => (
-                <div {...getRootProps()}>
-                  <Header/>
-                  {
-                    !inApp && (
-                      <Container maxWidth={false} component="main">
-                        <input {...getInputProps()} hidden />
-                        <div id="dropzone">
-                          {
-                            version ? (
-                              <>
-                                <Typography variant="h5" component="h5">
-                                  Drag another savefile here to start over.
-                                </Typography>
-                              </>
-                            ) : (
-                              <>
-                                <Typography variant="h5" component="h5">
-                                  Try our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which is able to read Steam and Xbox saves directly.
-                                </Typography>
-                                <Typography variant="h5" component="h5">
-                                  Or... drag your F1 Manager 2022/2023 savefile here to get started.
-                                </Typography>
-                                <Typography variant="p" component="p" sx={{ mt: 2 }}>
-                                  F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames
-                                  <br />
-                                  F1 Manager 2022: %LOCALAPPDATA%\F1Manager22\Saved\SaveGames
-                                  <br />
-                                  If you are playing Xbox Store version, please use <a
-                                  href="https://github.com/Fr33dan/GPSaveConverter/releases">
-                                  GPSaveConverter
-                                </a> to convert the savefile into original format, or use the Windows App.
-                                  <br />
-                                  Support for F1 Manager 2022 might be limited.
-                                </Typography>
-                              </>
-                            )
-                          }
-
-                        </div>
-                      </Container>
-                    )
-                  }
-                  <Container maxWidth={false} component="main">
-                    <VersionContext.Provider value={version}>
-                      <DatabaseContext.Provider value={db}>
-                        <DatabaseUpdaterContext.Provider value={setDb}>
-                          <MetadataContext.Provider value={metadata}>
-                            <EnvContext.Provider value={{
-                              inApp,
-                              filePath,
-                            }}>
-                              <Component {...pageProps} />
-                            </EnvContext.Provider>
-                          </MetadataContext.Provider>
-                        </DatabaseUpdaterContext.Provider>
-                      </DatabaseContext.Provider>
-                    </VersionContext.Provider>
-                  </Container>
-                  <Footer />
-                </div>
-              )}
-            </Dropzone>
+            <VersionContext.Provider value={version}>
+              <DatabaseContext.Provider value={db}>
+                <DatabaseUpdaterContext.Provider value={setDb}>
+                  <MetadataContext.Provider value={metadata}>
+                    <BasicInfoContext.Provider value={basicInfo}>
+                      <EnvContext.Provider value={{ inApp, filePath }}>
+                        <Dropzone
+                          onDropAccepted={files => openFile(files[0])}
+                          noClick
+                          multiple={false}
+                        >
+                          {({ getRootProps, getInputProps }) => (
+                            <div {...getRootProps()}>
+                              <Header />
+                              <DragBox props={getInputProps()} />
+                              <Container maxWidth={false} component="main">
+                                <DataView>
+                                  <Component {...pageProps} />
+                                </DataView>
+                              </Container>
+                              <Footer />
+                            </div>
+                          )}
+                        </Dropzone>
+                      </EnvContext.Provider>
+                    </BasicInfoContext.Provider>
+                  </MetadataContext.Provider>
+                </DatabaseUpdaterContext.Provider>
+              </DatabaseContext.Provider>
+            </VersionContext.Provider>
           ) : (
             <Container maxWidth={false} component="main">
               <Typography variant="h5" component="h5">

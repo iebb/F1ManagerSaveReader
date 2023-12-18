@@ -2,13 +2,10 @@ import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
 import {VTabs} from "../Tabs";
-import CarAnalysis from "./CarAnalysis";
-import DesignView from "./Design";
-import DesignValueView from "./DesignV";
-import ExpertiseView from "./Expertise";
+import CostCap from "./CostCap";
 
 
-export default function Parts() {
+export default function Regulations() {
 
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
@@ -17,17 +14,8 @@ export default function Parts() {
   const env = useContext(EnvContext);
 
   let opt = [
-    {name: "Car Analysis", tab: <CarAnalysis />},
-    {name: "Parts Analysis", tab: <DesignView />},
-    {name: "Expertise", tab: <ExpertiseView />},
+    {name: "Cost Cap", tab: <CostCap />},
   ];
-  
-
-  if (process.env.NODE_ENV === 'development') {
-    opt.push(
-      {name: "Part Values", tab: <DesignValueView />}
-    )
-  }
 
   return (
     <div>

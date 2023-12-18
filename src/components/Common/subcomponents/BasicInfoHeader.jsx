@@ -6,7 +6,7 @@ import {useContext} from "react";
 import {dump, repack} from "../../../js/fileAnalyzer";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../../Contexts";
 
-export const Header = () => {
+export const BasicInfoHeader = () => {
   const basicInfo = useContext(BasicInfoContext);
   const database = useContext(DatabaseContext);
   const version = useContext(VersionContext);
@@ -14,6 +14,8 @@ export const Header = () => {
   const env = useContext(EnvContext);
 
   const { player, teamMap, weekend, races, currentSeasonRaces } = basicInfo;
+
+  console.log(basicInfo);
 
   const team = teamMap[player.TeamID];
 

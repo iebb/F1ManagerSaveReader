@@ -1,5 +1,5 @@
 import {Container, Divider, Typography} from "@mui/material";
-import KofiButton from "../Kofi/Kofi";
+import KofiButton from "./Kofi/Kofi";
 
 export default function Header() {
   return (

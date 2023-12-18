@@ -1,7 +1,7 @@
 import {Typography} from "@mui/material";
 import {useContext, useEffect, useState} from "react";
 import {parseBasicInfo} from "../js/basicInfoParser";
-import {Header} from "./Common/subcomponents/Header";
+import {BasicInfoHeader} from "./Common/subcomponents/BasicInfoHeader";
 import {BasicInfoContext, DatabaseContext, VersionContext} from "./Contexts";
 import Modding from "./Modding/Modding";
 import Parts from "./Parts/Parts";
@@ -31,28 +31,24 @@ export default function DataView() {
 
   if (!version) {
     return (
-      <div>
-        <Typography variant="h5" component="h5" sx={{ m: 2 }}>
-          Please drag a file first. All processing is done client-side so your savefile won't be uploaded.
-        </Typography>
-      </div>
+      <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+        Please drag a file first. All processing is done client-side so your savefile won't be uploaded.
+      </Typography>
     );
   }
 
   if (!basicInfo) {
     return (
-      <div>
-        <Typography variant="h5" component="h5" sx={{ m: 2 }}>
-          This savefile is corrupted or unsupported.
-        </Typography>
-      </div>
+      <Typography variant="h5" component="h5" sx={{ m: 2 }}>
+        This savefile is corrupted or unsupported.
+      </Typography>
     );
   }
 
   return (
     <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
       <BasicInfoContext.Provider value={basicInfo}>
-        <Header />
+        <BasicInfoHeader />
         <VTabs options={[
           {name: "Weekend", tab: <RaceWeekend />},
           {name: "Results", tab: <RaceResults />},

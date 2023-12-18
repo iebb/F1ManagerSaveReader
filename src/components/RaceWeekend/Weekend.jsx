@@ -34,8 +34,6 @@ export default function RaceWeekend() {
   }
 
   return (
-    <div>
-      <VTabs options={opt} />
-    </div>
+    <VTabs options={opt} />
   );
 }
