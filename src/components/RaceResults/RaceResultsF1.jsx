@@ -47,8 +47,6 @@ export default function RaceResultsF1() {
 
   useEffect(() => {
 
-    // let season = player.CurrentSeason;
-
     let columns, values;
     let results;
 

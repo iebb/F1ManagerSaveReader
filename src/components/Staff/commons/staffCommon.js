@@ -45,7 +45,7 @@ export const PerformanceStatTypes = [
   "Composure",
 ];
 export const mailSenders = {
-  "STAFF_TYPE_5": "Team Principal",
+  "STAFF_TYPE_5": "(Rival) Team Principal",
   "MAIL_SENDER_ACCOUNTANT_NEIL": "Neil Baldr",
   "MAIL_SENDER_AERO_ENGINEER_VERA": "Vera Bidane",
   "MAIL_SENDER_BOARD_REP_PATRICK": "Patrick Stafford",

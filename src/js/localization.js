@@ -47,15 +47,15 @@ export const weekendStages = [
 ]
 
 export const weekendStagesAbbrev = [
-  "P1", //
+  "Day 1", //
   "P1",
   "P2",
-  "P3", //
+  "Day 2", //
   "P3",
   "Q1",
   "Q2",
   "Q3",
-  "Race",
+  "Pre-Race",
   "Race",
   "End",
   "End",

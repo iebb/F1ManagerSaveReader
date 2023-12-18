@@ -78,6 +78,9 @@ export default function App({ Component, pageProps }) {
   const [filePath, setFilePath] = useState("");
   const [basicInfo, setBasicInfo] = useState(null);
 
+  const [updated, setUpdated] = useState(0);
+  const refresh = () => setUpdated(+new Date());
+
   const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, metadata}) => {
       setDb(db);
@@ -89,6 +92,7 @@ export default function App({ Component, pageProps }) {
             db,
             version: metadata.version
           }))
+          refresh();
         } catch (e) {
           console.error(e);
           setBasicInfo(null);
@@ -158,7 +162,7 @@ export default function App({ Component, pageProps }) {
                               <input {...getInputProps()} hidden />
                               <DragBox />
                               <Container maxWidth={false} component="main">
-                                <DataView>
+                                <DataView key={updated}>
                                   <Component {...pageProps} />
                                 </DataView>
                               </Container>
