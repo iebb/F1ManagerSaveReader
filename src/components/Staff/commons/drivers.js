@@ -27,12 +27,12 @@ export const getStaff = (ctx, StaffType = 0) => {
   if (StaffType === 5) {
     if (version === 3) {
       // [{ columns, values }] = database.exec(
-      //   "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_BasicData \n" +
-      //   `LEFT JOIN Staff_NarrativeData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID WHERE Staff_NarrativeData.IsActive = 1\n`
+      //   "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_NarrativeData \n" +
+      //   `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID WHERE Staff_NarrativeData.IsActive = 1\n`
       // );
       [{ columns, values }] = database.exec(
-        "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_BasicData \n" +
-        `LEFT JOIN Staff_NarrativeData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID\n`
+        "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_NarrativeData \n" +
+        `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID\n`
       );
       // TODO: 1.3.0 Does not have IsActive
     }
