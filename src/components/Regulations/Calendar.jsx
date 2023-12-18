@@ -36,6 +36,7 @@ export default function CustomCalendar() {
 
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
+  const version = useContext(VersionContext);
 
   const {player} = basicInfo;
 
@@ -141,6 +142,38 @@ export default function CustomCalendar() {
               )
             }
           },
+          ...(version !== 2) ? [
+            {
+              field: 'IsF2Race',
+              headerName: 'F2',
+              width: 40,
+              renderCell: ({ row, value }) => {
+                return (
+                  <a className="noselect" onClick={() => {
+                    database.exec(
+                      `UPDATE Races_Tracks SET IsF2Race = ${1 - value} WHERE TrackID = ${row.TrackID};`
+                    );
+                    refresh();
+                  }}>{value ? "F2" : "-"}</a>
+                )
+              }
+            },
+            {
+              field: 'IsF3Race',
+              headerName: 'F3',
+              width: 40,
+              renderCell: ({ row, value }) => {
+                return (
+                  <a className="noselect" onClick={() => {
+                    database.exec(
+                      `UPDATE Races_Tracks SET IsF3Race = ${1 - value} WHERE TrackID = ${row.TrackID};`
+                    );
+                    refresh();
+                  }}>{value ? "F3" : "-"}</a>
+                )
+              }
+            },
+          ] : [],
           {
             field: '_expedite',
             headerName: 'expedite',

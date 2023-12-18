@@ -94,8 +94,19 @@ export default function RaceResultsF2({ formulae = 2 }) {
 
     let raceSchedule = [];
     [{ columns, values }] = database.exec(
-      `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} AND IsF${formulae}Race = 1 order by Day ASC`
+      `select * from Races 
+         LEFT JOIN (select RaceID as FR_RaceID, RaceFormula from Races_FeatureRaceResults WHERE RaceFormula = ${formulae} GROUP BY RaceID) as FR ON (
+            Races.RaceID = FR.FR_RaceID
+         )
+         LEFT JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID 
+         WHERE SeasonID = ${season} AND (
+            (IsF${formulae}Race = 1 AND State IN (0, 1))
+            OR 
+            (FR.RaceFormula = ${formulae} AND State = 2)
+         )
+        order by Day ASC`
     );
+
     for(const r of values) {
       let race = {};
       r.map((x, _idx) => {
@@ -283,8 +294,15 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <ResultsTable
+          key={season}
           version={version}
-          {...{ driverTeams, formulae, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
+          raceSchedule={raceSchedule}
+          formulae={formulae}
+          championDriverID={championDriverID}
+          driverTeams={driverTeams}
+          driverStandings={driverStandings}
+          driverResults={driverResults}
+          fastestLapOfRace={fastestLapOfRace}
         />
       </div>
     </div>

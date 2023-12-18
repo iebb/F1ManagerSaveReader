@@ -14,9 +14,6 @@ export const BasicInfoHeader = () => {
   const env = useContext(EnvContext);
 
   const { player, teamMap, weekend, races, currentSeasonRaces } = basicInfo;
-
-  console.log(basicInfo);
-
   const team = teamMap[player.TeamID];
 
   const currentRaceIdx = currentSeasonRaces.map(x => x.RaceID).indexOf(weekend.RaceID);

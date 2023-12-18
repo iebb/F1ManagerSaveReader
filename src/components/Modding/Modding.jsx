@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
-import CustomCalendar from "./Calendar";
+import CustomCalendar from "../Regulations/Calendar";
 import ExpertiseView from "../Parts/Expertise";
 import ReplaceDB from "./ReplaceDB";
 import DataBrowser from "./SQL";
@@ -22,14 +22,12 @@ export default function Modding() {
 
   if (version === 3) {
     opt = [
-      {name: "Calendar", tab: <CustomCalendar />},
       {name: "Tools / Cheats", tab: <Toolbox />},
       {name: "SQL Browser", tab: <DataBrowser />},
       {name: "Replace Database", tab: <ReplaceDB />},
     ];
   } else {
     opt = [
-      {name: "Calendar", tab: <CustomCalendar />},
       {name: "SQL Browser", tab: <DataBrowser />},
       {name: "Replace Database", tab: <ReplaceDB />},
     ];
