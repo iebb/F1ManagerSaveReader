@@ -77,7 +77,7 @@ export default function CustomCalendar() {
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Custom Calendar
+        Calendar Editor
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <DataGrid
