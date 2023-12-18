@@ -18,7 +18,7 @@ export default function Header() {
           <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
         </div>
       </div>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
+      <Divider variant="fullWidth" sx={{ mt: 2 }} />
     </Container>
   )
 }

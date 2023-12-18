@@ -155,7 +155,8 @@ export default function App({ Component, pageProps }) {
                           {({ getRootProps, getInputProps }) => (
                             <div {...getRootProps()}>
                               <Header />
-                              <DragBox props={getInputProps()} />
+                              <input {...getInputProps()} hidden />
+                              <DragBox />
                               <Container maxWidth={false} component="main">
                                 <DataView>
                                   <Component {...pageProps} />
