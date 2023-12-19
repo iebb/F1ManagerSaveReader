@@ -159,7 +159,7 @@ export default function RaceEditor() {
           <Button
             variant="contained"
             color="error"
-            disabled={(raceState.RaceEventFlags & 128) === 128}
+            disabled={(raceState.RaceEventFlags & (128 | 256)) !== 0}
             onClick={() => {
               database.exec('UPDATE Save_RaceSimManager SET RaceEventFlags = 128');
               refresh();
@@ -172,7 +172,7 @@ export default function RaceEditor() {
           <Button
             variant="contained"
             color="warning"
-            disabled={(raceState.RaceEventFlags & 64) === 64}
+            disabled={(raceState.RaceEventFlags & (64 | 128 | 256)) !== 0}
             onClick={() => {
               database.exec(`UPDATE Save_RaceSimManager SET SafetyCarState = 2, RaceEventFlags = 2115; UPDATE Save_RaceControl SET SafetyCarReleasedSimTime = ${raceState.SimTime}`);
               refresh();
@@ -204,7 +204,7 @@ export default function RaceEditor() {
           <ButtonGroup
             variant="contained"
             color="warning"
-            disabled={(raceState.RaceEventFlags & 4) === 4}
+            disabled={(raceState.RaceEventFlags & (64 | 128 | 256)) !== 0}
           >
             <Button
               onClick={() => {
