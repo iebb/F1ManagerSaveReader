@@ -21,3 +21,36 @@ export const PartStatsCategorizedV = {
   2: PartStatsCategorized2023,
   3: PartStatsCategorized2023
 };
+
+
+export const PartNames = [
+  "Engine",
+  "ERS",
+  "Gearbox",
+  "Chassis",
+  "Front Wing",
+  "Rear Wing",
+  "Sidepods",
+  "Underfloor",
+  "Suspension",
+];
+
+
+export const PartStatNames = [
+  "Airflow Front",
+  "Airflow Sensitivity",
+  "Brake Cooling",
+  "DRS Delta",
+  "Drag Reduction",
+  "Engine Cooling",
+  "Fuel Efficiency",
+  "Low Speed Downforce",
+  "Med Speed Downforce",
+  "High Speed Downforce",
+  "Power",
+  "Power Loss Threshold",
+  "Wear Resistance",
+  "Airflow Middle",
+  "Thermal Resistance",
+  "Minimum Lifespan",
+];

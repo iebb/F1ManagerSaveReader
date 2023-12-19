@@ -1,10 +1,11 @@
 import {getDriverName} from "@/js/localization";
-import {Button} from "@mui/material";
+import {Button, ButtonGroup, Grid, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
+import {PartNames} from "../Parts/consts";
 
 
 const affectedCarIndexTables = [
@@ -22,6 +23,10 @@ const affectedCarIDTables = [
   `Save_CarAI_Race`,
 ]
 
+
+const Tyres = ["", "FrontLeft", "FrontRight", "BackLeft", "BackRight"];
+const DamageParts = ["Body", "FrontWing", "RearWing", "SidePods", "Floor", "Suspension"];
+
 export default function RaceEditor() {
 
   const database = useContext(DatabaseContext);
@@ -31,6 +36,7 @@ export default function RaceEditor() {
   const basicInfo = useContext(BasicInfoContext);
 
   const [rows, setRows] = useState([]);
+  const [raceState, setRaceState] = useState({});
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -67,6 +73,8 @@ export default function RaceEditor() {
     try {
       let r = database.exec(`
         SELECT * FROM Save_RaceSimCars 
+        LEFT JOIN Save_RaceSimCars_Parts ON 
+            Save_RaceSimCars.CarIndex = Save_RaceSimCars_Parts.CarIndex
         LEFT JOIN Save_CarConfig ON 
             Save_RaceSimCars.CarIndex = (Save_CarConfig.TeamID * 2 + Save_CarConfig.LoadoutID - 2)
         LEFT JOIN Save_CarTyreAllocation ON 
@@ -87,6 +95,26 @@ export default function RaceEditor() {
           _rows.push(row);
         }
       }
+
+      let raceState = {};
+      r = database.exec(`SELECT * FROM Save_RaceControl`)
+      if (r.length) {
+        [{columns, values}] = r;
+        for (const r of values) {
+          r.map((x, _idx) => {raceState[columns[_idx]] = x});
+        }
+      }
+      r = database.exec(`SELECT * FROM Save_RaceSimManager`)
+      if (r.length) {
+        [{columns, values}] = r;
+        for (const r of values) {
+          r.map((x, _idx) => {raceState[columns[_idx]] = x});
+        }
+      }
+
+      console.log(raceState);
+
+      setRaceState(raceState);
       setRows(_rows);
     } catch {
 
@@ -109,9 +137,129 @@ export default function RaceEditor() {
       </div>
     )
   }
-
   return (
     <div>
+      <Typography variant="h5" component="h5">
+        Race Control
+      </Typography>
+      <Grid container spacing={2} alignItems="center" sx={{py: 2}}>
+        <Grid item>
+          <Button
+            variant="contained"
+            disabled={raceState.RaceEventFlags === 0}
+            onClick={() => {
+              database.exec('UPDATE Save_RaceSimManager SET RaceEventFlags = 0, SafetyCarState = 0');
+              refresh();
+            }}
+          >
+            Clear All
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={(raceState.RaceEventFlags & 128) === 128}
+            onClick={() => {
+              database.exec('UPDATE Save_RaceSimManager SET RaceEventFlags = 128');
+              refresh();
+            }}
+          >
+            Red Flag
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={(raceState.RaceEventFlags & 64) === 64}
+            onClick={() => {
+              database.exec(`UPDATE Save_RaceSimManager SET SafetyCarState = 2, RaceEventFlags = 2115; UPDATE Save_RaceControl SET SafetyCarReleasedSimTime = ${raceState.SimTime}`);
+              refresh();
+            }}
+          >
+            Deploy Safety Car
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={!(
+              (raceState.RaceEventFlags & 64) === 64
+              &&
+              raceState.SafetyCarReleasedSimTime > 0
+              &&
+              (raceState.SafetyCarState === 5 || raceState.SafetyCarState === 2)
+            )}
+            onClick={() => {
+              database.exec('UPDATE Save_RaceSimManager SET SafetyCarState = 4');
+              refresh();
+            }}
+          >
+            End Safety Car
+          </Button>
+        </Grid>
+        <Grid item>
+          <ButtonGroup
+            variant="contained"
+            color="warning"
+            disabled={(raceState.RaceEventFlags & 4) === 4}
+          >
+            <Button
+              onClick={() => {
+                database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 7`); // won't end
+                refresh();
+              }}
+            >
+              VSC
+            </Button>
+            <Button
+              onClick={() => {
+                database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 4`);
+                database.exec(`UPDATE Save_RaceControl SET VscEnding = 1, VscEndSimTime = ${raceState.SimTime + 60}`);
+                refresh();
+              }}
+            >
+              60s
+            </Button>
+            <Button
+              onClick={() => {
+                database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 4`);
+                database.exec(`UPDATE Save_RaceControl SET VscEnding = 1, VscEndSimTime = ${raceState.SimTime + 120}`);
+                refresh();
+              }}
+            >
+              120s
+            </Button>
+            <Button
+              onClick={() => {
+                database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 4`);
+                database.exec(`UPDATE Save_RaceControl SET VscEnding = 1, VscEndSimTime = ${raceState.SimTime + 120}`);
+                refresh();
+              }}
+            >
+              180s
+            </Button>
+          </ButtonGroup>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="outlined"
+            disabled={(raceState.RaceEventFlags & 128) === 128}
+            onClick={() => {
+              database.exec('UPDATE Save_RaceSimCars_PitStop SET PitStopState = 0 WHERE PitLaneReason != 5'); // maybe = 8?
+              refresh();
+            }}
+          >
+            Force Cars Out of Pit
+          </Button>
+        </Grid>
+      </Grid>
+
+      <p style={{color: "yellow", fontSize: 18, marginBottom: 10}}>
+        When cars stuck in the pit after swapping positions, try save again and use "Force cars out of Pit".
+      </p>
       <DataGrid
         rows={rows}
         getRowId={r => r.id}
@@ -124,16 +272,27 @@ export default function RaceEditor() {
             })
           }
 
+          for (const part of DamageParts) {
+            if (newRow[`${part}DamageLevel`] !== oldRow[`${part}DamageLevel`]) {
+              database.exec(`UPDATE Save_RaceSimCars_Parts SET ${part}DamageLevel = :wear WHERE CarIndex = :CarID`, {
+                ":wear": newRow[`${part}DamageLevel`],
+                ":CarID": newRow.CarIndex,
+              })
+            }
+          }
 
-          for (const tyreX of ["Front", "Back"]) {
-            for (const tyreY of ["Left", "Right"]) {
-              if (newRow[`${tyreX}${tyreY}Wear`] !== oldRow[`${tyreX}${tyreY}Wear`]) {
-                database.exec(`UPDATE Save_CarTyreAllocation SET ${tyreX}${tyreY}Wear = :wear WHERE CarId = :CarID AND TyreSetID = :TyreSetID`, {
-                  ":wear": newRow[`${tyreX}${tyreY}Wear`],
-                  ":CarID": newRow.CarIndex,
-                  ":TyreSetID": newRow.CurrentActiveTyreID,
-                })
-              }
+          for (let tyreId = 1; tyreId <= 4; tyreId++) {
+            if (newRow[`Tyre${tyreId}Condition`] !== oldRow[`Tyre${tyreId}Condition`]) {
+              let tyreName = Tyres[tyreId];
+              database.exec(`UPDATE Save_CarTyreAllocation SET ${tyreName}Wear = :wear WHERE CarId = :CarID AND TyreSetID = :TyreSetID`, {
+                ":wear": newRow[`${tyreName}Wear`],
+                ":CarID": newRow.CarIndex,
+                ":TyreSetID": newRow.CurrentActiveTyreID,
+              })
+              database.exec(`UPDATE Save_RaceSimCars_Parts SET Tyre${tyreId}Condition = :wear WHERE CarIndex = :CarID`, {
+                ":wear": newRow[`${tyreX}${tyreY}Wear`],
+                ":CarID": newRow.CarIndex,
+              })
             }
           }
           return newRow;
@@ -142,8 +301,8 @@ export default function RaceEditor() {
           {
             field: 'RacePosition',
             headerName: "#",
-            valueGetter: ({ value }) => value + 1,
-            renderCell: ({ value, row }) => {
+            valueGetter: ({value}) => value + 1,
+            renderCell: ({value, row}) => {
               if (row.RaceCompleteState === 3) return "DNF";
               return value;
             },
@@ -153,7 +312,7 @@ export default function RaceEditor() {
             field: 'TeamID',
             headerName: "Team / Driver",
             width: 140,
-            renderCell: ({ value, row }) => {
+            renderCell: ({value, row}) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
                   {teamNames(value, metadata.version)} {row.TeamCarID}
@@ -170,48 +329,51 @@ export default function RaceEditor() {
           {
             field: 'Fuel',
             headerName: "Fuel / L",
-            valueGetter: ({ value }) => Number(value.toFixed(6)),
+            valueGetter: ({value}) => Number(value.toFixed(6)),
             type: "number",
-            renderCell: ({ value }) => value.toFixed(4),
+            renderCell: ({value}) => value.toFixed(4),
             width: 120,
             editable: true,
           },
-          {
-            field: 'FrontLeftWear',
-            headerName: "Front Left",
-            valueGetter: ({ value }) => Number(value.toFixed(6)),
-            type: "number",
-            renderCell: ({ value }) => (100 * value).toFixed(2) + "%",
-            width: 120,
-            editable: true,
-          },
-          {
-            field: 'FrontRightWear',
-            headerName: "Front Right",
-            valueGetter: ({ value }) => Number(value.toFixed(6)),
-            type: "number",
-            renderCell: ({ value }) => (100 * value).toFixed(2) + "%",
-            width: 120,
-            editable: true,
-          },
-          {
-            field: 'BackLeftWear',
-            headerName: "Rear Left",
-            valueGetter: ({ value }) => Number(value.toFixed(6)),
-            type: "number",
-            renderCell: ({ value }) => (100 * value).toFixed(2) + "%",
-            width: 120,
-            editable: true,
-          },
-          {
-            field: 'BackRightWear',
-            headerName: "Rear Right",
-            valueGetter: ({ value }) => Number(value.toFixed(6)),
-            type: "number",
-            renderCell: ({ value }) => (100 * value).toFixed(2) + "%",
-            width: 120,
-            editable: true,
-          },
+          ...[1, 2, 3, 4].map(tyre => (
+            {
+              field: Tyres[tyre] + 'Wear',
+              headerName: Tyres[tyre],
+              valueGetter: ({value}) => Number(value.toFixed(6)),
+              type: "number",
+              align: 'right',
+              headerAlign: 'right',
+              renderCell: ({value}) => (100 * value).toFixed(2) + "%",
+              width: 100,
+              editable: true,
+            }
+          )),
+          ...[3, 4, 5, 6, 7, 8].map(idx => (
+            {
+              field: DamageParts[idx - 3] + "DamageLevel",
+              headerName: PartNames[idx],
+              type: 'singleSelect',
+              align: 'right',
+              headerAlign: 'right',
+              valueOptions: [
+                {value: 0, label: "Good"},
+                {value: 1, label: "Minor"},
+                {value: 2, label: "Major"},
+                {value: 3, label: "Fatal"},
+              ],
+              width: 100,
+              editable: true,
+              renderCell: ({value, formattedValue}) => {
+                return <span style={{
+                  color: [
+                    "#555",
+                    "#bbbb33",
+                    "#ff9933",
+                    "#ff3333"][value]
+                }}>{formattedValue}</span>
+              }
+            }
+          )),
           {
             field: '__',
             headerName: "",
@@ -221,16 +383,16 @@ export default function RaceEditor() {
             field: '_',
             headerName: "Position Swap",
             width: 140,
-            renderCell: ({ row }) => {
+            renderCell: ({row}) => {
               return (
                 <div>
                   <Button
-                    disabled={(!RacePositions[row.RacePosition - 1]) || RacePositions[row.RacePosition - 1].RaceCompleteState !== 0 || row.RaceCompleteState !== 0 }
+                    disabled={(!RacePositions[row.RacePosition - 1]) || RacePositions[row.RacePosition - 1].RaceCompleteState !== 0 || row.RaceCompleteState !== 0}
                     onClick={
                       () => swapPositions(row, RacePositions[row.RacePosition - 1])
                     }>▲</Button>
                   <Button
-                    disabled={(!RacePositions[row.RacePosition + 1]) || RacePositions[row.RacePosition + 1].RaceCompleteState !== 0 || row.RaceCompleteState !== 0 }
+                    disabled={(!RacePositions[row.RacePosition + 1]) || RacePositions[row.RacePosition + 1].RaceCompleteState !== 0 || row.RaceCompleteState !== 0}
                     onClick={
                       () => swapPositions(row, RacePositions[row.RacePosition + 1])
                     }>▼</Button>
