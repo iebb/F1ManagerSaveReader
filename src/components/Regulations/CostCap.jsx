@@ -7,7 +7,7 @@ import Select from '@mui/material/Select';
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, teamColors, teamNames} from "../../js/localization";
+import {dayToDate, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 
 
@@ -145,10 +145,10 @@ export default function CostCap() {
     <div>
       <Typography variant="h5" component="h5">
         Cost Cap Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-        <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
+        <InputLabel id="standard-label">Season</InputLabel>
         <Select
-          labelId="demo-simple-select-standard-label"
-          id="demo-simple-select-standard"
+          labelId="standard-label"
+          id="standard"
           value={season}
           onChange={handleChange}
           label="Season"

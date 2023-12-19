@@ -1,13 +1,10 @@
-import {raceAbbrevs} from "@/js/localization";
 import {Button, Divider, FormControlLabel, Grid, Input, Slider, Switch, Typography} from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, teamColors, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
 import Table from "@mui/material/Table";
 import TableRow from "@mui/material/TableRow";

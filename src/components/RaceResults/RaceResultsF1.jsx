@@ -15,7 +15,7 @@ export default function RaceResultsF1() {
   const version = useContext(VersionContext);
   const basicInfo = useContext(BasicInfoContext);
 
-  const { driverMap, player } = basicInfo;
+  const { player } = basicInfo;
 
   const [championDriverID, setChampionDriverID] = useState(0);
   const [raceSchedule, setRaceSchedule] = useState([]);
@@ -187,10 +187,10 @@ export default function RaceResultsF1() {
     <div>
       <Typography variant="h5" component="h5">
         Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-          <InputLabel id="demo-simple-select-standard-label">Season</InputLabel>
+          <InputLabel id="standard-label">Season</InputLabel>
           <Select
-            labelId="demo-simple-select-standard-label"
-            id="demo-simple-select-standard"
+            labelId="standard-label"
+            id="standard"
             value={season}
             onChange={handleChange}
             label="Season"
