@@ -18,7 +18,10 @@ export default function Header() {
           <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
         </div>
       </div>
-      <Divider variant="fullWidth" sx={{ mt: 2 }} />
+      <Typography variant="p" component="p" sx={{ py: 1, color: "#ffff77" }}>
+        Bugs / Suggestions? Welcome to <a href="https://github.com/iebb/F1ManagerSaveReader/issues">Github issues</a>
+      </Typography>
+      <Divider variant="fullWidth" />
     </Container>
   )
 }

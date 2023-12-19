@@ -112,8 +112,6 @@ export default function RaceEditor() {
         }
       }
 
-      console.log(raceState);
-
       setRaceState(raceState);
       setRows(_rows);
     } catch {
