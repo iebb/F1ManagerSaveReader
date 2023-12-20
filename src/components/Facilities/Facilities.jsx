@@ -48,7 +48,6 @@ export default function Facilities() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -262,7 +261,7 @@ export default function Facilities() {
             renderCell: ({ value }) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, metadata.version)}
+                  {teamNames(value, version)}
                   <div>
                     <div style={{
                       width: 12, height: 12, borderRadius: 6,

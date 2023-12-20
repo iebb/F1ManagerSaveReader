@@ -32,7 +32,6 @@ export default function RaceEditor() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 
   const [rows, setRows] = useState([]);
@@ -318,7 +317,7 @@ export default function RaceEditor() {
             renderCell: ({value, row}) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, metadata.version)} {row.TeamCarID}
+                  {teamNames(value, version)} {row.TeamCarID}
                   <div>{getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])}</div>
                 </div>
               )

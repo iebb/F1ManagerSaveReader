@@ -3,7 +3,7 @@ import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {DatabaseContext, MetadataContext} from "../Contexts";
 import {PartStatsCategorizedV} from "./consts";
 
 
@@ -11,8 +11,6 @@ export default function ExpertiseView() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
-  const basicInfo = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -105,7 +103,7 @@ export default function ExpertiseView() {
             renderCell: ({ value }) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, metadata.version)}
+                  {teamNames(value, version)}
                   <div>
                     <div style={{
                       width: 12, height: 12, borderRadius: 6,

@@ -8,9 +8,6 @@ import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 export default function DataBrowser() {
 
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
-  const basicInfo = useContext(BasicInfoContext);
 
   const { enqueueSnackbar } = useSnackbar();
 

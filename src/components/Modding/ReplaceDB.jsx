@@ -6,7 +6,6 @@ import Dropzone from "react-dropzone";
 import {DatabaseUpdaterContext, MetadataContext} from "../Contexts";
 
 export default function ReplaceDB() {
-  const metadata = useContext(MetadataContext);
   const replaceDatabase = useContext(DatabaseUpdaterContext);
 
   const { enqueueSnackbar } = useSnackbar();

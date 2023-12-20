@@ -144,7 +144,7 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`
             renderCell: ({ value, row }) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, metadata.version)}
+                  {teamNames(value, version)}
                   <div>
                     {
                       getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])

@@ -13,7 +13,6 @@ export default function DesignView() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 
   const {driverMap, teamMap } = basicInfo;
@@ -202,7 +201,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             renderCell: ({ value, row }) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, metadata.version)}
+                  {teamNames(value, version)}
                   <div>
                     {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
                   </div>

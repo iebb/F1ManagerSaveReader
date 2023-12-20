@@ -296,7 +296,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
             renderCell: ({ row }) => {
               return row.TeamID ? (
                 <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
-                  {teamNames(row.TeamID, metadata.version)}
+                  {teamNames(row.TeamID, version)}
                   <br />
                   {
                     (StaffType === 0 || StaffType === 2) && (

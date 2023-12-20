@@ -19,6 +19,9 @@ export const VTabs = ({ options }) => {
       return opt.versions.includes(version);
     }
     if (opt.minVersion) {
+      if (typeof opt.minVersion === "number") {
+        return version >= opt.minVersion;
+      }
       return cmp(`${version}.${gameVersion}`, opt.minVersion) >= 0;
     }
     if (opt.devOnly) {
@@ -34,7 +37,7 @@ export const VTabs = ({ options }) => {
         {_options.map((t, _idx) => <Tab label={t.name} value={_idx.toString(10)} key={_idx.toString(10)} />)}
       </TabList>
     </Box>
-    {options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0 }}>
+    {_options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0 }}>
       {t.tab}
     </TabPanel>)}
   </TabContext>;

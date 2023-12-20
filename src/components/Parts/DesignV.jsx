@@ -10,7 +10,6 @@ export default function DesignView() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
@@ -148,7 +147,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             renderCell: ({ value, row }) => {
               return (
                 <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, metadata.version)}
+                  {teamNames(value, version)}
                   <div>
                     {row.DesignID ? `Design ${row.DesignID}` : "Not Installed"}
                   </div>
