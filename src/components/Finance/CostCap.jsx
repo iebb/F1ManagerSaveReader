@@ -201,13 +201,11 @@ export default function CostCap() {
       </FormControl>
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <Alert severity="warning" sx={{my: 2}}>
+      <Alert severity="warning" sx={{ my: 2 }}>
         <AlertTitle>Warning</AlertTitle>
-        AI Teams <b>DOES NOT</b> follow the cost cap <b>NOR</b> will be fined for breaching, it's only for informative
-        purposes.
+        AI Teams <b>DO NOT</b> follow the cost cap, <b>NOR</b> will they be fined for breaching it. The inclusion of AI Teams is only for informative purposes.
         <br/>
-        Game <b>DOES NOT</b> track previous caps. However if you have breached the cap, it can be calculated from
-        the fines.
+        Game <b>DOES NOT</b> track previous caps. However if you have been fined for breaching the cap, it can be calculated from the fines.
       </Alert>
       <div style={{ overflowX: "auto" }}>
         <ReactECharts

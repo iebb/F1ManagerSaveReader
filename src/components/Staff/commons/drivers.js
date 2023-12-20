@@ -130,7 +130,6 @@ export const swapDriverContracts = (ctx, staff1, staff2, staffType = 0) => {
   database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 1 AND Accepted = 30`);
 
   if (staffType === 0) {
-    console.log("swapping drivers")
     let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1}`);
     let [{values: [[AssignedCarNumberB]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2}`);
 
@@ -157,6 +156,7 @@ export const swapDriverContracts = (ctx, staff1, staff2, staffType = 0) => {
       }
 
       /* standings */
+      // TODO: 3rd driver does not need to be included
 
       results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
       if (results.length) {

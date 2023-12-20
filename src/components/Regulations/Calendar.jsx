@@ -31,6 +31,14 @@ const weathers = {
   32: "⛈️",
 }
 
+const WeatherPrefix = ["Rain", "WeatherState", "Temperature"];
+const EventSuffix = ["Practice", "Qualifying", "Race"];
+const EventToDay = {
+  Practice: "Fri",
+  Qualifying: "Sat",
+  Race: "Sun",
+};
+
 export default function CustomCalendar() {
 
   const database = useContext(DatabaseContext);
@@ -50,9 +58,10 @@ export default function CustomCalendar() {
   }
 
 
+
   useEffect(() => {
     let races = [];
-    let raceTemplates = [];
+    let raceTemplates = {};
     let weeks = {};
     const {CurrentSeason} = player;
     try {
@@ -62,7 +71,7 @@ export default function CustomCalendar() {
       for(const r of values) {
         let raceTemplate = {};
         r.map((x, _idx) => {raceTemplate[columns[_idx]] = x;})
-        raceTemplates.push(raceTemplate)
+        raceTemplates[raceTemplate.TrackID] = raceTemplate;
       }
       setRaceTemplates(raceTemplates);
 
@@ -87,15 +96,11 @@ export default function CustomCalendar() {
 
   }, [database, updated])
 
+  const playerWeek = dayToDate(player.Day).getWeek()
+
+
 
   const weatherConfigs = [];
-  const WeatherPrefix = ["Rain", "WeatherState", "Temperature"];
-  const EventSuffix = ["Practice", "Qualifying", "Race"];
-  const EventToDay = {
-    Practice: "Fri",
-    Qualifying: "Sat",
-    Race: "Sun",
-  };
   for(const event of EventSuffix) {
     weatherConfigs.push({
       field: 'Rain' + event,
@@ -177,7 +182,6 @@ export default function CustomCalendar() {
             for(const suffix of EventSuffix) {
               if (newRow[prefix + suffix] !== oldRow[prefix + suffix]) {
                 database.exec(`UPDATE Races SET ${prefix + suffix} = ${newRow[prefix + suffix]} WHERE RaceID = ${newRow.RaceID};`);
-                console.log(`UPDATE Races SET ${prefix + suffix} = ${newRow[prefix + suffix]} WHERE RaceID = ${newRow.RaceID};`);
                 refresh();
               }
             }
@@ -228,8 +232,8 @@ export default function CustomCalendar() {
             width: 250,
             editable: true,
             type: 'singleSelect',
-            valueOptions: raceTemplates.map(
-              rt => ({ value: rt.TrackID, label: `${circuitNames[rt.TrackID]}, ${countryNames[rt.TrackID]}` })
+            valueOptions: Object.keys(raceTemplates).map(
+              rt => ({ value: rt, label: `${circuitNames[rt]}, ${countryNames[rt]}` })
             ),
             renderCell: ({ value }) => {
               return `${circuitNames[value]}, ${countryNames[value]}`
@@ -283,6 +287,14 @@ export default function CustomCalendar() {
             filterable: false,
             width: 150,
             renderCell: ({ row }) => {
+              let nextAvailableDuplicateWeek = -1;
+              for(let w = Math.max(playerWeek, row.week + 1); w <= 51; w++) {
+                if (!weeks[w]) {
+                  nextAvailableDuplicateWeek = w;
+                  break;
+                }
+              }
+
               return (
                 [
                   <GridActionsCellItem
@@ -322,22 +334,30 @@ export default function CustomCalendar() {
                   />,
                   <GridActionsCellItem
                     icon={<CopyAll />}
-                    disabled={row.State === 2 || row.week >= 51 || weeks[row.week + 1]}
+                    disabled={nextAvailableDuplicateWeek === -1}
                     label="Duplicate"
-                    onClick={() => {
-                      let [{ values }] = database.exec(`select * from Races WHERE RaceID = ${row.RaceID}`);
+                    onClick={(event) => {
+                      let [{ columns, values }] = database.exec(`select * from Races WHERE RaceID = ${row.RaceID}`);
                       const r = values[0].map(x => typeof x === 'number'? x : `"${x}"`);
-                      r[0] = "NULL"; r[2] += 7;
-                      database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
-                      const RT = raceTemplates[r[3]];
-                      let updateStr = [];
+                      const targetWeekDelta = nextAvailableDuplicateWeek - row.week;
+                      let reverseColumns = {};
+                      for(let i = 0; i < columns.length; i++) reverseColumns[columns[i]] = i;
+
+                      r[reverseColumns.RaceID] = "NULL";
+                      r[reverseColumns.Day] += 7 * targetWeekDelta;
+                      r[reverseColumns.State] = 0;
+
+                      const RT = raceTemplates[r[3]]; // TrackID
                       for(const suffix of EventSuffix) {
                         const rain = Math.random() < RT.RainMax ? 1 : 0;
                         const weather = 1 << (Math.floor(Math.random() * 3) + rain * 3);
                         const temperature = Math.random() * (RT.TemperatureMax - RT.TemperatureMin) + RT.TemperatureMin;
-                        updateStr.push(`Rain${suffix} = ${rain}, WeatherState${suffix} = ${weather}, Temperature${suffix} = ${temperature}`);
+                        r[reverseColumns["Rain" + suffix]] = rain;
+                        r[reverseColumns["WeatherState" + suffix]] = weather;
+                        r[reverseColumns["Temperature" + suffix]] = temperature;
                       }
-                      database.exec(`UPDATE Races SET ${updateStr.join(", ")} WHERE RaceID = last_insert_rowid()`);
+                      database.exec(`INSERT INTO Races SELECT ${r.join(",")} WHERE NOT EXISTS (SELECT 1 FROM Races WHERE Day = ${r[reverseColumns.Day]});`);
+                      // database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
                       refresh();
                     }}
                   />,

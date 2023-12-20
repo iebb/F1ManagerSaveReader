@@ -1,6 +1,6 @@
 import {getDriverName} from "@/js/localization";
 import {Alert, AlertTitle} from "@mui/lab";
-import {Button, ButtonGroup, Grid, Typography} from "@mui/material";
+import {Button, ButtonGroup, Divider, Grid, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
@@ -31,7 +31,6 @@ const DamageParts = ["Body", "FrontWing", "RearWing", "SidePods", "Floor", "Susp
 export default function RaceEditor() {
 
   const database = useContext(DatabaseContext);
-  const env = useContext(EnvContext);
   const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
@@ -139,7 +138,8 @@ export default function RaceEditor() {
       <Typography variant="h5" component="h5">
         Race Control
       </Typography>
-      <Grid container spacing={2} alignItems="center" sx={{py: 2}}>
+      <Divider variant="fullWidth" sx={{ my: 2 }} />
+      <Grid container spacing={2} alignItems="center">
         <Grid item>
           <Button
             variant="contained"
@@ -169,7 +169,7 @@ export default function RaceEditor() {
           <Button
             variant="contained"
             color="warning"
-            disabled={(raceState.RaceEventFlags & (64 | 256)) !== 0}
+            disabled={(raceState.RaceEventFlags & (64 | 256)) !== 0 /* SC is 2048 + 64 + 3 */}
             onClick={() => {
               database.exec(`UPDATE Save_RaceSimManager SET SafetyCarState = 2, RaceEventFlags = 2115; UPDATE Save_RaceControl SET SafetyCarReleasedSimTime = ${raceState.SimTime}`);
               refresh();
@@ -201,7 +201,7 @@ export default function RaceEditor() {
           <ButtonGroup
             variant="contained"
             color="warning"
-            disabled={(raceState.RaceEventFlags & (64 | 256)) !== 0}
+            disabled={(raceState.RaceEventFlags & (64 | 256)) !== 0 /* VSC is 64+4 */}
           >
             <Button
               onClick={() => {
@@ -253,9 +253,15 @@ export default function RaceEditor() {
           </Button>
         </Grid>
       </Grid>
+      <Alert severity="warning" sx={{my: 2}}>
+        <AlertTitle>Warning</AlertTitle>
+        Use "Swap Positions" with caution.
+        <br />
+        Sometimes cars can stuck in the pit after swap, and "Force cars out of Pit" can be useful in that scenario.
+      </Alert>
 
       <p style={{color: "yellow", fontSize: 18, marginBottom: 10}}>
-        When cars stuck in the pit after swapping positions, try save again and use "Force cars out of Pit".
+
       </p>
       <DataGrid
         rows={rows}
