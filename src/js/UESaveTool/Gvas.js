@@ -20,8 +20,7 @@ export class Gvas {
         if (Buffer.compare(Buffer.from('GVAS'), format) !== 0)
             throw Error(`Unexpected header, expected 'GVAS`)
         this.Header.deserialize(serial);
-        console.log(this.Header);
-        this.Properties.Name = this.Header.SaveGameType;
+        this.Properties.Name = this.Header.SaveGameClassName;
         this.Properties.deserialize(serial);
         return this;
     }

@@ -15,17 +15,20 @@ export const analyzeFileToDatabase = async (file) => {
         const GVASMeta = new Gvas().deserialize(serial);
         const { Header, Properties } = GVASMeta;
         const { SaveGameVersion, EngineVersion } = Header;
-        const { BuildId } = EngineVersion;
-        const version = SaveGameVersion;
+        const { BuildId, Build } = EngineVersion;
+        const version = SaveGameVersion; // TODO: will be incorrect for 2024
+        /*
+
+         */
         const gameVersionString = BuildId;
 
         let prettifiedGameVersion;
         switch (version) {
           case 3:
-            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("23+") + 3);
+            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("23+") + 3) + `.${Build & 0x7fffffff}`;
             break;
           case 2:
-            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("22_") + 3);
+            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("22_") + 3) + `.${Build & 0x7fffffff}`;
             break;
         }
 

@@ -7,6 +7,7 @@ export class GvasHeader {
         this.Format = 'GVAS';
         this.SaveGameVersion = 0;
         this.PackageVersion = 0;
+        this.PackageFileVersionUE5 = 0;
         this.EngineVersion = {
             Major: 0,
             Minor: 0,
@@ -19,7 +20,7 @@ export class GvasHeader {
             Count: 0,
             Entries: []
         }
-        this.SaveGameType = "";
+        this.SaveGameClassName = "";
     }
     get Size() {
         let size = this.Format.length;
@@ -33,27 +34,36 @@ export class GvasHeader {
         this.CustomFormatData.Entries.forEach(guid => {
             size += guid.Size; // 20
         })
-        size += this.SaveGameType.length + 1 + 4;
+        size += this.SaveGameClassName.length + 1 + 4;
         return size;
     }
     deserialize(serial) {
+        /* 5.3: https://github.com/EpicGames/UnrealEngine/blob/5.3/Engine/Source/Runtime/Engine/Private/GameplayStatics.cpp#L85 */
+
+        // FileTypeTag: GVAS
         this.SaveGameVersion = serial.readInt32();
         this.PackageVersion = serial.readInt32();
         if (this.SaveGameVersion >= 3) {
-            this.SomeInt32 = serial.readInt32();
-        } // UE 5 for F1M 23
-        this.EngineVersion.Major = serial.readInt16();
-        this.EngineVersion.Minor = serial.readInt16();
-        this.EngineVersion.Patch = serial.readInt16();
-        this.EngineVersion.Build = serial.readInt32();
+            this.PackageFileVersionUE5 = serial.readInt32();
+            /* this needs to be larger than 1000 */
+        }
+        /*
+            3 means PackageFileSummaryVersionChange, rather than F1M 2023
+            https://github.com/EpicGames/UnrealEngine/blob/5.3/Engine/Source/Runtime/Engine/Private/GameplayStatics.cpp#L93
+        */
+        this.EngineVersion.Major = serial.readUInt16();
+        this.EngineVersion.Minor = serial.readUInt16();
+        this.EngineVersion.Patch = serial.readUInt16();
+        this.EngineVersion.Build = serial.readUInt32();
         this.EngineVersion.BuildId = serial.readString();
+
         this.CustomFormatVersion = serial.readInt32();
         this.CustomFormatData.Count = serial.readInt32();
         for (let i = 0; i < this.CustomFormatData.Count; i++) {
             let guid = PropertyFactory.create({ Type: 'Guid' })
             this.CustomFormatData.Entries.push(guid.deserialize(serial));
         }
-        this.SaveGameType = serial.readString();
+        this.SaveGameClassName = serial.readString();
         return this;
     }
     serialize() {
@@ -62,19 +72,19 @@ export class GvasHeader {
         serial.writeInt32(this.SaveGameVersion);
         serial.writeInt32(this.PackageVersion);
         if (this.SaveGameVersion >= 3) {
-            serial.writeInt32(this.SomeInt32);
+            serial.writeInt32(this.PackageFileVersionUE5);
         } // UE 5 for F1M 23
 
-        serial.writeInt16(this.EngineVersion.Major);
-        serial.writeInt16(this.EngineVersion.Minor);
-        serial.writeInt16(this.EngineVersion.Patch);
-        serial.writeInt32(this.EngineVersion.Build);
+        serial.writeUInt16(this.EngineVersion.Major);
+        serial.writeUInt16(this.EngineVersion.Minor);
+        serial.writeUInt16(this.EngineVersion.Patch);
+        serial.writeUInt32(this.EngineVersion.Build);
         serial.writeString(this.EngineVersion.BuildId);
 
         serial.writeInt32(this.CustomFormatVersion);
         serial.writeInt32(this.CustomFormatData.Count);
         this.CustomFormatData.Entries.forEach(guid => serial.write(guid.serialize()));
-        serial.writeString(this.SaveGameType);
+        serial.writeString(this.SaveGameClassName);
         if (serial.tell != this.Size)
             throw new SerializationError(this);
         return serial.Data;
@@ -89,7 +99,7 @@ export class GvasHeader {
         obj.CustomFormatData.Entries.forEach(guid => {
             header.CustomFormatData.Entries.push(PropertyFactory.create(guid));
         });
-        header.SaveGameType = obj.SaveGameType;
+        header.SaveGameClassName = obj.SaveGameClassName;
         return header;
     }
 }

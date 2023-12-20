@@ -20,7 +20,6 @@ export class Int8Property extends Property {
         return this;
     }
     serialize() {
-        console.log(this, this.Size);
         let serial = Serializer.alloc(this.Size);
         serial.writeString(this.Name);
         serial.writeString(this.Type);
