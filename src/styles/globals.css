@@ -241,3 +241,7 @@ main {
   background-position-x: right;
   background-repeat: no-repeat;
 }
+
+#fullpage_dropzone {
+  min-height: 100vh;
+}

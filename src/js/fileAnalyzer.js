@@ -1,11 +1,7 @@
+import {Gvas, Serializer} from "./UESaveTool";
+
 const pako = require("pako");
 const { saveAs } = require("file-saver");
-const toInteger = (x) => {
-  return ((
-      x.charCodeAt(3) * 256 +
-      x.charCodeAt(2)) * 256 +
-    x.charCodeAt(1)) * 256 + x.charCodeAt(0);
-}
 
 export const analyzeFileToDatabase = async (file) => {
   if (!window.SQL) return;
@@ -15,58 +11,57 @@ export const analyzeFileToDatabase = async (file) => {
     if (file !== undefined) {
       let reader = new FileReader();
       reader.onload = async (e) => {
-        const data = reader.result;
-        const version = toInteger(data.slice(4, 8));
-        const versionStringOffset = version === 3 ? 0x1A : 0x16;
-        const gameVersionStringLength = toInteger(data.slice(versionStringOffset, versionStringOffset + 4));
-        const gameVersionString = data.slice(
-          versionStringOffset + 4,
-          versionStringOffset + 4 + gameVersionStringLength - 1
-        ); // removal of trailing 0x00
+        const serial = new Serializer(Buffer.from(reader.result));
+        const { Header, Properties } = new Gvas().deserialize(serial);
+        const { SaveGameVersion, EngineVersion } = Header;
+        const { BuildId } = EngineVersion;
+        const version = SaveGameVersion;
+        const gameVersionString = BuildId;
 
         let prettifiedGameVersion;
         switch (version) {
           case 3:
-            prettifiedGameVersion = gameVersionString.substring(gameVersionString.indexOf("23+") + 3);
+            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("23+") + 3);
             break;
           case 2:
-            prettifiedGameVersion = gameVersionString.substring(gameVersionString.indexOf("22_") + 3);
+            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("22_") + 3);
             break;
         }
 
-        const metaLength = data.indexOf("\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x05\x00\x00\x00\x4E\x6F\x6E\x65\x00\x00\x00\x00\x00") + 19 + 4;
+        const careerSaveMetadata = {};
 
-        const total_size = toInteger(data.slice(metaLength, metaLength + 4));
-        const size_1 = toInteger(data.slice(metaLength + 4, metaLength + 8));
-        const size_2 = toInteger(data.slice(metaLength + 8, metaLength + 12));
-        const size_3 = toInteger(data.slice(metaLength + 12, metaLength + 16));
+        const metadataProperty = Properties.Properties.filter(x => x.Name === "MetaData")[0];
+        const careerSaveMetadataProperty = metadataProperty.Properties[0];
 
-        const remainingData = data.slice(metaLength + 16);
+        careerSaveMetadataProperty.Properties.forEach(prop => {
+          careerSaveMetadata[prop.Name] = prop.Property || prop.Properties;
+        })
 
-        let compressedData = Uint8Array.from(remainingData, (c) => c.charCodeAt(0));
+        const unk_zero = serial.readInt32();
+        const total_size = serial.readInt32();
+        const size_1 = serial.readInt32();
+        const size_2 = serial.readInt32();
+        const size_3 = serial.readInt32();
 
+        const compressedData = serial.read(total_size);
         const output = pako.inflate(compressedData);
         const database_file = output.slice(0, size_1);
 
         // @ts-ignore
 
-        if (window.db) {
-          window.db.close();
-        }
+        if (window.db) window.db.close();
         const db = new window.SQL.Database(database_file);
         window.db = db;
-
 
         const metadata = {
           filename: file.name,
           version,
           gameVersionRaw: gameVersionString,
           gameVersion: prettifiedGameVersion,
-          chunk0: Uint8Array.from(
-            data.slice(0, metaLength), (c) => c.charCodeAt(0)
-          ),
-          meta_length: metaLength,
           database_file,
+          header: Header,
+          properties: Properties,
+          careerSaveMetadata,
           other_database: [{
             size: size_2,
             file: output.slice(size_1, size_1 + size_2),
@@ -77,37 +72,13 @@ export const analyzeFileToDatabase = async (file) => {
         }
 
         if (process.env.NODE_ENV === 'development') {
-          console.log(db, version, metadata)
+          console.log(db, version, Header, careerSaveMetadata)
           // saveAs(new Blob([metadata.chunk0], {type: "application/binary"}), "chunk0");
         }
 
-        resolve({
-          db,
-          metadata
-        });
-
-        /*
-
-        format:
-
-        metadata: [0 - metaLength]
-        size0: [metaLength, metaLength + 4] = size of compressed data
-        size1: [metaLength + 4, metaLength + 8] = size of db
-        size2: [metaLength + 8, metaLength + 12] = size of backup db 1
-        size3: [metaLength + 12, metaLength + 16] = size of backup db 2
-        remainingdata = deflated [
-          db, <size = size1>
-          db_backup1, <size = size2>
-          db_backup2, <size = size3>
-        ]
-
-
-         */
-
-
-
+        resolve({db, metadata});
       };
-      reader.readAsBinaryString(file);
+      reader.readAsArrayBuffer(file);
     }
   });
 }

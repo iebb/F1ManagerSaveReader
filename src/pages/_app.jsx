@@ -5,7 +5,7 @@ import Head from "next/head";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
-import {BasicInfoHeader} from "../components/Common/subcomponents/BasicInfoHeader";
+import {BasicInfoHeader} from "../components/Common/BasicInfoHeader";
 import {
   BasicInfoContext, BasicInfoUpdaterContext,
   DatabaseContext,
@@ -114,21 +114,23 @@ export default function App({ Component, pageProps }) {
     if (window?.navigator?.userAgent?.includes("MRCHROME") && !inApp) {
       setInApp(true);
     }
+    if (!window.initialized) {
+      window.initialized = true;
+      require('sql.js')({
+        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
+      }).then(SQL => {
+        window.SQL = SQL;
+        setLoaded(true);
+      });
 
-    require('sql.js')({
-      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
-    }).then(SQL => {
-      window.SQL = SQL;
-      setLoaded(true);
-    });
-
-    window.document.addEventListener('loadFile', e => {
-      openFile(e.detail.file);
-      setFilePath(e.detail.path);
-      setInApp(true);
-      window.mode = "app";
-      window.file_path = e.detail.path;
-    }, false)
+      window.document.addEventListener('loadFile', e => {
+        openFile(e.detail.file);
+        setFilePath(e.detail.path);
+        setInApp(true);
+        window.mode = "app";
+        window.file_path = e.detail.path;
+      }, false)
+    }
   }, []);
 
 
@@ -163,7 +165,7 @@ export default function App({ Component, pageProps }) {
                           multiple={false}
                         >
                           {({ getRootProps, getInputProps }) => (
-                            <div {...getRootProps()}>
+                            <div id="fullpage_dropzone" {...getRootProps()}>
                               <Header />
                               <input {...getInputProps()} hidden />
                               <DragBox />
