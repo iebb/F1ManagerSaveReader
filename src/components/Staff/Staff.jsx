@@ -28,8 +28,6 @@ export default function Staff() {
 
 
   return (
-    <div>
-      <VTabs options={opt} />
-    </div>
+    <VTabs options={opt} />
   );
 }

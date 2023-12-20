@@ -6,12 +6,12 @@ import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
 import {
+  PartNames,
   PartCalculationStatsV, PartFactorsV,
   PartStatsCategorizedV,
 } from "./consts";
 
 import {
-  PartNames,
   statRenderer,
   unitValueToValue, valueToDeltaUnitValue
 } from "./consts_2023";

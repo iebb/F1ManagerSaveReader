@@ -118,19 +118,6 @@ export const statRenderer = {
   15: x => `${(x).toFixed(2)}%`,
 }
 
-export const PartNames = [
-  "Engine",
-  "ERS",
-  "Gearbox",
-  "Chassis",
-  "Front Wing",
-  "Rear Wing",
-  "Sidepods",
-  "Underfloor",
-  "Suspension",
-];
-
-
 export const PartStatNames = [
   "Airflow Front",
   "Airflow Sensitivity",
