@@ -182,7 +182,7 @@ export const raceFlags = [
   "AE",
   "US-MIAMI", // Miami
   "NL",
-  "IT-EMI", // SMR
+  "IT-45", // SMR
   "US-VEGAS", // Las Vegas
   "QA",
 ]
