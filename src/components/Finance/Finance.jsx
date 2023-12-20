@@ -1,5 +1,5 @@
 import {raceAbbrevs} from "@/js/localization";
-import {Alert, AlertTitle} from "@mui/lab";
+import {Alert, AlertTitle} from "@mui/material";
 import {Divider, Typography} from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';

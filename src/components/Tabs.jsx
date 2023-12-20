@@ -1,10 +1,7 @@
-import {Box, Tabs} from "@mui/material";
-import TabList from "@mui/lab/TabList";
-import Tab from "@mui/material/Tab";
-import TabPanel from "@mui/lab/TabPanel";
-import TabContext from "@mui/lab/TabContext";
-import {useContext, useState} from "react";
+import {TabContext, TabList, TabPanel} from "@mui/lab";
+import {Box, Tab, Tabs} from "@mui/material";
 import {useRouter} from "next/router";
+import {useContext, useState} from "react";
 import {MetadataContext} from "./Contexts";
 
 

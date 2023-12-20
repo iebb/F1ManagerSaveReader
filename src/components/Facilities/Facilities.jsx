@@ -1,13 +1,12 @@
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import {Tabs} from "@mui/material";
-import Tab from "@mui/material/Tab";
+import {Tab, Tabs} from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {DatabaseContext, MetadataContext} from "../Contexts";
 
 export const BuildingsCategorized = [
   {

@@ -1,19 +1,14 @@
-import {Tabs} from "@mui/material";
-import Tab from "@mui/material/Tab";
+import {Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {
-  PartCalculationStats2023,
   PartCalculationStatsV,
   PartFactorsV,
-  PartStats2023,
   PartStatsV,
-  PSF2023
 } from "./consts";
-import {PartCalculationStats2022, PartStats2022, PSF2022} from "./consts_2022";
 
 
 export default function CarAnalysis() {

@@ -1,5 +1,5 @@
 import {getDriverName} from "@/js/localization";
-import {Alert, AlertTitle} from "@mui/lab";
+import {Alert, AlertTitle} from "@mui/material";
 import {Button, ButtonGroup, Divider, Grid, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";

@@ -1,5 +1,4 @@
-import {Button, Tabs} from "@mui/material";
-import Tab from "@mui/material/Tab";
+import {Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";

@@ -1,4 +1,4 @@
-import {Alert, AlertTitle} from "@mui/lab";
+import {Alert, AlertTitle} from "@mui/material";
 import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext} from "../../components/Contexts";

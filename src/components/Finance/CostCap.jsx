@@ -1,10 +1,5 @@
 import {raceAbbrevs} from "@/js/localization";
-import {Alert, AlertTitle} from "@mui/lab";
-import {Divider, Typography} from "@mui/material";
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
+import {Alert, AlertTitle, Divider, FormControl, InputLabel, MenuItem, Select, Typography} from "@mui/material";
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";

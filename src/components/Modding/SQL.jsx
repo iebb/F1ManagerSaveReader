@@ -1,10 +1,9 @@
-import {Button, FormControl, Divider, MenuItem, Select, TextField, Typography} from "@mui/material";
+import {Button, Divider, FormControl, MenuItem, Select, TextField, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
-import {getBasicDataTable} from "../Staff/commons/drivers";
 
 export default function DataBrowser() {
 

@@ -1,8 +1,7 @@
-import {Button, FormControl, Divider, MenuItem, Select, TextField, Typography} from "@mui/material";
-import {DataGrid} from "@mui/x-data-grid";
+import {Button, Divider, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
+import {useContext} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 

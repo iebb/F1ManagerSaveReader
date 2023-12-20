@@ -1,20 +1,12 @@
-import {Tabs, Typography} from "@mui/material";
-import Tab from "@mui/material/Tab";
+import {Tab, Tabs, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
-import {
-  PartNames,
-  PartCalculationStatsV, PartFactorsV,
-  PartStatsCategorizedV,
-} from "./consts";
+import {PartCalculationStatsV, PartFactorsV, PartNames, PartStatsCategorizedV,} from "./consts";
 
-import {
-  statRenderer,
-  unitValueToValue, valueToDeltaUnitValue
-} from "./consts_2023";
+import {statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts_2023";
 
 
 export default function DesignView() {

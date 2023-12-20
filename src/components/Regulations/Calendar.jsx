@@ -6,7 +6,7 @@ import {
   KeyboardDoubleArrowUp, NotStarted,
   PlayCircle
 } from "@mui/icons-material";
-import {Alert, AlertTitle} from "@mui/lab";
+import {Alert, AlertTitle} from "@mui/material";
 import {Divider, Typography} from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
