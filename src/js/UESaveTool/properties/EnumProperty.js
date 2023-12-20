@@ -9,10 +9,10 @@ export class EnumProperty extends Property {
         this.Property = "";
     }
     get Size() {
-        return this.Name.length + 4
-            + this.Type.length + 4
-            + this.Property.length + 4
-            + this.EnumType.length + 4
+        return this.Name.length + 1 + 4
+            + this.Type.length + 1 + 4
+            + this.Property.length + 1 + 4
+            + this.EnumType.length + 1 + 4
             + 9;
     }
     deserialize(serial) {
@@ -26,7 +26,7 @@ export class EnumProperty extends Property {
         let serial = Serializer.alloc(this.Size);
         serial.writeString(this.Name);
         serial.writeString(this.Type);
-        serial.writeInt32(this.Property.length + 4);
+        serial.writeInt32(this.Property.length + 1 + 4);
         serial.seek(4);
         serial.writeString(this.EnumType);
         serial.seek(1);

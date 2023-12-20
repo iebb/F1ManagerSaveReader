@@ -24,19 +24,23 @@ export class GvasHeader {
     get Size() {
         let size = this.Format.length;
         size += 18;
-        size += this.EngineVersion.BuildId.length + 4;
+
+        size += this.EngineVersion.BuildId.length + 1 + 4;
+        if (this.EngineVersion.Major >= 5) {
+            size += 4;
+        }
         size += 8;
         this.CustomFormatData.Entries.forEach(guid => {
             size += guid.Size; // 20
         })
-        size += this.SaveGameType.length + 4;
+        size += this.SaveGameType.length + 1 + 4;
         return size;
     }
     deserialize(serial) {
         this.SaveGameVersion = serial.readInt32();
         this.PackageVersion = serial.readInt32();
         if (this.SaveGameVersion >= 3) {
-            serial.readInt32();
+            this.SomeInt32 = serial.readInt32();
         } // UE 5 for F1M 23
         this.EngineVersion.Major = serial.readInt16();
         this.EngineVersion.Minor = serial.readInt16();
@@ -57,6 +61,9 @@ export class GvasHeader {
         serial.write(Buffer.from(this.Format));
         serial.writeInt32(this.SaveGameVersion);
         serial.writeInt32(this.PackageVersion);
+        if (this.SaveGameVersion >= 3) {
+            serial.writeInt32(this.SomeInt32);
+        } // UE 5 for F1M 23
 
         serial.writeInt16(this.EngineVersion.Major);
         serial.writeInt16(this.EngineVersion.Minor);

@@ -9,8 +9,8 @@ export class FloatProperty extends Property {
         this.Index = 0;
     }
     get Size() {
-        return this.Name.length + 4
-            + this.Type.length + 4
+        return this.Name.length + 1 + 4
+            + this.Type.length + 1 + 4
             + 13;
     }
     deserialize(serial) {

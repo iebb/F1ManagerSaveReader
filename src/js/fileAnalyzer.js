@@ -12,7 +12,8 @@ export const analyzeFileToDatabase = async (file) => {
       let reader = new FileReader();
       reader.onload = async (e) => {
         const serial = new Serializer(Buffer.from(reader.result));
-        const { Header, Properties } = new Gvas().deserialize(serial);
+        const GVASMeta = new Gvas().deserialize(serial);
+        const { Header, Properties } = GVASMeta;
         const { SaveGameVersion, EngineVersion } = Header;
         const { BuildId } = EngineVersion;
         const version = SaveGameVersion;
@@ -58,6 +59,7 @@ export const analyzeFileToDatabase = async (file) => {
           version,
           gameVersionRaw: gameVersionString,
           gameVersion: prettifiedGameVersion,
+          gvasMeta: GVASMeta,
           database_file,
           header: Header,
           properties: Properties,
@@ -87,7 +89,7 @@ export const repack = (db, metadata, overwrite = false) => {
   const db_data = db.export();
   const db_size = db_data.length;
 
-  const { other_database, meta_length } = metadata;
+  const { other_database, gvasMeta } = metadata;
 
   const s1 = other_database[0].size;
   const s2 = other_database[1].size;
@@ -100,27 +102,36 @@ export const repack = (db, metadata, overwrite = false) => {
   const compressed = pako.deflate(compressedData);
   const compressed_size = compressed.length;
 
+  const serialized = gvasMeta.serialize();
+  const meta_length = serialized.length;
 
-  const finalData = new Buffer(meta_length + 16 + compressed_size);
+  const check = new Gvas().deserialize(
+    new Serializer(Buffer.from(serialized))
+  );
 
-  finalData.set(metadata.chunk0, 0);
-  finalData.writeInt32LE(compressed_size, meta_length);
-  finalData.writeInt32LE(db_size, meta_length + 4);
-  finalData.writeInt32LE(s1, meta_length + 8);
-  finalData.writeInt32LE(s2, meta_length + 12);
-  finalData.set(compressed, meta_length + 16);
+  if (JSON.stringify(gvasMeta) === JSON.stringify(check)) {
+    const finalData = new Buffer(meta_length + 16 + compressed_size);
 
-  if (window.mode === "app" && overwrite) {
-    window.parent.document.dispatchEvent( new CustomEvent('export-file', {
-      detail: {
-        data: finalData,
-        filename: metadata.filename,
-        filepath: window.file_path,
-      }
-    }))
-  } else {
-    saveAs(new Blob([finalData], {type: "application/binary"}), metadata.filename);
+    finalData.set(serialized, 0);
+    finalData.writeInt32LE(compressed_size, meta_length);
+    finalData.writeInt32LE(db_size, meta_length + 4);
+    finalData.writeInt32LE(s1, meta_length + 8);
+    finalData.writeInt32LE(s2, meta_length + 12);
+    finalData.set(compressed, meta_length + 16);
+
+    if (window.mode === "app" && overwrite) {
+      window.parent.document.dispatchEvent( new CustomEvent('export-file', {
+        detail: {
+          data: finalData,
+          filename: metadata.filename,
+          filepath: window.file_path,
+        }
+      }))
+    } else {
+      saveAs(new Blob([finalData], {type: "application/binary"}), metadata.filename);
+    }
   }
+
 }
 export const dump = (db, metadata) => {
   saveAs(new Blob([db.export()], {type: "application/vnd.sqlite3"}), metadata.filename + ".db");

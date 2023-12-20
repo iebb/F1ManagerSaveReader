@@ -49,9 +49,13 @@ export class Serializer {
     }
     readString() {
         let length = this.readInt32();
-        let str = this.read(length - 1).toString('utf8');
-        this.read(1);
-        return str;
+        if (length > 0) {
+            let str = this.read(length - 1).toString('utf8');
+            this.read(1);
+            return str;
+        } else {
+            return "[NULL]";
+        }
     }
     write(buf) {
         this._offset += buf.copy(this.Data, this.tell);
@@ -71,15 +75,22 @@ export class Serializer {
         this._offset = this.Data.writeUInt8(byte, this.tell);
     }
     writeInt8(byte) {
+        console.log("writing", byte);
+        console.log("this.Data", this.Data, this.tell);
         this._offset = this.Data.writeInt8(byte, this.tell);
     }
     writeFloat(num) {
         this._offset = this.Data.writeFloatLE(num, this.tell);
     }
-    writeString(_str) {
-        let str = _str + "\x00";
-        this._offset = this.Data.writeInt32LE(str.length, this.tell);
-        this._offset += this.Data.write(str, this.tell);
+    writeString(str) {
+        if (str === "[NULL]") {
+            this._offset = this.Data.writeInt32LE(0, this.tell);
+        } else {
+            console.log("writing", str, str.length, this.Data, this.tell);
+            this._offset = this.Data.writeInt32LE(str.length + 1, this.tell);
+            this._offset += this.Data.write(str, this.tell);
+            this._offset = this.Data.writeInt8(0, this.tell);
+        }
     }
     append(buf) {
         this._data = Buffer.concat([this.Data, buf]);

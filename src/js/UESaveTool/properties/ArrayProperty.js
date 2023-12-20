@@ -12,19 +12,19 @@ export class ArrayProperty extends Property {
     }
     get Size() {
         let size = 0;
-        size += this.Name.length + 4;
-        size += this.Type.length + 4;
+        size += this.Name.length + 1 + 4;
+        size += this.Type.length + 1 + 4;
         size += 8; // 4 byte size + 4 byte padding
-        size += this.StoredPropertyType.length + 4;
+        size += this.StoredPropertyType.length + 1 + 4;
         size += 5; // 1 byte padding + 2 byte int + 2 byte padding
         size += this.Property.Size;
         return size;
     }
     get HeaderSize() {
-        let size = this.Name.length + 4;
-        size += this.Type.length + 4;
+        let size = this.Name.length + 1 + 4;
+        size += this.Type.length + 1 + 4;
         size += 8;
-        size += this.StoredPropertyType.length + 4;
+        size += this.StoredPropertyType.length + 1 + 4;
         size += 1;
         return size;
     }

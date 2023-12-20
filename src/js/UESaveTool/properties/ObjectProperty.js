@@ -8,9 +8,9 @@ export class ObjectProperty extends Property {
         this.Property = "";
     }
     get Size() {
-        return this.Name.length + 4
-            + this.Type.length + 4
-            + this.Property.length + 4
+        return this.Name.length + 1 + 4
+            + this.Type.length + 1 + 4
+            + this.Property.length + 1 + 4
             + 9;
     }
     deserialize(serial) {
@@ -22,7 +22,7 @@ export class ObjectProperty extends Property {
         let serial = Serializer.alloc(this.Size);
         serial.writeString(this.Name);
         serial.writeString(this.Type);
-        serial.writeInt32(this.Property.length + 4);
+        serial.writeInt32(this.Property.length + 1 + 4);
         serial.seek(5);
         serial.writeString(this.Property);
         if (serial.tell !== this.Size)

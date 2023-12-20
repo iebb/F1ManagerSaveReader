@@ -9,10 +9,10 @@ export class StructProperty extends Property {
         this.Properties = [];
     }
     get Size() {
-        let size = this.Name.length + 4;
-        size += this.Type.length + 4;
+        let size = this.Name.length + 1 + 4;
+        size += this.Type.length + 1 + 4;
         size += 8; // 4 byte size + 4 byte padding
-        size += this.StoredPropertyType.length + 4;
+        size += this.StoredPropertyType.length + 1 + 4;
         size += 17; // 17 byte padding
         for (let i = 0; i < this.Properties.length; i++) {
             size += this.Properties[i].Size;
@@ -20,10 +20,10 @@ export class StructProperty extends Property {
         return size;
     }
     get HeaderSize() {
-        let size = this.Name.length + 4;
-        size += this.Type.length + 4;
+        let size = this.Name.length + 1 + 4;
+        size += this.Type.length + 1 + 4;
         size += 8;
-        size += this.StoredPropertyType.length + 4;
+        size += this.StoredPropertyType.length + 1 + 4;
         size += 17;
         return size
     }

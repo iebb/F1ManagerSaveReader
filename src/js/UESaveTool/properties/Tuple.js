@@ -22,7 +22,9 @@ export class Tuple extends Property {
     }
     deserialize(serial) {
         let Name;
+        console.log(serial);
         while ((Name = serial.readString()) !== 'None') {
+            console.log("read", Name);
             let Type = serial.readString();
             let Size = serial.readInt32();
             let prop = PropertyFactory.create({ Name, Type });

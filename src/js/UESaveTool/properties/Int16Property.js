@@ -9,9 +9,9 @@ export class Int16Property extends Property {
         this.Index = 0;
     }
     get Size() {
-        return this.Name.length + 4
-            + this.Type.length + 2
-            + 13;
+        return this.Name.length + 1 + 4
+            + this.Type.length + 1 + 4
+            + 9 + 2;
     }
     deserialize(serial) {
         this.Index = serial.readInt32();

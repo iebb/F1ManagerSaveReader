@@ -8,8 +8,8 @@ export class BoolProperty extends Property {
         this.Property = false;
     }
     get Size() {
-        return this.Name.length + 4
-            + this.Type.length + 4
+        return this.Name.length + 1 + 4
+            + this.Type.length + 1 + 4
             + 10;
     }
     deserialize(serial) {

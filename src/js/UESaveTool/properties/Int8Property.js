@@ -9,17 +9,18 @@ export class Int8Property extends Property {
         this.Index = 0;
     }
     get Size() {
-        return this.Name.length + 4
-            + this.Type.length + 1
-            + 13;
+        return this.Name.length + 1 + 4
+            + this.Type.length + 1 + 4
+            + 9 + 1;
     }
     deserialize(serial) {
-        serial.readInt32();
+        this.Index = serial.readInt32();
         serial.seek(1);
         this.Property = serial.readInt8();
         return this;
     }
     serialize() {
+        console.log(this, this.Size);
         let serial = Serializer.alloc(this.Size);
         serial.writeString(this.Name);
         serial.writeString(this.Type);
