@@ -50,12 +50,11 @@ export default function Facilities() {
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
-  const basicInfo = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
   const [buildings, setBuildings] = useState([]);
-  const [partPanel, setPartPanel] = useState(1);
+  const [partPanel, setPartPanel] = useState(0);
 
   const BuildingsCategorizedPage = BuildingsCategorized[partPanel].buildings;
 
