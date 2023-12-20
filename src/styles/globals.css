@@ -35,6 +35,7 @@
   --callout-border-rgb: 108, 108, 108;
   --card-rgb: 100, 100, 100;
   --card-border-rgb: 200, 200, 200;
+  font-variant-numeric: tabular-nums;
 }
 
 * {

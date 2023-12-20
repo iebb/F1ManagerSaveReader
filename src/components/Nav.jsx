@@ -1,4 +1,4 @@
-import {NavTabs} from "../Tabs";
+import {NavTabs} from "./Tabs";
 
 export default function Nav(props) {
   return (
@@ -6,6 +6,7 @@ export default function Nav(props) {
       {name: "Weekend", navigator: '/weekend'},
       {name: "Results", navigator: '/results'},
       {name: "Regulations", navigator: '/regulations'},
+      {name: "Finance", navigator: '/finance'},
       {name: "Staff", navigator: '/staff'},
       {name: "Facilities", navigator: '/facilities'},
       {name: "Parts", navigator: '/parts'},

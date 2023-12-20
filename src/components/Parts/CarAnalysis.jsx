@@ -4,7 +4,7 @@ import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {
   PartCalculationStats2023,
   PartCalculationStatsV,
@@ -19,7 +19,7 @@ import {PartCalculationStats2022, PartStats2022, PSF2022} from "./consts_2022";
 export default function CarAnalysis() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const {driverMap, teamMap } = basicInfo;

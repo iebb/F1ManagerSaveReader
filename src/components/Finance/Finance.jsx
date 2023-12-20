@@ -1,4 +1,5 @@
 import {raceAbbrevs} from "@/js/localization";
+import {Alert, AlertTitle} from "@mui/lab";
 import {Divider, Typography} from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -8,13 +9,14 @@ import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {dayToDate, teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {defaultFontFamily} from "../UI/Fonts";
 
 
-export default function CostCap() {
+export default function Finance() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
   const { player } = basicInfo;
@@ -50,25 +52,27 @@ export default function CostCap() {
 
       let columns, values;
 
-      [{ values }] = database.exec(
-        `SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`
-      );
+      [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
       const [seasonStart, seasonEnd] = values[0];
       setXMax(dayToDate(seasonEnd));
 
-      [{ values }] = database.exec(
-        `SELECT CurrentValue FROM 'Regulations_Enum_Changes' WHERE Name = 'SpendingCap'`
+      let totalRevenueForTeam = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      let revenueHistoryForTeam = [[], [], [], [], [], [], [], [], [], [], [], []];
+      [{ columns, values }] = database.exec(
+        `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' 
+        WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} GROUP BY TeamID, Day ORDER BY Day ASC`
       );
-      const [costCap] = values[0];
+      for(const r of values) {
+        let transaction = {};
+        r.map((x, _idx) => transaction[columns[_idx]] = x)
+        //
+        totalRevenueForTeam[transaction.TeamID] += transaction.Value;
+        revenueHistoryForTeam[transaction.TeamID].push(
+          [transaction.Day, totalRevenueForTeam[transaction.TeamID]]
+        )
+      }
 
-      const raceMarklines = [{
-        name: "Current Cost Cap",
-        yAxis: costCap,
-        label: {
-          formatter: '{b}: {c}',
-          position: 'insideStart'
-        }
-      }];
+      const raceMarklines = [];
 
       [{ columns, values }] = database.exec(
         `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
@@ -91,49 +95,44 @@ export default function CostCap() {
         })
       }
 
-      let totalCostCapForTeam = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      let costCapHistoryForTeam = [[], [], [], [], [], [], [], [], [], [], [], []];
-      [{ columns, values }] = database.exec(
-        `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' 
-        WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND AffectsCostCap = 1 GROUP BY TeamID, Day ORDER BY Day ASC`
-      );
-      for(const r of values) {
-        let transaction = {};
-        r.map((x, _idx) => transaction[columns[_idx]] = x)
-        //
-        totalCostCapForTeam[transaction.TeamID] -= transaction.Value;
-        costCapHistoryForTeam[transaction.TeamID].push(
-          [dayToDate(transaction.Day), totalCostCapForTeam[transaction.TeamID]]
-        )
-      }
-
       const seriesList = [{
         type: 'line',
         markLine: {
+          symbol: 'none',
           data: raceMarklines
         }
-      },];
+      }];
 
 
-      let calcYMax = costCap;
+
+
       for(let i = 1; i <= 10; i++) {
-        costCapHistoryForTeam[i].push([dayToDate(
-          Math.min(player.Day, seasonEnd - 1)
-        ), totalCostCapForTeam[i]])
-        if (totalCostCapForTeam[i] > calcYMax) {
-          calcYMax = totalCostCapForTeam[i];
-        }
+        revenueHistoryForTeam[i].push([Math.min(player.Day, seasonEnd - 1), totalRevenueForTeam[i]])
         const color = getComputedStyle(window.vc).getPropertyValue(`--team${i}`);
+        const data = [
+          [dayToDate(seasonStart - 1), 0]
+        ];
+        let previousDate = seasonStart;
+        let previousCapUsage = 0;
+        for(const [day, cap] of revenueHistoryForTeam[i]) {
+          for(let i = previousDate; i < day; i++) {
+            data.push([dayToDate(i), previousCapUsage]);
+          }
+          previousCapUsage = cap;
+          previousDate = day;
+        }
+        data.push([dayToDate(previousDate), previousCapUsage]);
+
         seriesList.push( {
           name: teamNames(i, version),
           type: 'line',
           itemStyle: {color},
-          data: costCapHistoryForTeam[i]
+          showSymbol: false,
+          data
         })
       }
 
       setSeriesList(seriesList);
-      setYMax(calcYMax * 1.2);
 
     } catch (e) {
       console.error(e);
@@ -144,7 +143,7 @@ export default function CostCap() {
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Cost Cap Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+        Revenue Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
         <InputLabel id="standard-label">Season</InputLabel>
         <Select
           labelId="standard-label"
@@ -157,17 +156,18 @@ export default function CostCap() {
         </Select>
       </FormControl>
       </Typography>
-      <Typography variant="p" component="p" sx={{ color: "orange", marginTop: 2 }}>
-        Note: AI Teams doesn't follow the cost cap, it's only for informative purposes.
-      </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <div style={{ overflowX: "auto" }}>
         <ReactECharts
           theme="dark"
           style={{ height: 500 }}
           option={{
+            legend: {show: true},
+            textStyle: {
+              fontFamily: defaultFontFamily,
+              fontVariantNumeric: 'tabular-nums',
+            },
             backgroundColor: "transparent",
-            // animationDuration: 10000,
             tooltip: {
               order: 'valueDesc',
               trigger: 'axis'
@@ -179,11 +179,14 @@ export default function CostCap() {
             },
             yAxis: {
               type: 'value',
-              name: 'Cost Cap',
-              max: yMax,
+              name: 'Revenue',
+              axisLabel: {
+                formatter: val => `${val / 1000000}m`
+              },
             },
             grid: {
-              right: 140
+              right: 60,
+              left: 60,
             },
             series: seriesList
           }} />

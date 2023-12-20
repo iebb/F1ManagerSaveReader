@@ -2,7 +2,7 @@ import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 
 const PitCrewStatsList = {
   2: [
@@ -30,7 +30,7 @@ const PitCrewStatsList = {
 export default function PitcrewView() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext);
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);

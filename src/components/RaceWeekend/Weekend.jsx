@@ -1,13 +1,14 @@
+import {Alert, AlertTitle} from "@mui/lab";
 import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, MetadataContext} from "../Contexts";
 import {VTabs} from "../Tabs";
 import CarSetup from "./CarSetup";
 import RaceEditor from "./RaceEditor";
 
 
 export default function RaceWeekend() {
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
   const { weekend } = basicInfo;
@@ -24,12 +25,10 @@ export default function RaceWeekend() {
 
   if (weekend.RaceID < 0) {
     return (
-      <div>
-       <span style={{ color: "yellow", fontSize: 18 }}>
-          You are not in a race weekend. Please save inside a race weekend.
-        </span>
-        <br/>
-      </div>
+      <Alert severity="error" sx={{ my: 2 }}>
+        <AlertTitle>Unsupported</AlertTitle>
+        You are not in a race weekend. Please save inside a race weekend.
+      </Alert>
     )
   }
 

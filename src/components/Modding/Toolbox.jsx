@@ -4,7 +4,7 @@ import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 
 export default function Toolbox() {
 

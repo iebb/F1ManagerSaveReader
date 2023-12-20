@@ -3,7 +3,7 @@ import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} 
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {countries} from "../../../js/staffNames";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
 
 
 const driverNumbers = ["N/A"];
@@ -14,7 +14,7 @@ for(let i = 0; i < 100; i++) {
 export default function StaffEditor(props) {
   const { editRow, setEditRow, refresh } = props;
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
 
 
   const [firstName, setFirstName] = useState("Lando");

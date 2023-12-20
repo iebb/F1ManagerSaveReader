@@ -1,13 +1,13 @@
-import {Button, Tabs} from "@mui/material";
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import {Tabs} from "@mui/material";
 import Tab from "@mui/material/Tab";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
-import RefreshIcon from '@mui/icons-material/Refresh';
-import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
-import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 
 export const BuildingsCategorized = [
   {
@@ -48,7 +48,7 @@ export const BuildingsCategorized = [
 export default function Facilities() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);

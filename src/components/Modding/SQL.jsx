@@ -3,13 +3,13 @@ import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {getBasicDataTable} from "../Staff/commons/drivers";
 
 export default function DataBrowser() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 

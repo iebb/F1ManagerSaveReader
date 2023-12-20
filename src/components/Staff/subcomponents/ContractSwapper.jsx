@@ -2,13 +2,13 @@ import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} 
 import {useContext, useState} from "react";
 import * as React from "react";
 import {getDriverName} from "../../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
 import {assignRandomRaceNumber, fireDriverContract, getStaff, swapDriverContracts} from "../commons/drivers";
 
 export default function ContractSwapper(props) {
   const { swapRow, setSwapRow, refresh } = props;
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 

@@ -1,10 +1,11 @@
 import {getDriverName} from "@/js/localization";
+import {Alert, AlertTitle} from "@mui/lab";
 import {Button, ButtonGroup, Grid, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
 import {PartNames} from "../Parts/consts";
 
 
@@ -31,7 +32,7 @@ export default function RaceEditor() {
 
   const database = useContext(DatabaseContext);
   const env = useContext(EnvContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 
@@ -127,12 +128,10 @@ export default function RaceEditor() {
 
   if (weekend.WeekendStage < 8) {
     return (
-      <div>
-       <span style={{ color: "yellow", fontSize: 18 }}>
-          You are not in a Race or Sprint.
-        </span>
-        <br/>
-      </div>
+      <Alert severity="error" sx={{ my: 2 }}>
+        <AlertTitle>Unsupported</AlertTitle>
+        You are not in a Race or a Sprint Race.
+      </Alert>
     )
   }
   return (

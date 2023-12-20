@@ -3,18 +3,38 @@ import TabList from "@mui/lab/TabList";
 import Tab from "@mui/material/Tab";
 import TabPanel from "@mui/lab/TabPanel";
 import TabContext from "@mui/lab/TabContext";
-import {useState} from "react";
+import {useContext, useState} from "react";
 import {useRouter} from "next/router";
+import {MetadataContext} from "./Contexts";
+
 
 export const VTabs = ({ options }) => {
+  const {version, gameVersion} = useContext(MetadataContext);
   const [value, setValue] = useState("0");
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+
+  const cmp = require('semver-compare');
+
+  const _options = options.filter(opt => {
+    if (opt.versions) {
+      return opt.versions.includes(version);
+    }
+    if (opt.minVersion) {
+      return cmp(`${version}.${gameVersion}`, opt.minVersion) >= 0;
+    }
+    if (opt.devOnly) {
+      return process.env.NODE_ENV === 'development';
+    }
+    return true;
+  })
+
+
   return <TabContext value={value}>
     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
       <TabList onChange={handleChange}>
-        {options.map((t, _idx) => <Tab label={t.name} value={_idx.toString(10)} key={_idx.toString(10)} />)}
+        {_options.map((t, _idx) => <Tab label={t.name} value={_idx.toString(10)} key={_idx.toString(10)} />)}
       </TabList>
     </Box>
     {options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0 }}>

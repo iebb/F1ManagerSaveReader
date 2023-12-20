@@ -10,10 +10,10 @@ import * as React from "react";
 import {useContext} from "react";
 import {getCountryFlag} from "../../../js/countries";
 import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamNames} from "../../../js/localization";
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
 
 export default function ResultsTable(ctx) {
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
 import PitcrewView from "./Pitcrew";
 import StaffGeneric from "./StaffGeneric";
 import {VTabs} from "../Tabs";
@@ -9,7 +9,7 @@ import {VTabs} from "../Tabs";
 export default function Staff() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const env = useContext(EnvContext);

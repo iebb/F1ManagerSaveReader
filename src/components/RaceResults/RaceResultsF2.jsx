@@ -6,14 +6,14 @@ import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {yearToDateRange} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
 export default function RaceResultsF2({ formulae = 2 }) {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
   const { driverMap, player, misc } = basicInfo;

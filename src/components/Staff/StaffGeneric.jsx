@@ -3,7 +3,7 @@ import {getCountryFlag, getCountryShort} from "@/js/countries";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {getStaff} from "./commons/drivers";
 import {localeStaffStats, mailSenders} from "./commons/staffCommon";
 import ContractSwapper from "./subcomponents/ContractSwapper";
@@ -13,7 +13,7 @@ import StaffEditor from "./subcomponents/StaffEditor";
 export default function StaffGeneric({ StaffType = 1 }) {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const { enqueueSnackbar } = useSnackbar();

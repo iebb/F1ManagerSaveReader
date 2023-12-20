@@ -10,7 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {repack} from "../../js/fileAnalyzer";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext, EnvContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext, EnvContext} from "../Contexts";
 
 
 export const CarSetupParams = [
@@ -76,7 +76,7 @@ export default function CarSetup() {
 
   const database = useContext(DatabaseContext);
   const env = useContext(EnvContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 

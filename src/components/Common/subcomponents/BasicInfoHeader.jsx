@@ -4,12 +4,12 @@ import {Button, Divider, Step, StepLabel, Stepper, Typography} from "@mui/materi
 import * as React from "react";
 import {useContext} from "react";
 import {dump, repack} from "../../../js/fileAnalyzer";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, VersionContext} from "../../Contexts";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../../Contexts";
 
 export const BasicInfoHeader = () => {
   const basicInfo = useContext(BasicInfoContext);
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const env = useContext(EnvContext);
 

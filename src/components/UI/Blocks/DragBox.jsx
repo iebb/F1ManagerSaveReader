@@ -1,9 +1,9 @@
 import {Container, Typography} from "@mui/material";
 import {useContext} from "react";
-import {EnvContext, VersionContext} from "../../Contexts";
+import {EnvContext, MetadataContext} from "../../Contexts";
 
 export default function DragBox() {
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const env = useContext(EnvContext);
 
   if (env.inApp || version) {

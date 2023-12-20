@@ -5,14 +5,14 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
 export default function RaceResultsF1() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
   const { player } = basicInfo;

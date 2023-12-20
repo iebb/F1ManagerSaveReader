@@ -5,23 +5,22 @@ import Head from "next/head";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
+import {BasicInfoHeader} from "../components/Common/subcomponents/BasicInfoHeader";
 import {
+  BasicInfoContext, BasicInfoUpdaterContext,
   DatabaseContext,
   DatabaseUpdaterContext,
-  BasicInfoContext,
   EnvContext,
   MetadataContext,
-  VersionContext
 } from "../components/Contexts";
+import DragBox from "../components/UI/Blocks/DragBox";
+import {defaultFont, defaultFontFamily} from "../components/UI/Fonts";
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
-import {analyzeFileToDatabase} from "../js/fileAnalyzer";
+import Nav from "../components/Nav";
 import {parseBasicInfo} from "../js/basicInfoParser";
-import DragBox from "../components/UI/Blocks/DragBox";
-import {BasicInfoHeader} from "../components/Common/subcomponents/BasicInfoHeader";
-import Nav from "../components/UI/Nav";
+import {analyzeFileToDatabase} from "../js/fileAnalyzer";
 
-const pjs = Plus_Jakarta_Sans({ subsets: ['latin'] });
 const theme = createTheme({
   palette: {
     mode: 'dark',
@@ -31,15 +30,14 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: `"Plus Jakarta Sans", ${pjs.style.fontFamily}, -apple-system, BlinkMacSystemFont, "Segoe UI", ` +
-      'Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+    fontFamily: defaultFontFamily,
   },
 });
 
 
 
 export function DataView({ children }) {
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
   if (!version) {
@@ -72,8 +70,7 @@ export default function App({ Component, pageProps }) {
 
   const [loaded, setLoaded] = useState(false);
   const [db, setDb] = useState(null);
-  const [version, setVersion] = useState(null);
-  const [metadata, setMetadata] = useState(null);
+  const [metadata, setMetadata] = useState({});
   const [inApp, setInApp] = useState(false);
   const [filePath, setFilePath] = useState("");
   const [basicInfo, setBasicInfo] = useState(null);
@@ -84,13 +81,11 @@ export default function App({ Component, pageProps }) {
   const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, metadata}) => {
       setDb(db);
-      setVersion(metadata.version);
       setMetadata(metadata);
       if (metadata.version) {
         try {
           setBasicInfo(parseBasicInfo({
-            db,
-            version: metadata.version
+            db, metadata
           }))
           refresh();
         } catch (e) {
@@ -101,6 +96,17 @@ export default function App({ Component, pageProps }) {
         setBasicInfo(null);
       }
     });
+  }
+
+  const updateBasicInfo = () => {
+    try {
+      setBasicInfo(parseBasicInfo({
+        db, metadata
+      }))
+    } catch (e) {
+      console.error(e);
+      setBasicInfo(null);
+    }
   }
 
 
@@ -145,11 +151,11 @@ export default function App({ Component, pageProps }) {
         <CssBaseline />
         {
           loaded ? (
-            <VersionContext.Provider value={version}>
-              <DatabaseContext.Provider value={db}>
-                <DatabaseUpdaterContext.Provider value={setDb}>
-                  <MetadataContext.Provider value={metadata}>
-                    <BasicInfoContext.Provider value={basicInfo}>
+            <DatabaseContext.Provider value={db}>
+              <DatabaseUpdaterContext.Provider value={setDb}>
+                <MetadataContext.Provider value={metadata}>
+                  <BasicInfoContext.Provider value={basicInfo}>
+                    <BasicInfoUpdaterContext.Provider value={() => updateBasicInfo()}>
                       <EnvContext.Provider value={{ inApp, filePath }}>
                         <Dropzone
                           onDropAccepted={files => openFile(files[0])}
@@ -171,11 +177,11 @@ export default function App({ Component, pageProps }) {
                           )}
                         </Dropzone>
                       </EnvContext.Provider>
-                    </BasicInfoContext.Provider>
-                  </MetadataContext.Provider>
-                </DatabaseUpdaterContext.Provider>
-              </DatabaseContext.Provider>
-            </VersionContext.Provider>
+                    </BasicInfoUpdaterContext.Provider>
+                  </BasicInfoContext.Provider>
+                </MetadataContext.Provider>
+              </DatabaseUpdaterContext.Provider>
+            </DatabaseContext.Provider>
           ) : (
             <Container maxWidth={false} component="main">
               <Typography variant="h5" component="h5">

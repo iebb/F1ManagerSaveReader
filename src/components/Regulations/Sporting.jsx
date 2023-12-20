@@ -5,7 +5,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import Table from "@mui/material/Table";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
@@ -16,7 +16,7 @@ import TableBody from "@mui/material/TableBody";
 export default function SportingRegulations() {
 
   const database = useContext(DatabaseContext);
-  const version = useContext(VersionContext);
+  const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
   const [regulations, setRegulations] = useState({});
   const [regulationDetails, setRegulationDetails] = useState({});

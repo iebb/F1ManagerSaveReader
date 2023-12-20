@@ -1,5 +1,6 @@
-export const parseBasicInfo = ({db, version}) => {
+export const parseBasicInfo = ({db, metadata}) => {
   let columns, values;
+  const { version } = metadata;
   const basicInfo = {
     currentSeasonRaces: [],
     races: {},

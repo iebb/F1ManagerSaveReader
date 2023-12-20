@@ -1,10 +1,19 @@
+import {
+  CheckCircle,
+  CopyAll,
+  Delete,
+  KeyboardDoubleArrowDown,
+  KeyboardDoubleArrowUp, NotStarted,
+  PlayCircle
+} from "@mui/icons-material";
+import {Alert, AlertTitle} from "@mui/lab";
 import {Divider, Typography} from "@mui/material";
-import {DataGrid} from "@mui/x-data-grid";
+import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {dayToDate, formatDate} from "../../js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext, VersionContext} from "../Contexts";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {raceFlags, raceAbbrevs, countryNames, circuitNames} from "@/js/localization";
 
 const rainTypes = ["dry", "wet"];
@@ -13,16 +22,6 @@ const nextRain = {
   1: 0,
   0: 1,
 }
-
-const nextWeather = {
-  1: 2,
-  2: 4,
-  4: 8,
-  8: 16,
-  16: 32,
-  32: 1,
-}
-
 const weathers = {
   1: "☀️",
   2: "⛅",
@@ -36,22 +35,39 @@ export default function CustomCalendar() {
 
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
-  const version = useContext(VersionContext);
+  const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
+  const {version, gameVersion} = useContext(MetadataContext)
 
   const {player} = basicInfo;
 
   const [races, setRaces] = useState([]);
+  const [raceTemplates, setRaceTemplates] = useState([]);
   const [weeks, setWeeks] = useState({});
   const [updated, setUpdated] = useState(0);
-  const refresh = () => setUpdated(+new Date());
+  const refresh = () => {
+    basicInfoUpdater();
+    setUpdated(+new Date());
+  }
 
 
   useEffect(() => {
     let races = [];
+    let raceTemplates = [];
     let weeks = {};
     const {CurrentSeason} = player;
     try {
       let [{ columns, values }] = database.exec(
+        `select * from Races_Templates JOIN Races_Tracks ON Races_Templates.TrackID = Races_Tracks.TrackID`
+      );
+      for(const r of values) {
+        let raceTemplate = {};
+        r.map((x, _idx) => {raceTemplate[columns[_idx]] = x;})
+        raceTemplates.push(raceTemplate)
+      }
+      setRaceTemplates(raceTemplates);
+
+
+      [{ columns, values }] = database.exec(
         `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${CurrentSeason} order by Day ASC`
       );
       for(const r of values) {
@@ -72,7 +88,57 @@ export default function CustomCalendar() {
   }, [database, updated])
 
 
+  const weatherConfigs = [];
+  const WeatherPrefix = ["Rain", "WeatherState", "Temperature"];
+  const EventSuffix = ["Practice", "Qualifying", "Race"];
+  const EventToDay = {
+    Practice: "Fri",
+    Qualifying: "Sat",
+    Race: "Sun",
+  };
+  for(const event of EventSuffix) {
+    weatherConfigs.push({
+      field: 'Rain' + event,
+      headerName: EventToDay[event],
+      width: 50,
+      renderCell: ({ row, value }) => {
+        if (row.State !== 0) return <span>{rainTypes[value]}</span>
+        return (
+          <a className="noselect" onClick={() => {
+            database.exec(`UPDATE Races SET Rain${event} = ${nextRain[value]} WHERE RaceID = ${row.RaceID}`);
+            refresh();
+          }}>{rainTypes[value]}</a>
+        )
+      },
+    });
+    weatherConfigs.push({
+      field: 'WeatherState' + event,
+      headerName: 'Weather',
+      width: 120,
+      type: "singleSelect",
+      editable: true,
+      valueOptions: [
+        {value: 1, label: "Sunny"},
+        {value: 2, label: "Partly Cloudy"},
+        {value: 4, label: "Cloudy"},
+        {value: 8, label: "Light Rain"},
+        {value: 16, label: "Moderate Rain"},
+        {value: 32, label: "Heavy Rain"},
+      ],
+      renderCell: ({ value, formattedValue }) => {
+        return <span>{weathers[value]} <span style={{ fontSize: 12 }}>{formattedValue}</span></span>
+      },
+    });
+    weatherConfigs.push({
+      field: 'Temperature' + event,
+      headerName: '°C',
+      width: 65,
+      type: "number",
+      editable: true,
+      valueGetter: ({ value }) => Number(value).toFixed(2),
+    });
 
+  }
 
   return (
     <div>
@@ -80,23 +146,63 @@ export default function CustomCalendar() {
         Calendar Editor
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
+      {
+        version === 3 && (
+          <Alert severity="warning" sx={{ my: 2 }}>
+            <AlertTitle>Warning</AlertTitle>
+            Feeder Series race are based on <b>Track</b> rather than <b>Race</b>. Enabling F2 and F3 races for unsupported tracks might result in weird lap times.
+          </Alert>
+        )
+      }
       <DataGrid
         rows={races.map((x, _idx) => ({id: _idx + 1, ...x}))}
         hideFooter
+        isCellEditable={({ row }) => {
+          return row.State === 0;
+        }}
+        onProcessRowUpdateError={e => console.error(e)}
+        processRowUpdate={(newRow, oldRow) => {
+          if (newRow.State > 0) {
+            return oldRow;
+          }
+          if (newRow.TrackID !== oldRow.TrackID) {
+            database.exec(`UPDATE Races SET TrackID = ${newRow.TrackID} WHERE RaceID = ${newRow.RaceID};`);
+            refresh();
+          }
+          if (newRow.WeekendType !== oldRow.WeekendType) {
+            database.exec(`UPDATE Races SET WeekendType = ${newRow.WeekendType} WHERE RaceID = ${newRow.RaceID};`);
+            refresh();
+          }
+          for(const prefix of WeatherPrefix) {
+            for(const suffix of EventSuffix) {
+              if (newRow[prefix + suffix] !== oldRow[prefix + suffix]) {
+                database.exec(`UPDATE Races SET ${prefix + suffix} = ${newRow[prefix + suffix]} WHERE RaceID = ${newRow.RaceID};`);
+                console.log(`UPDATE Races SET ${prefix + suffix} = ${newRow[prefix + suffix]} WHERE RaceID = ${newRow.RaceID};`);
+                refresh();
+              }
+            }
+          }
+          return newRow;
+        }}
         columns={[
           {
-          field: 'CurrentNumber',
-          headerName: '#',
-          valueGetter: ({ row }) => row.id,
-          width: 40,
-          renderCell: ({ row }) => {
-            return (
-              <div style={{ fontSize: "90%" }}>{row.id}</div>
-            )
-          }
-        },
+            field: 'State',
+            headerName: '',
+            width: 25,
+            renderCell: ({ value }) => [
+              <NotStarted sx={{ color: "#33b8ff", fontSize: 18 }} />,
+              <PlayCircle sx={{ color: "#fff533", fontSize: 18 }} />,
+              <CheckCircle sx={{ color: "#33ff66", fontSize: 18 }} />,
+            ][value]
+          },
           {
-            field: 'TrackID',
+            field: 'CurrentNumber',
+            headerName: 'R',
+            valueGetter: ({ row }) => row.id,
+            width: 25,
+          },
+          {
+            field: 'Flag',
             headerName: 'Flag',
             valueGetter: ({ row }) => raceFlags[row.TrackID],
             width: 100,
@@ -113,46 +219,31 @@ export default function CustomCalendar() {
                     {raceAbbrevs[row.TrackID]}
                   </span>
                 </>
-
               )
             }
           },
           {
-            field: 'Country',
-            headerName: 'Country',
-            valueGetter: ({ row }) => raceFlags[row.TrackID],
+            field: 'TrackID',
+            headerName: 'Circuit / Country',
             width: 250,
-            renderCell: ({ row }) => {
-              return (
-                <>
-                  {circuitNames[row.TrackID]}, {countryNames[row.TrackID]}
-                </>
-              )
-            }
-          },
-          {
-            field: '_',
-            headerName: 'Date',
-            width: 180,
-            renderCell: ({ row }) => {
-              return (
-                <>
-                  Week {row.week}: {dayToDate(row.Day).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })}
-                </>
-              )
+            editable: true,
+            type: 'singleSelect',
+            valueOptions: raceTemplates.map(
+              rt => ({ value: rt.TrackID, label: `${circuitNames[rt.TrackID]}, ${countryNames[rt.TrackID]}` })
+            ),
+            renderCell: ({ value }) => {
+              return `${circuitNames[value]}, ${countryNames[value]}`
             }
           },
           ...(version !== 2) ? [
             {
               field: 'IsF2Race',
               headerName: 'F2',
-              width: 40,
+              width: 30,
               renderCell: ({ row, value }) => {
                 return (
                   <a className="noselect" onClick={() => {
-                    database.exec(
-                      `UPDATE Races_Tracks SET IsF2Race = ${1 - value} WHERE TrackID = ${row.TrackID};`
-                    );
+                    database.exec(`UPDATE Races_Tracks SET IsF2Race = ${1 - value} WHERE TrackID = ${row.TrackID};`);
                     refresh();
                   }}>{value ? "F2" : "-"}</a>
                 )
@@ -161,13 +252,11 @@ export default function CustomCalendar() {
             {
               field: 'IsF3Race',
               headerName: 'F3',
-              width: 40,
+              width: 30,
               renderCell: ({ row, value }) => {
                 return (
                   <a className="noselect" onClick={() => {
-                    database.exec(
-                      `UPDATE Races_Tracks SET IsF3Race = ${1 - value} WHERE TrackID = ${row.TrackID};`
-                    );
+                    database.exec(`UPDATE Races_Tracks SET IsF3Race = ${1 - value} WHERE TrackID = ${row.TrackID};`);
                     refresh();
                   }}>{value ? "F3" : "-"}</a>
                 )
@@ -175,204 +264,100 @@ export default function CustomCalendar() {
             },
           ] : [],
           {
-            field: '_expedite',
-            headerName: 'expedite',
+            field: '_',
+            headerName: 'Date',
+            width: 120,
+            renderCell: ({ row }) => {
+              return (
+                <>
+                  W{row.week}: {dayToDate(row.Day).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })}
+                </>
+              )
+            }
+          },
+          {
+            field: '_actions',
+            headerName: 'Actions',
+            headerAlign: 'center',
+            sortable: false,
+            filterable: false,
+            width: 150,
+            renderCell: ({ row }) => {
+              return (
+                [
+                  <GridActionsCellItem
+                    icon={<KeyboardDoubleArrowUp />}
+                    disabled={row.State !== 0 || row.Day - 7 - 2 /* race weekend */ <= player.Day || row.week <= 2}
+                    label="Expedite"
+                    onClick={() => {
+                      if (weeks[row.week - 1]) {
+                        database.exec(`UPDATE Races SET Day = ${row.Day} WHERE RaceID = ${weeks[row.week - 1]};UPDATE Races SET Day = ${row.Day - 7} WHERE RaceID = ${row.RaceID};`);
+                      } else {
+                        database.exec(`UPDATE Races SET Day = ${row.Day - 7} WHERE RaceID = ${row.RaceID}`);
+                      }
+                      refresh();
+                    }}
+                  />,
+                  <GridActionsCellItem
+                    icon={<KeyboardDoubleArrowDown />}
+                    disabled={row.State !== 0 || row.week >= 51}
+                    label="Postpone"
+                    onClick={() => {
+                      if (weeks[row.week + 1]) {
+                        database.exec(`UPDATE Races SET Day = ${row.Day} WHERE RaceID = ${weeks[row.week + 1]};UPDATE Races SET Day = ${row.Day + 7} WHERE RaceID = ${row.RaceID};`);
+                      } else {
+                        database.exec(`UPDATE Races SET Day = ${row.Day + 7} WHERE RaceID = ${row.RaceID}`);
+                      }
+                      refresh();
+                    }}
+                  />,
+                  <GridActionsCellItem
+                    icon={<Delete />}
+                    disabled={row.State !== 0 || races.length < 2}
+                    label="Delete"
+                    onClick={() => {
+                      database.exec(`DELETE FROM Races WHERE RaceID = ${row.RaceID}`);
+                      refresh();
+                    }}
+                  />,
+                  <GridActionsCellItem
+                    icon={<CopyAll />}
+                    disabled={row.State === 2 || row.week >= 51 || weeks[row.week + 1]}
+                    label="Duplicate"
+                    onClick={() => {
+                      let [{ values }] = database.exec(`select * from Races WHERE RaceID = ${row.RaceID}`);
+                      const r = values[0].map(x => typeof x === 'number'? x : `"${x}"`);
+                      r[0] = "NULL"; r[2] += 7;
+                      database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
+                      const RT = raceTemplates[r[3]];
+                      let updateStr = [];
+                      for(const suffix of EventSuffix) {
+                        const rain = Math.random() < RT.RainMax ? 1 : 0;
+                        const weather = 1 << (Math.floor(Math.random() * 3) + rain * 3);
+                        const temperature = Math.random() * (RT.TemperatureMax - RT.TemperatureMin) + RT.TemperatureMin;
+                        updateStr.push(`Rain${suffix} = ${rain}, WeatherState${suffix} = ${weather}, Temperature${suffix} = ${temperature}`);
+                      }
+                      database.exec(`UPDATE Races SET ${updateStr.join(", ")} WHERE RaceID = last_insert_rowid()`);
+                      refresh();
+                    }}
+                  />,
+                ]
+              )
+            }
+          },
+          ...(version >= 3) ? [{
+            field: 'WeekendType',
+            headerName: 'Weekend',
+            type: 'singleSelect',
+            editable: true,
+            valueOptions: [
+              {value: 0, label: "Normal"},
+              {value: 1, label: "Sprint"},
+              {value: 2, label: "ATA"},
+            ],
             width: 100,
-            renderCell: ({ row }) => {
-              if (row.State !== 0 || row.Day - 7 <= player.Day || row.week <= 2) {
-                return null;
-              }
-              if (weeks[row.week - 1]) {
-                return (
-                  <a className="noselect" onClick={() => {
-                    database.exec(
-                      `UPDATE Races SET Day = ${row.Day} WHERE RaceID = ${weeks[row.week - 1]};UPDATE Races SET Day = ${row.Day - 7} WHERE RaceID = ${row.RaceID};`
-                    );
-                    refresh();
-                  }}>swap up</a>
-                )
-              }
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(
-                    `UPDATE Races SET Day = ${row.Day - 7} WHERE RaceID = ${row.RaceID}`
-                  );
-                  refresh();
-                }}>expedite</a>
-              )
-            }
-          },
-          {
-            field: '_postpone',
-            headerName: 'postpone',
-            width: 100,
-            renderCell: ({ row }) => {
-              if (row.State !== 0 || row.week >= 51) {
-                return null;
-              }
-              if (weeks[row.week + 1]) {
-                return (
-                  <a className="noselect" onClick={() => {
-                    database.exec(
-                      `UPDATE Races SET Day = ${row.Day} WHERE RaceID = ${weeks[row.week + 1]};UPDATE Races SET Day = ${row.Day + 7} WHERE RaceID = ${row.RaceID};`
-                    );
-                    refresh();
-                  }}>swap down</a>
-                )
-              }
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(
-                    `UPDATE Races SET Day = ${row.Day + 7} WHERE RaceID = ${row.RaceID}`
-                  );
-                  refresh();
-                }}>postpone</a>
-              )
-            }
-          },
-          {
-            field: '_delete',
-            headerName: 'cancel',
-            width: 100,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) {
-                return null;
-              }
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(
-                    `DELETE FROM Races WHERE RaceID = ${row.RaceID}`
-                  );
-                  refresh();
-                }}>cancel</a>
-              )
-            }
-          },
-          {
-            field: '_duplicate',
-            headerName: 'duplicate',
-            width: 100,
-            renderCell: ({ row }) => {
-              if (row.State === 2 || row.week >= 51 || weeks[row.week + 1]) { // 1 is possible
-                return null;
-              }
-              return (
-                <a className="noselect" onClick={() => {
-                  let [{ values }] = database.exec(`select * from Races WHERE RaceID = ${row.RaceID}`);
-                  const r = values[0].map(x => typeof x === 'number'? x : `"${x}"`);
-                  r[0] = "NULL";
-                  r[2] += 7;
-                  database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
-                  refresh();
-                }}>duplicate</a>
-              )
-            }
-          },
-          {
-            field: '_weekendtype',
-            headerName: 'weekend',
-            width: 100,
-            renderCell: ({ row }) => {
-              const types = ["normal", "sprint", "ata quali"];
-              if (row.State !== 0) {
-                return (
-                  <span>{types[row.WeekendType]}</span>
-                )
-              }
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(
-                    `UPDATE Races SET WeekendType = ${(row.WeekendType + 1) % 3} WHERE RaceID = ${row.RaceID}`
-                  );
-                  refresh();
-                }}>{types[row.WeekendType]}</a>
-              )
-            }
-          },
-          {
-            field: 'RainPractice',
-            headerName: 'fri',
-            width: 50,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) return <span>{rainTypes[row.RainPractice]}</span>
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(`UPDATE Races SET RainPractice = ${nextRain[row.RainPractice]} WHERE RaceID = ${row.RaceID}`);
-                  refresh();
-                }}>{rainTypes[row.RainPractice]}</a>
-              )
-            }
-          },
-          {
-            field: 'WeatherStatePractice',
-            headerName: '',
-            width: 50,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) return <span>{weathers[row.WeatherStatePractice]}</span>
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(`UPDATE Races SET WeatherStatePractice = ${nextWeather[row.WeatherStatePractice]} WHERE RaceID = ${row.RaceID}`);
-                  refresh();
-                }}>{weathers[row.WeatherStatePractice]}</a>
-              )
-            }
-          },
-          {
-            field: 'RainQualifying',
-            headerName: 'sat',
-            width: 50,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) return <span>{rainTypes[row.RainQualifying]}</span>
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(`UPDATE Races SET RainQualifying = ${nextRain[row.RainQualifying]} WHERE RaceID = ${row.RaceID}`);
-                  refresh();
-                }}>{rainTypes[row.RainQualifying]}</a>
-              )
-            }
-          },
-          {
-            field: 'WeatherStateQualifying',
-            headerName: '',
-            width: 50,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) return <span>{weathers[row.WeatherStateQualifying]}</span>
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(`UPDATE Races SET WeatherStateQualifying = ${nextWeather[row.WeatherStateQualifying]} WHERE RaceID = ${row.RaceID}`);
-                  refresh();
-                }}>{weathers[row.WeatherStateQualifying]}</a>
-              )
-            }
-          },
-          {
-            field: 'RainRace',
-            headerName: 'sun',
-            width: 50,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) return <span>{rainTypes[row.RainRace]}</span>
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(`UPDATE Races SET RainRace = ${nextRain[row.RainRace]} WHERE RaceID = ${row.RaceID}`);
-                  refresh();
-                }}>{rainTypes[row.RainRace]}</a>
-              )
-            }
-          },
-          {
-            field: 'WeatherStateRace',
-            headerName: '',
-            width: 50,
-            renderCell: ({ row }) => {
-              if (row.State !== 0) return <span>{weathers[row.WeatherStateRace]}</span>
-              return (
-                <a className="noselect" onClick={() => {
-                  database.exec(`UPDATE Races SET WeatherStateRace = ${nextWeather[row.WeatherStateRace]} WHERE RaceID = ${row.RaceID}`);
-                  refresh();
-                }}>{weathers[row.WeatherStateRace]}</a>
-              )
-            }
-          },
+          }] : [],
+          ...weatherConfigs
         ]}
         density="compact"
       />
