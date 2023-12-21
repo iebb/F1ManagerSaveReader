@@ -119,9 +119,38 @@ export default function RaceResultsF1() {
 
       results = database.exec(
         version === 3 ?
-          `SELECT RaceID, DriverID, TeamID FROM 'Races_PracticeResults' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY RaceID ASC`
+          `SELECT Races_PracticeResults.RaceID, Races_PracticeResults.DriverID, Races_PracticeResults.TeamID, PR1.PracticeSession, PR2.PracticeSession FROM 'Races_PracticeResults' 
+LEFT JOIN 'Races_PracticeResults' as PR1
+  ON Races_PracticeResults.RaceID = PR1.RaceID 
+  AND Races_PracticeResults.DriverID = PR1.DriverID
+  AND Races_PracticeResults.TeamID = PR1.TeamID
+  AND PR1.PracticeSession = 2
+LEFT JOIN 'Races_PracticeResults' as PR2
+  ON Races_PracticeResults.RaceID = PR2.RaceID 
+  AND Races_PracticeResults.TeamID = PR2.TeamID
+  AND PR2.PracticeSession = 2
+WHERE 
+Races_PracticeResults.SeasonID = ${season} AND 
+Races_PracticeResults.RaceFormula = 1 AND 
+Races_PracticeResults.PracticeSession = 1 AND
+PR2.PracticeSession = 2 AND
+PR1.PracticeSession IS NULL`
         :
-          `SELECT RaceID, DriverID, TeamID FROM 'Races_PracticeResults' WHERE SeasonID = ${season} ORDER BY RaceID ASC`
+          `SELECT Races_PracticeResults.RaceID, Races_PracticeResults.DriverID, Races_PracticeResults.TeamID, PR1.PracticeSession, PR2.PracticeSession FROM 'Races_PracticeResults' 
+LEFT JOIN 'Races_PracticeResults' as PR1
+  ON Races_PracticeResults.RaceID = PR1.RaceID 
+  AND Races_PracticeResults.DriverID = PR1.DriverID
+  AND Races_PracticeResults.TeamID = PR1.TeamID
+  AND PR1.PracticeSession = 2
+LEFT JOIN 'Races_PracticeResults' as PR2
+  ON Races_PracticeResults.RaceID = PR2.RaceID 
+  AND Races_PracticeResults.TeamID = PR2.TeamID
+  AND PR2.PracticeSession = 2
+WHERE 
+Races_PracticeResults.SeasonID = ${season} AND 
+Races_PracticeResults.PracticeSession = 1 AND
+PR2.PracticeSession = 2 AND
+PR1.PracticeSession IS NULL`
       );
       if (results.length) {
         [{ columns, values }] = results;
