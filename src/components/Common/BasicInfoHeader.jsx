@@ -38,7 +38,7 @@ export const BasicInfoHeader = () => {
     )
     : (TrackID > 0 ? `Next Race (${CurrentRace} of ${RacesInSeason}) is ${circuitNames[TrackID]}` : `and all races are finished this season`);
 
-  const seasonPercentage = CurrentRace ? (100 * (CurrentRace - (RaceWeekendInProgress ? 0.5 : 0)) / RacesInSeason) : 100;
+  const seasonPercentage = CurrentRace ? (100 * (CurrentRace - (RaceWeekendInProgress ? 0.5 : 1)) / RacesInSeason) : 100;
 
   return (
     <div>
