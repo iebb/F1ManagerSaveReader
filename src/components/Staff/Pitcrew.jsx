@@ -3,6 +3,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {teamNames} from "../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {TeamName} from "../Localization/Localization";
 
 const PitCrewStatsList = {
   2: [
@@ -110,25 +111,7 @@ export default function PitcrewView() {
             field: 'TeamID',
             headerName: "Team",
             width: 120,
-            renderCell: ({ value }) => {
-              return (
-                <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, version)}
-                  <div>
-                    <div style={{
-                      width: 12, height: 12, borderRadius: 6,
-                      display: "inline-block", marginRight: 3,
-                      background: `var(--team${value}-fanfare1)`,
-                    }}/>
-                    <div style={{
-                      width: 12, height: 12, borderRadius: 6,
-                      display: "inline-block", marginRight: 3,
-                      background: `var(--team${value}-fanfare2)`,
-                    }}/>
-                  </div>
-                </div>
-              )
-            }
+            renderCell: ({ value }) => <TeamName TeamID={value} type="fanfare" />,
           },
           ...PitCrewStatsList[version].map(stat => ({
             field: `stat_` + stat.id,

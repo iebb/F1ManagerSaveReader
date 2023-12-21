@@ -245,3 +245,7 @@ main {
 #fullpage_dropzone {
   min-height: 100vh;
 }
+
+body {
+  text-shadow: 0 0 1px;
+}
