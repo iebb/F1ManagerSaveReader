@@ -91,13 +91,14 @@ export default function RaceResultsF1() {
       setChampionDriverID(championDriverID);
 
 
-
+      let driversInStanding = {};
       for(const r of values) {
         let driverStanding = {};
         r.map((x, _idx) => {
           driverStanding[columns[_idx]] = x;
         });
         driverStandings.push(driverStanding);
+        driversInStanding[driverStanding.DriverID] = driverStanding;
       }
 
       if (version === 3) {
@@ -117,6 +118,40 @@ export default function RaceResultsF1() {
 
 
       results = database.exec(
+        version === 3 ?
+          `SELECT RaceID, DriverID, TeamID FROM 'Races_PracticeResults' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY RaceID ASC`
+        :
+          `SELECT RaceID, DriverID, TeamID FROM 'Races_PracticeResults' WHERE SeasonID = ${season} ORDER BY RaceID ASC`
+      );
+      if (results.length) {
+        [{ columns, values }] = results;
+        for(const [RaceID, DriverID, TeamID] of values) {
+          if (!driverResults[DriverID]) {
+            driverResults[DriverID] = {
+              race: {},
+              sprint: {},
+              practice: {},
+            }
+          }
+          driverResults[DriverID].practice[RaceID] = {
+            type: 'practice',
+            TeamID: TeamID,
+          }
+          if (!driversInStanding[DriverID]){
+            driversInStanding[DriverID] = {
+              SeasonID: season,
+              DriverID,
+              Points: 0,
+              LastPointsChange: 0,
+              LastPositionChange: 0,
+            };
+            driverStandings.push(driversInStanding[DriverID])
+          }
+          driverTeams[DriverID] = TeamID;
+        }
+      }
+
+      results = database.exec(
         `SELECT * FROM 'Races_Results' WHERE Season = ${season} ORDER BY RaceID ASC`
       );
       if (results.length) {
@@ -133,6 +168,7 @@ export default function RaceResultsF1() {
             driverResults[raceResult.DriverID] = {
               race: {},
               sprint: {},
+              practice: {},
             }
           }
           if (polePositionPoints[raceResult.RaceID] && polePositionPoints[raceResult.RaceID][0] === raceResult.DriverID) {
@@ -204,7 +240,13 @@ export default function RaceResultsF1() {
         <ResultsTable
           formulae={1}
           version={version}
-          {...{ driverTeams, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace }}
+          key={season}
+          raceSchedule={raceSchedule}
+          championDriverID={championDriverID}
+          driverTeams={driverTeams}
+          driverStandings={driverStandings}
+          driverResults={driverResults}
+          fastestLapOfRace={fastestLapOfRace}
         />
       </div>
     </div>

@@ -117,28 +117,30 @@ export const assignRandomRaceNumber = (ctx, staff1) => {
 export const swapDriverContracts = (ctx, staff1, staff2, staffType = 0) => {
   const { database, basicInfo } = ctx;
   const season = basicInfo.player.CurrentSeason;
+  const staff1ID = staff1.StaffID;
+  const staff2ID = staff2.StaffID;
   let results;
 
   /* contracts */
-  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff2} AND ContractType = 0`);
-  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff1} AND ContractType = 0`);
+  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff2ID} AND ContractType = 0`);
+  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff1ID} AND ContractType = 0`);
 
-  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff2} AND ContractType = 3`);
-  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff1} AND ContractType = 3`);
+  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff2ID} AND ContractType = 3`);
+  database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff1ID} AND ContractType = 3`);
 
   database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 1 AND Accepted = 10`);
   database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 1 AND Accepted = 30`);
 
   if (staffType === 0) {
-    let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1}`);
-    let [{values: [[AssignedCarNumberB]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2}`);
+    let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1ID}`);
+    let [{values: [[AssignedCarNumberB]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2ID}`);
 
     /* car numbers */
-    database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff2}`, {":acn": AssignedCarNumberA});
-    database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1}`, {":acn": AssignedCarNumberB});
+    database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff2ID}`, {":acn": AssignedCarNumberA});
+    database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": AssignedCarNumberB});
 
-    const driverPairs = [[staff1, staff2], [staff2, staff1]]
-    for(const [A, B] of driverPairs) {
+    const driverPairs = [[staff1ID, staff2ID, AssignedCarNumberA], [staff2ID, staff1ID, AssignedCarNumberB]]
+    for(const [A, B, acn] of driverPairs) {
 
       /* race engineers */
       results = database.exec(`SELECT RaceEngineerID FROM Staff_RaceEngineerDriverAssignments WHERE IsCurrentAssignment = 1 AND DriverID = ${A}`);
@@ -156,15 +158,16 @@ export const swapDriverContracts = (ctx, staff1, staff2, staffType = 0) => {
       }
 
       /* standings */
-      // TODO: 3rd driver does not need to be included
-
-      results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
-      if (results.length) {
-        for(let {values: [[RaceFormula]]} of results) {
-          results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
-          if (!results.length) { // to be added
-            let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
-            database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${RaceFormula})`);
+      // TODO: 3rd driver in F1 does not need to be included
+      if (acn) {
+        results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
+        if (results.length) {
+          for(let {values: [[RaceFormula]]} of results) {
+            results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
+            if (!results.length) { // to be added
+              let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
+              database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${RaceFormula})`);
+            }
           }
         }
       }
@@ -172,7 +175,7 @@ export const swapDriverContracts = (ctx, staff1, staff2, staffType = 0) => {
 
     database.exec(`UPDATE Staff_RaceEngineerDriverAssignments SET IsCurrentAssignment = 1 WHERE IsCurrentAssignment = 3`);
   } else if (staffType === 2) { // race engineer
-    const raceEngineerPairs = [[staff1, staff2], [staff2, staff1]]
+    const raceEngineerPairs = [[staff1ID, staff2ID], [staff2ID, staff1ID]]
     for(const [A, B] of raceEngineerPairs) {
       /* race engineers */
       results = database.exec(`SELECT DriverID FROM Staff_RaceEngineerDriverAssignments WHERE IsCurrentAssignment = 1 AND RaceEngineerID = ${A}`);

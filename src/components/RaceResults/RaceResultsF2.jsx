@@ -189,7 +189,6 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
         }
       }
 
-
       try {
         [{columns, values}] = database.exec(
           `SELECT *, ChampionshipPoints as Points FROM 'Races_SprintResults' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY RaceID ASC`
@@ -208,7 +207,11 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
           driverResults[raceResult.DriverID].sprint[raceResult.RaceID] = raceResult;
           driverTeams[raceResult.DriverID] = raceResult.TeamID;
         }
+      } catch (e) {
 
+      }
+
+      try {
         for(const d of driverStandings) {
 
           let [sd, ed] = yearToDateRange(season);
@@ -220,7 +223,6 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
               [{ columns, values }] = database.exec(
                 `SELECT TeamID, PosInTeam FROM 'Staff_Contracts' WHERE StaffID = ${d.DriverID} AND ContractType = 0 AND StartDay <= ${sd} AND EndSeason >= ${season} ORDER BY StartDay DESC`
               );
-              // console.log(`SELECT TeamID, PosInTeam FROM 'Staff_CareerHistory' WHERE StaffID = ${d.DriverID} AND EndDay <= ${e} ORDER BY StartDay DESC`);
               const [TeamID, Position] = values[0];
               const teamOrder = teamStandings[TeamID] - 1;
               if (!Position) {

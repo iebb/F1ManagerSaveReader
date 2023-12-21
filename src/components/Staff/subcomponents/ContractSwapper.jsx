@@ -77,7 +77,7 @@ export default function ContractSwapper(props) {
                   assignRandomRaceNumber(ctx, swapDriver.id);
                 }
                 if (swapRow.StaffType === swapRow.StaffType) {
-                  swapDriverContracts(ctx, swapRow.StaffID, swapDriver.id, swapRow.StaffType);
+                  swapDriverContracts(ctx, swapRow, swapDriver.driver, swapRow.StaffType);
                 }
                 refresh();
               }
@@ -89,7 +89,7 @@ export default function ContractSwapper(props) {
             <Autocomplete
               disablePortal
               options={_drivers.filter(x => x.StaffID !== swapRow.StaffID).map(r => ({
-                label: getDriverName(r), id: r.StaffID, number: r.CurrentNumber
+                label: getDriverName(r), id: r.StaffID, number: r.CurrentNumber, driver: r
               }))}
               value={swapDriver}
               sx={{ width: 240, m: 0, display: "inline-block" }}

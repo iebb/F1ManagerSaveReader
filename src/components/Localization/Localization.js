@@ -4,11 +4,11 @@ import {teamNames} from "../../js/localization";
 import {MetadataContext} from "../Contexts";
 
 export const TeamName = ({
-                           TeamID = 1,
+                           TeamID = 0,
                            type = 'text'
                          }) => {
   const {version, gameVersion} = useContext(MetadataContext);
-
+  if (!TeamID) return null;
   switch(type) {
     case "text":
       return (

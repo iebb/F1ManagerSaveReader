@@ -5,6 +5,7 @@ import {useContext} from "react";
 import {getCountryFlag} from "../../../js/countries";
 import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamNames} from "../../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
+import {TeamName} from "../../Localization/Localization";
 
 export default function ResultsTable(ctx) {
   const {version, gameVersion} = useContext(MetadataContext)
@@ -100,32 +101,54 @@ export default function ResultsTable(ctx) {
                 <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
               </TableCell>
               <TableCell
-                sx={{ py: 0.2 }}
+                sx={{ py: 0.5 }}
                 className={`race_cell_team`}
               >
-                <div>
-                  <div style={{
-                    width: 12, height: 12, borderRadius: 6,
-                    display: "inline-block", marginRight: 3,
-                    background: `var(--team${driverTeams[row.DriverID]}-fanfare1)`,
-                  }} />
-                  <div style={{
-                    width: 12, height: 12, borderRadius: 6,
-                    display: "inline-block", marginRight: 3,
-                    background: `var(--team${driverTeams[row.DriverID]}-fanfare2)`,
-                  }} />
-                </div>
-                <span style={{ fontSize: 12 }}>{teamNames(driverTeams[row.DriverID], version)}</span>
+                <TeamName TeamID={driverTeams[row.DriverID]} type="fanfare" />
               </TableCell>
               <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
               {
-                raceSchedule.map(({type, race}) => {
-                  if (!driverResults[row.DriverID] || !driverResults[row.DriverID][type][race.RaceID]) {
+                raceSchedule.map(({type, race, span}) => {
+
+                  if (
+                    !driverResults[row.DriverID] ||
+                    !driverResults[row.DriverID][type][race.RaceID]
+                  ) {
+                    if (span > 0 && (driverResults[row.DriverID]?.practice && driverResults[row.DriverID].practice[race.RaceID])) {
+                      const result = driverResults[row.DriverID].practice[race.RaceID];
+                      return (
+                        <TableCell
+                          className={`race_cell_${type}`}
+                          align="right"
+                          key={race.RaceID + type}
+                          sx={{ p: 0.25 }}
+                          style={
+                            {
+                              ...basicInfo.player.TeamID === result.TeamID ? {
+                                background: `repeating-linear-gradient(0deg, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.15) 100%)`
+                              } : {
+                                background: `repeating-linear-gradient(0deg,
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.15) 13px, transparent 20px, transparent 100%)`
+                              },
+                              fontSize: "80%",
+                              color: "#ff7",
+                            }
+                          }
+                        >
+                          TD
+                        </TableCell>
+                      );
+                    }
                     return <TableCell
                       key={race.RaceID + type}
                       sx={{p: 0.2, minWidth: 36}}
                     />;
                   }
+
+
                   const result = driverResults[row.DriverID][type][race.RaceID];
                   let color = "auto";
                   if (result.FinishingPos === 1) {
