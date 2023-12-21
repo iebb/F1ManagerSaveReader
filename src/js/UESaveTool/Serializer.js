@@ -59,12 +59,20 @@ export class Serializer {
     }
     readString() {
         let length = this.readInt32();
-        if (length > 0) {
+        let str = this.read(length - 1).toString('utf8');
+        this.read(1);
+        return str;
+    }
+    readUnicodeString() {
+        let length = this.readInt32();
+        if (length < 0) {
+            let str = this.read(-length * 2 - 2).toString('utf16le');
+            this.read(2);
+            return [str, "utf16le"];
+        } else {
             let str = this.read(length - 1).toString('utf8');
             this.read(1);
-            return str;
-        } else {
-            return "[NULL]";
+            return [str, "utf8"];
         }
     }
     write(buf) {
@@ -97,13 +105,17 @@ export class Serializer {
         this._offset = this.Data.writeFloatLE(num, this.tell);
     }
     writeString(str) {
-        if (str === "[NULL]") {
-            this._offset = this.Data.writeInt32LE(0, this.tell);
-        } else {
-            this._offset = this.Data.writeInt32LE(str.length + 1, this.tell);
-            this._offset += this.Data.write(str, this.tell);
-            this._offset = this.Data.writeInt8(0, this.tell);
-        }
+        this._offset = this.Data.writeInt32LE(str.length + 1, this.tell);
+        this._offset += this.Data.write(str, this.tell);
+        this._offset = this.Data.writeInt8(0, this.tell);
+    }
+    writeUTF16String(str) {
+        this._offset = this.Data.writeInt32LE(-str.length - 1, this.tell);
+        this._offset += this.Data.write(str + "\0", this.tell, "utf16le");
+    }
+    writeUTF8String(str) {
+        this._offset = this.Data.writeInt32LE(str.length + 1, this.tell);
+        this._offset += this.Data.write(str + "\0", this.tell, "utf8");
     }
     append(buf) {
         this._data = Buffer.concat([this.Data, buf]);

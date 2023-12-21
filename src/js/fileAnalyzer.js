@@ -1,3 +1,4 @@
+import {enqueueSnackbar} from "notistack";
 import {Gvas, Serializer} from "./UESaveTool";
 
 const pako = require("pako");
@@ -133,6 +134,8 @@ export const repack = (db, metadata, overwrite = false) => {
     } else {
       saveAs(new Blob([finalData], {type: "application/binary"}), metadata.filename);
     }
+  } else {
+    alert("Savefile Serialization Check failed.")
   }
 
 }
