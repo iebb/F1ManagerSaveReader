@@ -1,7 +1,7 @@
 import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
 import {useContext, useState} from "react";
 import * as React from "react";
-import {getDriverName} from "../../../js/localization";
+import {getDriverName} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
 import {assignRandomRaceNumber, fireDriverContract, getStaff, swapDriverContracts} from "../commons/drivers";
 

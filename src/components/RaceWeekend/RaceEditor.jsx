@@ -4,7 +4,7 @@ import {Button, ButtonGroup, Divider, Grid, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {teamNames} from "../../js/localization";
+import {teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
 import {PartNames} from "../Parts/consts";
 

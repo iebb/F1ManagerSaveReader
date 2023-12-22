@@ -1,25 +1,25 @@
 import '@/styles/globals.css'
 import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
-import {Plus_Jakarta_Sans} from 'next/font/google'
 import Head from "next/head";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
 import {BasicInfoHeader} from "../components/Common/BasicInfoHeader";
 import {
-  BasicInfoContext, BasicInfoUpdaterContext,
+  BasicInfoContext,
+  BasicInfoUpdaterContext,
   DatabaseContext,
   DatabaseUpdaterContext,
   EnvContext,
   MetadataContext,
 } from "../components/Contexts";
+import Nav from "../components/Nav";
 import DragBox from "../components/UI/Blocks/DragBox";
-import {defaultFont, defaultFontFamily} from "../components/UI/Fonts";
+import {defaultFontFamily} from "../components/UI/Fonts";
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
-import Nav from "../components/Nav";
-import {parseBasicInfo} from "../js/basicInfoParser";
-import {analyzeFileToDatabase} from "../js/fileAnalyzer";
+import {parseBasicInfo} from "../js/BasicInfo";
+import {analyzeFileToDatabase} from "../js/Parser";
 
 const theme = createTheme({
   palette: {
@@ -141,10 +141,6 @@ export default function App({ Component, pageProps }) {
         <title>F1 Manager Save Browser - F1Setup.CFD</title>
         <meta name="description" content="F1 Manager Save Browser by ieb"/>
         <link rel="icon" href="/favicon.ico"/>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
       </Head>
       <SnackbarProvider
         maxSnack={10}

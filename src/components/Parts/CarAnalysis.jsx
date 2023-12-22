@@ -2,7 +2,7 @@ import {Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {getDriverName, teamNames} from "../../js/localization";
+import {getDriverName, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {
   PartCalculationStatsV,

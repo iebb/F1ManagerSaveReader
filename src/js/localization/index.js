@@ -1,4 +1,4 @@
-import {teamColors2023, teams2023} from "./localization_2023";
+import {teamColors2023, teams2023} from "./Teams2023";
 import {staffNames, driverCodes} from "./staffNames";
 
 Date.prototype.getWeek = function() {

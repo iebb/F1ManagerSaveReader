@@ -4,4 +4,4 @@ Not documented currently, but source code is available under MIT License.
 
 ## Credits:
 
-GVAS Metadata parsing: [ch1pset's UESaveTool](https://github.com/ch1pset/UESaveTool)
+GVAS Metadata parsing based on a heavily modified version of [ch1pset's UESaveTool](https://github.com/ch1pset/UESaveTool)

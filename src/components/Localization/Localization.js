@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useContext} from "react";
-import {teamNames} from "../../js/localization";
+import {teamNames} from "@/js/localization";
 import {MetadataContext} from "../Contexts";
 
 export const TeamName = ({

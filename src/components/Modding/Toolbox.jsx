@@ -2,7 +2,7 @@ import {Button, Divider, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
-import {teamNames} from "../../js/localization";
+import {teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 
 export default function Toolbox() {

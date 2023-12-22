@@ -142,10 +142,10 @@ export const PartStats2022 = [
   { id: 0, name: 'Airflow Front' },
   { id: 13, name: 'Airflow Middle' },
   { id: 1, name: 'Airflow Sensitivity' },
-  { id: 2, name: 'Brake Cooling' },
+  { id: 2, name: 'Brake Cooling' }, // ok
   { id: 3, name: 'DRS Delta' },
   { id: 4, name: 'Drag Reduction' },
-  { id: 5, name: 'Engine Cooling' },
+  { id: 5, name: 'Engine Cooling' }, // ok
   { id: 7, name: 'Low Speed Downforce' },
   { id: 8, name: 'Med Speed Downforce' },
   { id: 9, name: 'High Speed Downforce' },
@@ -159,7 +159,7 @@ export const PartCalculationStats2022 = [
   { id: 0, name: 'Top Speed',
     digits: 5,
     bounds: [367.2, 378],
-    render: v => `${v.toFixed(4)} kph`,
+    render: (v, d=4) => `${v.toFixed(d)} kph`,
     contributors: {
       [PartStat_DragReduction]: 1
     },
@@ -167,7 +167,7 @@ export const PartCalculationStats2022 = [
   { id: 1, name: 'Acceleration',
     digits: 5,
     bounds: [1.832, 1.929],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=4) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_Power]: 0.5,
       [PartStat_DragReduction]: 0.5,
@@ -176,7 +176,7 @@ export const PartCalculationStats2022 = [
   { id: 7, name: 'Low Speed',
     digits: 5,
     bounds: [2, 3],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=4) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_AirFlowFront]: 0.6,
       [PartStat_LowSpeedDownforce]: 1,
@@ -185,7 +185,7 @@ export const PartCalculationStats2022 = [
   { id: 8, name: 'Medium Speed',
     digits: 5,
     bounds: [3, 4],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=4) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_AirFlowFront]: 0.4,
       [PartStat_AirFlowMiddle]: 0.4,
@@ -195,7 +195,7 @@ export const PartCalculationStats2022 = [
   { id: 9, name: 'High Speed',
     digits: 5,
     bounds: [4, 5.5],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=4) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_AirFlowMiddle]: 0.6,
       [PartStat_HighSpeedDownforce]: 1,
@@ -229,7 +229,7 @@ export const PartCalculationStats2022 = [
   { id: 20, name: 'Dirty Corner Low',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_BrakeCooling]: 1,
     },
@@ -237,7 +237,7 @@ export const PartCalculationStats2022 = [
   { id: 21, name: 'Dirty Corner Med',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_BrakeCooling]: 1,
     },
@@ -245,7 +245,7 @@ export const PartCalculationStats2022 = [
   { id: 22, name: 'Dirty Corner High',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_BrakeCooling]: 1,
     },
@@ -253,7 +253,7 @@ export const PartCalculationStats2022 = [
   { id: 14, name: 'Brake Cooling',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_BrakeCooling]: 1,
     },
@@ -261,7 +261,7 @@ export const PartCalculationStats2022 = [
   { id: 13, name: 'Engine Cooling',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_EngineCooling]: 1,
     },

@@ -3,7 +3,7 @@ import {circuitNames, countryNames, dayToDate, formatDate, raceAbbrevs, raceFlag
 import {Button, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
 import * as React from "react";
 import {useContext} from "react";
-import {dump, repack} from "../../js/fileAnalyzer";
+import {dump, repack} from "@/js/Parser";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
 
 export const BasicInfoHeader = () => {

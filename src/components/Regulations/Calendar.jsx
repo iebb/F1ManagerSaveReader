@@ -12,7 +12,7 @@ import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, formatDate} from "../../js/localization";
+import {dayToDate, formatDate} from "@/js/localization";
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {raceFlags, raceAbbrevs, countryNames, circuitNames} from "@/js/localization";
 

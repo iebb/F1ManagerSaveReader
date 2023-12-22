@@ -2,7 +2,7 @@ import {Tab, Tabs, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {getDriverName, teamNames} from "../../js/localization";
+import {getDriverName, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {PartCalculationStatsV, PartFactorsV, PartNames, PartStatsCategorizedV,} from "./consts";
 
@@ -322,12 +322,11 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                         valueToDeltaUnitValue[stat.stat]
                       )) * 100
                     )
-                  } {stat.name}: <br />{
+                  } {stat.name}: {
                   reverseContrib[stat.stat === 15 ? 1500 : stat.stat]?.map(r =>
                       <span key={r.id} style={{ color: '#777', marginRight: 10 }}>
                   {r.name} {stat.stat === 15 ? "-" : "+"}{r.render(
-                        0.1 * r.contribution * PartFactor[stat.stat][PartInfo.parts[0]] *
-                        (r.bounds[1] - r.bounds[0])
+                        0.1 * r.contribution * PartFactor[stat.stat][PartInfo.parts[0]] * (r.bounds[1] - r.bounds[0])
                       )}
                 </span>
                   )

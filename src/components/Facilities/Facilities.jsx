@@ -5,7 +5,6 @@ import {Tab, Tabs} from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {teamNames} from "../../js/localization";
 import {DatabaseContext, MetadataContext} from "../Contexts";
 import {TeamName} from "../Localization/Localization";
 

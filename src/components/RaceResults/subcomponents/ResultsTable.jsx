@@ -1,9 +1,9 @@
+import {getDriverCode, getDriverName, raceAbbrevs, raceFlags} from "@/js/localization";
+import {getCountryFlag} from "@/js/localization/ISOCountries";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
 import Image from "next/image";
 import * as React from "react";
 import {useContext} from "react";
-import {getCountryFlag} from "../../../js/countries";
-import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, teamNames} from "../../../js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
 import {TeamName} from "../../Localization/Localization";
 

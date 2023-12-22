@@ -2,8 +2,8 @@ import {getDriverName, resolveDriverCode, resolveName, unresolveDriverCode, unre
 import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {countries} from "../../../js/staffNames";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
+import {countries} from "@/js/localization/staffNames";
+import {DatabaseContext, MetadataContext} from "../../Contexts";
 
 
 const driverNumbers = ["N/A"];

@@ -1,4 +1,3 @@
-import {enqueueSnackbar} from "notistack";
 import {Gvas, Serializer} from "./UESaveTool";
 
 const pako = require("pako");
@@ -13,28 +12,29 @@ export const analyzeFileToDatabase = async (file) => {
       let reader = new FileReader();
       reader.onload = async (e) => {
         const serial = new Serializer(Buffer.from(reader.result));
-        const GVASMeta = new Gvas().deserialize(serial);
-        const { Header, Properties } = GVASMeta;
+        const gvasMeta = new Gvas().deserialize(serial);
+        const { Header, Properties } = gvasMeta;
         const { SaveGameVersion, EngineVersion } = Header;
         const { BuildId, Build } = EngineVersion;
-        const version = SaveGameVersion; // TODO: will be incorrect for 2024
-        /*
-
-         */
-        const gameVersionString = BuildId;
-
-        let prettifiedGameVersion;
-        switch (version) {
-          case 3:
-            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("23+") + 3) + `.${Build & 0x7fffffff}`;
-            break;
+        let version = 0, gameVersion, gameVersionWithBuild;
+        switch (SaveGameVersion) {
           case 2:
-            prettifiedGameVersion = BuildId.substring(gameVersionString.indexOf("22_") + 3) + `.${Build & 0x7fffffff}`;
+            version = 2;
+            gameVersion = BuildId.substring(BuildId.indexOf("22_") + 3);
+            gameVersionWithBuild = `${gameVersion}.${Build & 0x7fffffff}`;
             break;
+          case 3:
+            if (BuildId.indexOf("volta23") !== -1) {
+              version = 3;
+              gameVersion = BuildId.substring(BuildId.indexOf("23+") + 3);
+              gameVersionWithBuild = `${gameVersion}.${Build & 0x7fffffff}`;
+            }
+            break;
+          default:
+            version = 0;
         }
 
         const careerSaveMetadata = {};
-
         const metadataProperty = Properties.Properties.filter(x => x.Name === "MetaData")[0];
         const careerSaveMetadataProperty = metadataProperty.Properties[0];
 
@@ -50,25 +50,30 @@ export const analyzeFileToDatabase = async (file) => {
 
         const compressedData = serial.read(total_size);
         const output = pako.inflate(compressedData);
-        const database_file = output.slice(0, size_1);
+        const databaseFile = output.slice(0, size_1);
 
         // @ts-ignore
 
         if (window.db) window.db.close();
-        const db = new window.SQL.Database(database_file);
+        const db = new window.SQL.Database(databaseFile);
         window.db = db;
 
         const metadata = {
-          filename: file.name,
+          filename: file.name, // for in-app
+
           version,
-          gameVersionRaw: gameVersionString,
-          gameVersion: prettifiedGameVersion,
-          gvasMeta: GVASMeta,
-          database_file,
-          header: Header,
-          properties: Properties,
+          fullBuildId: BuildId,
+          gameVersion,
+          gameVersionWithBuild,
+
+          databaseFile,
+
+          gvasMeta,
+          gvasHeader: Header,
+          gvasProperties: Properties,
           careerSaveMetadata,
-          other_database: [{
+
+          otherDatabases: [{
             size: size_2,
             file: output.slice(size_1, size_1 + size_2),
           }, {
@@ -93,15 +98,15 @@ export const repack = (db, metadata, overwrite = false) => {
   const db_data = db.export();
   const db_size = db_data.length;
 
-  const { other_database, gvasMeta } = metadata;
+  const { otherDatabases, gvasMeta } = metadata;
 
-  const s1 = other_database[0].size;
-  const s2 = other_database[1].size;
+  const s1 = otherDatabases[0].size;
+  const s2 = otherDatabases[1].size;
 
   const compressedData = new Buffer(db_size + s1 + s2);
   compressedData.set(db_data, 0);
-  compressedData.set(other_database[0].file, db_size);
-  compressedData.set(other_database[1].file, db_size + s1);
+  compressedData.set(otherDatabases[0].file, db_size);
+  compressedData.set(otherDatabases[1].file, db_size + s1);
 
   const compressed = pako.deflate(compressedData);
   const compressed_size = compressed.length;

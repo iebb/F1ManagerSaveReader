@@ -1,7 +1,7 @@
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {teamNames} from "../../js/localization";
+import {teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {TeamName} from "../Localization/Localization";
 

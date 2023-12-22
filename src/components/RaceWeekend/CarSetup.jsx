@@ -14,7 +14,7 @@ import {
 
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {repack} from "../../js/fileAnalyzer";
+import {repack} from "@/js/Parser";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
 
 

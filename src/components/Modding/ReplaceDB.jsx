@@ -18,9 +18,9 @@ export default function ReplaceDB() {
           if (file !== undefined) {
             let reader = new FileReader();
             reader.onload = async (e) => {
-              const database_file = reader.result;
+              const databaseFile = reader.result;
               try {
-                const db = new window.SQL.Database(database_file);
+                const db = new window.SQL.Database(databaseFile);
                 let [{ values }] = db.exec("SELECT * FROM Player");
                 enqueueSnackbar(
                   `Hello ${values[0][0]} ${values[0][1]}!`,

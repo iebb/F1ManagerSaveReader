@@ -167,7 +167,7 @@ export const PartCalculationStats2023 = [
   { id: 0, name: 'Top Speed',
     digits: 5,
     bounds: [313, 328],
-    render: v => `${v.toFixed(4)} kph`,
+    render:  (v, d=4) => `${v.toFixed(d)} kph`,
     contributors: {
       [PartStat_DragReduction]: 1
     },
@@ -175,7 +175,7 @@ export const PartCalculationStats2023 = [
   { id: 1, name: 'Acceleration',
     digits: 5,
     bounds: [1.8, 1.9],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=6) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_Power]: 0.5,
       [PartStat_DragReduction]: 0.5,
@@ -185,7 +185,7 @@ export const PartCalculationStats2023 = [
   { id: 16, name: 'DRS Effectiveness',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_DRSDelta]: 1,
     },
@@ -193,7 +193,7 @@ export const PartCalculationStats2023 = [
   { id: 7, name: 'Low Speed',
     digits: 5,
     bounds: [2, 3],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=6) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_AirFlowFront]: 0.6,
       [PartStat_LowSpeedDownforce]: 1,
@@ -203,7 +203,7 @@ export const PartCalculationStats2023 = [
   { id: 8, name: 'Medium Speed',
     digits: 5,
     bounds: [3, 4],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=6) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_AirFlowFront]: 0.4,
       [PartStat_AirFlowMiddle]: 0.4,
@@ -214,7 +214,7 @@ export const PartCalculationStats2023 = [
   { id: 9, name: 'High Speed',
     digits: 5,
     bounds: [4, 5.5],
-    render: v => `${v.toFixed(4)} G`,
+    render:  (v, d=6) => `${v.toFixed(d)} G`,
     contributors: {
       [PartStat_AirFlowMiddle]: 0.6,
       [PartStat_HighSpeedDownforce]: 1,
@@ -224,7 +224,7 @@ export const PartCalculationStats2023 = [
   { id: 12, name: 'Dirty Air Tolerance',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_AirFlowTolerance]: 1,
     },
@@ -232,7 +232,7 @@ export const PartCalculationStats2023 = [
   { id: 14, name: 'Brake Cooling',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_BrakeCooling]: 1,
     },
@@ -240,7 +240,7 @@ export const PartCalculationStats2023 = [
   { id: 13, name: 'Engine Cooling',
     digits: 5,
     bounds: [0, 100],
-    render: v => `${v.toFixed(3)}%`,
+    render:  (v, d=4) => `${v.toFixed(d)}%`,
     contributors: {
       [PartStat_EngineCooling]: 1,
     },

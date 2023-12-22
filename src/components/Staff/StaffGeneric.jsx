@@ -1,5 +1,5 @@
 import {resolveName, teamNames, dateToDay, dayToDate, getDriverCode} from "@/js/localization";
-import {getCountryFlag, getCountryShort} from "@/js/countries";
+import {getCountryFlag, getCountryShort} from "@/js/localization/ISOCountries";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import {useContext, useEffect, useState} from "react";

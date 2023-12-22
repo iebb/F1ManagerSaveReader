@@ -3,7 +3,7 @@ import {Alert, AlertTitle, Divider, FormControl, InputLabel, MenuItem, Select, T
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, teamNames} from "../../js/localization";
+import {dayToDate, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 import {defaultFontFamily} from "../UI/Fonts";
 
