@@ -44,7 +44,9 @@ export default function TeamSwitch() {
                 disabled={team.TeamID === basicInfo.player.TeamID}
                 onClick={() => {
                   database.exec(`UPDATE Player SET TeamID = ${team.TeamID}`);
-                  database.exec(`UPDATE Staff_NarrativeData SET TeamID = ${team.TeamID} WHERE GenSource = 0`);
+                  if (version === 3) {
+                    database.exec(`UPDATE Staff_NarrativeData SET TeamID = ${team.TeamID} WHERE GenSource = 0`);
+                  }
                   database.exec(`UPDATE Player_History SET EndDay = ${basicInfo.player.Day - 1} WHERE EndDay IS NULL`);
                   database.exec(`DELETE FROM Player_History WHERE EndDay < StartDay`);
                   database.exec(`INSERT INTO Player_History VALUES (${team.TeamID}, ${basicInfo.player.Day}, NULL)`);
