@@ -149,7 +149,11 @@ export default function Spending() {
             teamIDtoCategory[TeamID]
           ] += Value;
         } else {
-          console.log(TransactionType);
+          rawData[
+            categoriesMapping[TransactionType]
+            ][
+            9
+            ] += Value;
         }
       }
 
