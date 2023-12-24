@@ -18,10 +18,11 @@ import DragBox from "../components/UI/Blocks/DragBox";
 import {defaultFontFamily} from "../components/UI/Fonts";
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
+import {createTeamColorTheme} from "../components/UI/Theme";
 import {parseBasicInfo} from "../js/BasicInfo";
-import {analyzeFileToDatabase} from "../js/Parser";
+import {analyzeFileToDatabase, parseGvasProps} from "../js/Parser";
 
-const theme = createTheme({
+const defaultTheme = createTheme({
   palette: {
     mode: 'dark',
     white: {
@@ -29,9 +30,7 @@ const theme = createTheme({
       contrastText: '#222',
     },
   },
-  typography: {
-    fontFamily: defaultFontFamily,
-  },
+  typography: { fontFamily: defaultFontFamily },
 });
 
 
@@ -68,6 +67,7 @@ export function DataView({ children }) {
 
 export default function App({ Component, pageProps }) {
 
+  const [theme, setTheme] = useState(defaultTheme);
   const [loaded, setLoaded] = useState(false);
   const [db, setDb] = useState(null);
   const [metadata, setMetadata] = useState({});
@@ -78,15 +78,17 @@ export default function App({ Component, pageProps }) {
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
+  useEffect(() => {
+    setTheme(createTeamColorTheme(metadata.version));
+  }, [metadata.version]);
+
   const openFile = (f) => {
     analyzeFileToDatabase(f).then(({db, metadata}) => {
       setDb(db);
       setMetadata(metadata);
       if (metadata.version) {
         try {
-          setBasicInfo(parseBasicInfo({
-            db, metadata
-          }))
+          setBasicInfo(parseBasicInfo({ db, metadata }))
           refresh();
         } catch (e) {
           console.error(e);
@@ -135,25 +137,34 @@ export default function App({ Component, pageProps }) {
 
 
   return (
-    <ThemeProvider theme={theme}>
-      <Head>
-        <meta name="viewport" content="initial-scale=1, width=device-width"/>
-        <title>F1 Manager Save Browser - F1Setup.CFD</title>
-        <meta name="description" content="F1 Manager Save Browser by ieb"/>
-        <link rel="icon" href="/favicon.ico"/>
-      </Head>
-      <SnackbarProvider
-        maxSnack={10}
-        anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-      >
-        <CssBaseline />
-        {
-          loaded ? (
-            <DatabaseContext.Provider value={db}>
-              <DatabaseUpdaterContext.Provider value={setDb}>
-                <MetadataContext.Provider value={metadata}>
-                  <BasicInfoContext.Provider value={basicInfo}>
-                    <BasicInfoUpdaterContext.Provider value={() => updateBasicInfo()}>
+    <DatabaseContext.Provider value={db}>
+      <DatabaseUpdaterContext.Provider value={setDb}>
+        <MetadataContext.Provider value={metadata}>
+          <BasicInfoContext.Provider value={basicInfo}>
+            <ThemeProvider theme={theme}>
+              <Head>
+                <meta name="viewport" content="initial-scale=1, width=device-width"/>
+                <title>F1 Manager Save Browser - F1Setup.CFD</title>
+                <meta name="description" content="F1 Manager Save Browser by ieb"/>
+                <link rel="icon" href="/favicon.ico"/>
+              </Head>
+              <SnackbarProvider
+                maxSnack={10}
+                anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+              >
+                <CssBaseline />
+                {
+                  loaded ? (
+                    <BasicInfoUpdaterContext.Provider value={({ metadata }) => {
+                      if (metadata) {
+                        metadata = {
+                          ...metadata,
+                          ...parseGvasProps(metadata.gvasMeta.Properties),
+                        };
+                        setMetadata(metadata);
+                      }
+                      updateBasicInfo()
+                    }}>
                       <EnvContext.Provider value={{ inApp, filePath }}>
                         <Dropzone
                           onDropAccepted={files => openFile(files[0])}
@@ -176,19 +187,19 @@ export default function App({ Component, pageProps }) {
                         </Dropzone>
                       </EnvContext.Provider>
                     </BasicInfoUpdaterContext.Provider>
-                  </BasicInfoContext.Provider>
-                </MetadataContext.Provider>
-              </DatabaseUpdaterContext.Provider>
-            </DatabaseContext.Provider>
-          ) : (
-            <Container maxWidth={false} component="main">
-              <Typography variant="h5" component="h5">
-                Loading Database parser. Please wait.
-              </Typography>
-            </Container>
-          )
-        }
-      </SnackbarProvider>
-    </ThemeProvider>
+                  ) : (
+                    <Container maxWidth={false} component="main">
+                      <Typography variant="h5" component="h5">
+                        Loading Database parser. Please wait.
+                      </Typography>
+                    </Container>
+                  )
+                }
+              </SnackbarProvider>
+            </ThemeProvider>
+          </BasicInfoContext.Provider>
+        </MetadataContext.Provider>
+      </DatabaseUpdaterContext.Provider>
+    </DatabaseContext.Provider>
   );
 }

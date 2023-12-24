@@ -55,7 +55,6 @@ export default function Finance() {
       [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
       const [seasonStart, seasonEnd] = values[0];
       setXMax(dayToDate(seasonEnd));
-      console.log(seasonStart, seasonEnd);
 
       let totalRevenueForTeam = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       let revenueHistoryForTeam = [[], [], [], [], [], [], [], [], [], [], [], []];

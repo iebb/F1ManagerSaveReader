@@ -3,6 +3,7 @@ import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
 import {teamNames} from "@/js/localization";
+import {repack} from "../../js/Parser";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
 
 export default function Toolbox() {
@@ -16,6 +17,30 @@ export default function Toolbox() {
 
 
   const tools = [{
+    category: "Team Switching",
+    commands: [{
+      name: "Switch to McLaren",
+      command: () => {
+        enqueueSnackbar(
+          `All ${teamNames(myTeam, metadata.version)} facilities are 50% newer now.`,
+          { variant: "success" }
+        );
+
+        database.exec(`UPDATE Player SET TeamID = 2`);
+        database.exec(`UPDATE Player_History SET EndDay = ${basicInfo.player.Day - 1} WHERE EndDay IS NULL`);
+        database.exec(`INSERT INTO Player_History VALUES (2, ${basicInfo.player.Day}, NULL)`);
+        metadata.gvasMeta.Properties.Properties[0].Properties[0].Properties.forEach(x => {
+          if (x.Name === 'TeamID') {
+            x.Property = 2;
+          }
+          if (x.Name === 'Team') {
+            x.Property = "McLaren Mercedes";
+          }
+        });
+        repack(database, metadata, true);
+      }
+    }]
+  }, {
     category: "Facilities",
     commands: [{
       name: "Refurbish My Facilities",

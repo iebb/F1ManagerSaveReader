@@ -56,13 +56,15 @@ export const BasicInfoHeader = () => {
             {
               env.inApp && (
                 <Button color="error" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
-                  Overwrite Database
+                  Overwrite DB
                 </Button>
               )
             }
-            <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, false)}>Re-export Savefile</Button>
+            <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, false)}>
+              Export Savefile
+            </Button>
             <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>
-              Dump Database
+              Dump DB
             </Button>
           </div>
         </div>

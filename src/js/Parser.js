@@ -3,6 +3,18 @@ import {Gvas, Serializer} from "./UESaveTool";
 const pako = require("pako");
 const { saveAs } = require("file-saver");
 
+export const parseGvasProps = (Properties) => {
+  const careerSaveMetadata = {};
+  const metadataProperty = Properties.Properties.filter(x => x.Name === "MetaData")[0];
+  const careerSaveMetadataProperty = metadataProperty.Properties[0];
+
+  careerSaveMetadataProperty.Properties.forEach(prop => {
+    careerSaveMetadata[prop.Name] = prop.Property || prop.Properties;
+  })
+
+  return { careerSaveMetadata };
+}
+
 export const analyzeFileToDatabase = async (file) => {
   if (!window.SQL) return;
 
@@ -34,13 +46,6 @@ export const analyzeFileToDatabase = async (file) => {
             version = 0;
         }
 
-        const careerSaveMetadata = {};
-        const metadataProperty = Properties.Properties.filter(x => x.Name === "MetaData")[0];
-        const careerSaveMetadataProperty = metadataProperty.Properties[0];
-
-        careerSaveMetadataProperty.Properties.forEach(prop => {
-          careerSaveMetadata[prop.Name] = prop.Property || prop.Properties;
-        })
 
         const unk_zero = serial.readInt32();
         const total_size = serial.readInt32();
@@ -69,9 +74,9 @@ export const analyzeFileToDatabase = async (file) => {
           databaseFile,
 
           gvasMeta,
-          gvasHeader: Header,
-          gvasProperties: Properties,
-          careerSaveMetadata,
+          gvasHeader: Header, // read-only
+
+          ...parseGvasProps(Properties),
 
           otherDatabases: [{
             size: size_2,
@@ -83,7 +88,7 @@ export const analyzeFileToDatabase = async (file) => {
         }
 
         if (process.env.NODE_ENV === 'development') {
-          console.log(db, version, Header, careerSaveMetadata)
+          console.log(db, version, gvasMeta, Header, metadata.careerSaveMetadata)
           // saveAs(new Blob([metadata.chunk0], {type: "application/binary"}), "chunk0");
         }
 
