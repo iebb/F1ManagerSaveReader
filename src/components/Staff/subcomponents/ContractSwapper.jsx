@@ -1,26 +1,38 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {getDriverName} from "@/js/localization";
-import {Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
+import {Alert, AlertTitle, Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
 import * as React from "react";
-import {useContext, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {assignRandomRaceNumber, fireDriverContract, getStaff} from "../commons/drivers";
 
 export default function ContractSwapper(props) {
   const { swapRow, setSwapRow, refresh } = props;
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
-  const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
   const { player } = basicInfo;
 
   const ctx = { database, version, basicInfo };
   const [swapDriver, setSwapDriver] = useState(null);
+
+  const [_drivers, setDrivers] = useState([]);
+  const [updated, setUpdated] = useState(0);
+  const _refresh = () => setUpdated(+new Date());
+
+  useEffect(() => {
+    if (swapRow) {
+      setDrivers(getStaff(ctx, swapRow.StaffType)[1]);
+    }
+  }, [swapRow, updated]);
+
   if (!swapRow) return null;
 
-  const [_, _drivers] = getStaff(ctx, swapRow.StaffType);
+  const swapDriverUpdated = _drivers.filter(d => d.StaffID === swapDriver?.id)?.[0];
+
 
   /* swap contracts */
-  const swapContracts = (staff1, staff2, pernamentSwap = true) => {
+  const swapContracts = (staff1, staff2, permanentSwap = true) => {
 
     const season = basicInfo.player.CurrentSeason;
     const staff1ID = staff1.StaffID;
@@ -33,34 +45,62 @@ export default function ContractSwapper(props) {
     [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
     const [seasonStart, seasonEnd] = values[0];
 
-    /* contracts */
-    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff2ID} AND ContractType = 0`);
-    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff1ID} AND ContractType = 0`);
+    let staff1Team, staff2Team;
+    let staff1StartDay, staff2StartDay;
+    let staff1PIT, staff2PIT;
 
-    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff2ID} AND ContractType = 3`);
-    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff1ID} AND ContractType = 3`);
+    results = database.exec(`SELECT StartDay, TeamID, PosInTeam FROM Staff_Contracts WHERE ContractType = 0 AND StaffID = ${staff1ID}`);
+    if (results) {
+      [[staff1StartDay, staff1Team, staff1PIT]] = results[0].values;
+    }
 
-    if (pernamentSwap) { // add a record in history
-
-      database.exec(`DELETE FROM Staff_CareerHistory WHERE EndDay < StartDay`);
-
-      if (version === 2) {
-        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1})`);
-        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1})`);
-      } else {
-        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1}, ${staff1.PosInTeam})`);
-        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1}, ${staff2.PosInTeam})`);
-      }
-      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0, StartDay = ${player.Day} WHERE ContractType = 1 AND Accepted = 10`);
-    } else {
-      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 1 AND Accepted = 10`);
+    results = database.exec(`SELECT StartDay, TeamID, PosInTeam FROM Staff_Contracts WHERE ContractType = 0 AND StaffID = ${staff2ID}`);
+    if (results) {
+      [[staff2StartDay, staff2Team, staff2PIT]] = results[0].values;
     }
 
 
+    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 130 WHERE StaffID = ${staff2ID} AND ContractType = 3`);
+    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 130 WHERE StaffID = ${staff1ID} AND ContractType = 3`);
+    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 120 WHERE StaffID = ${staff2ID} AND ContractType = 2`);
+    database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 120 WHERE StaffID = ${staff1ID} AND ContractType = 2`);
+
+    if (permanentSwap) { // add a record in history
+      /* contracts */
+      database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 100, StartDay = ${player.Day} WHERE StaffID = ${staff2ID} AND ContractType = 0`);
+      database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 100, StartDay = ${player.Day} WHERE StaffID = ${staff1ID} AND ContractType = 0`);
+
+      database.exec(`DELETE FROM Staff_CareerHistory WHERE EndDay <= StartDay`);
+
+      if (version === 2) {
+        if (staff1.StartDay !== player.Day && staff1Team) {
+          database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1Team}, ${staff1StartDay}, ${player.Day})`);
+        }
+        if (staff2.StartDay !== player.Day && staff2Team) {
+          database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2Team}, ${staff2StartDay}, ${player.Day})`);
+        }
+      } else {
+        if (staff1.StartDay !== player.Day && staff1Team) {
+          database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1Team}, ${staff1StartDay}, ${player.Day}, ${staff1PIT})`);
+        }
+        if (staff2.StartDay !== player.Day && staff2Team) {
+          database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2Team}, ${staff2StartDay}, ${player.Day}, ${staff2PIT})`);
+        }
+      }
+
+
+    } else {
+
+      /* contracts */
+      database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 100 WHERE StaffID = ${staff2ID} AND ContractType = 0`);
+      database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 100 WHERE StaffID = ${staff1ID} AND ContractType = 0`);
+
+    }
+
+    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 100`);
+    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 2 WHERE ContractType = 120`);
     // future contracts are not affected
-    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 1 AND Accepted = 30`);
-
-
+    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 130`);
 
 
     if (staffType === 0) {
@@ -191,10 +231,8 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
       }
       database.exec(`UPDATE Staff_RaceEngineerDriverAssignments SET IsCurrentAssignment = 1 WHERE IsCurrentAssignment = 3`);
     }
+    _refresh();
   }
-
-
-
   return (
     <Modal
       open={swapRow}
@@ -217,24 +255,13 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
           Contract Swap for {getDriverName(swapRow)}
         </Typography>
 
+        <Alert severity="info" sx={{ my: 2 }}>
+          <AlertTitle>Info</AlertTitle>
+          <p>Temporary: Won't affect Career History until driver changes team in-game.</p>
+          <p>Permanent: Career History will be updated and separated.</p>
+        </Alert>
         <Divider variant="fullWidth" sx={{ my: 2 }} />
-
-        <Grid direction="row-reverse" container spacing={1}>
-          <Grid item>
-            <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
-              if (swapDriver && (swapRow.StaffID !== swapDriver.id)) {
-                if (swapRow.StaffType === 0 && !swapDriver.number) {
-                  assignRandomRaceNumber(ctx, swapDriver.id);
-                }
-                if (swapRow.StaffType === swapRow.StaffType) {
-                  swapContracts(swapRow, swapDriver.driver);
-                }
-                refresh();
-              }
-            }} disabled={!swapDriver || (swapRow.StaffID === swapDriver.id)}>Swap</Button>
-          </Grid>
-          <Grid item>
-          </Grid>
+        <Grid direction="row" container spacing={1}>
           <Grid item style={{ flex: 1 }}>
             <Autocomplete
               disablePortal
@@ -248,14 +275,56 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
               renderInput={(params) => <TextField {...params} label="Swap with" autoComplete="off" />}
             />
           </Grid>
+          <Grid item style={{ flex: 1 }}>
+            {
+              swapDriverUpdated?.TeamID && (
+                <TeamName
+                  TeamID={swapDriverUpdated?.TeamID}
+                  type="posinteam"
+                  PosInTeam={swapDriverUpdated?.PosInTeam}
+                  description={`Contract until ${swapDriverUpdated.EndSeason}`}
+                />
+              )
+            }
+          </Grid>
         </Grid>
-        <Divider variant="fullWidth" sx={{ my: 2 }} />
-        <div style={{ margin: 10 }}>
-          <Button color="error" variant="contained" onClick={() => {
-            fireDriverContract(ctx, swapRow.StaffID);
-            refresh();
-          }}>Fire {getDriverName(swapRow)}</Button>
-        </div>
+        <Divider variant="fullWidth" sx={{ my: 1 }} />
+        <Grid direction="row" container spacing={1}>
+          <Grid item>
+            <Button color="error" variant="contained" sx={{ m: 1 }} onClick={() => {
+              fireDriverContract(ctx, swapRow.StaffID);
+              refresh();
+            }}>Fire {getDriverName(swapRow)}</Button>
+          </Grid>
+          <Grid item>
+            <Button color="secondary" variant="contained" sx={{ m: 1 }} onClick={() => {
+              if (swapDriver && (swapRow.StaffID !== swapDriver.id)) {
+                if (swapRow.StaffType === swapRow.StaffType) {
+                  if (swapRow.StaffType === 0 && !swapDriver.number) {
+                    assignRandomRaceNumber(ctx, swapDriver.id);
+                  }
+                  swapContracts(swapRow, swapDriver.driver, false);
+                  _refresh();
+                }
+                refresh();
+              }
+            }} disabled={!swapDriver || (swapRow.StaffID === swapDriver.id)}>Temporary Swap</Button>
+          </Grid>
+          <Grid item>
+            <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
+              if (swapDriver && (swapRow.StaffID !== swapDriver.id)) {
+                if (swapRow.StaffType === swapRow.StaffType) {
+                  if (swapRow.StaffType === 0 && !swapDriver.number) {
+                    assignRandomRaceNumber(ctx, swapDriver.id);
+                  }
+                  swapContracts(swapRow, swapDriver.driver, true);
+                  _refresh();
+                }
+                refresh();
+              }
+            }} disabled={!swapDriver || (swapRow.StaffID === swapDriver.id)}>Permanent Swap</Button>
+          </Grid>
+        </Grid>
       </Box>
     </Modal>
   )

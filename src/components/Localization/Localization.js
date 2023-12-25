@@ -5,7 +5,9 @@ import {MetadataContext} from "@/js/Contexts";
 
 export const TeamName = ({
                            TeamID = 0,
-                           type = 'text'
+                           type = 'text',
+  PosInTeam = 1,
+                           description = "",
                          }) => {
   const {version, gameVersion} = useContext(MetadataContext);
   if (!TeamID) return null;
@@ -19,16 +21,42 @@ export const TeamName = ({
         <div style={{color: `rgb(var(--team${TeamID}-triplet)`}}>
           <div>{teamNames(TeamID, version)}</div>
           <div>
-            <div style={{
-              width: 12, height: 12, borderRadius: 6,
-              display: "inline-block", marginRight: 3,
-              background: `var(--team${TeamID}-fanfare1)`,
-            }}/>
-            <div style={{
-              width: 12, height: 12, borderRadius: 6,
-              display: "inline-block", marginRight: 3,
-              background: `var(--team${TeamID}-fanfare2)`,
-            }}/>
+            {
+              description ? description : [
+                <div style={{
+                  width: 12, height: 12, borderRadius: 6,
+                  display: "inline-block", marginRight: 3,
+                  background: `var(--team${TeamID}-fanfare1)`,
+                }}/>,
+                <div style={{
+                  width: 12, height: 12, borderRadius: 6,
+                  display: "inline-block", marginRight: 3,
+                  background: `var(--team${TeamID}-fanfare2)`,
+                }}/>
+              ]
+            }
+          </div>
+        </div>
+      )
+    case "posinteam":
+      return (
+        <div style={{color: `rgb(var(--team${TeamID}-triplet)`}}>
+          <div>{teamNames(TeamID, version)} / #{PosInTeam}</div>
+          <div>
+            {
+              description ? description : [
+                <div style={{
+                  width: 12, height: 12, borderRadius: 6,
+                  display: "inline-block", marginRight: 3,
+                  background: `var(--team${TeamID}-fanfare1)`,
+                }}/>,
+                <div style={{
+                  width: 12, height: 12, borderRadius: 6,
+                  display: "inline-block", marginRight: 3,
+                  background: `var(--team${TeamID}-fanfare2)`,
+                }}/>
+              ]
+            }
           </div>
         </div>
       )
