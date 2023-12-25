@@ -50,12 +50,12 @@ export default function ContractSwapper(props) {
     let staff1PIT, staff2PIT;
 
     results = database.exec(`SELECT StartDay, TeamID, PosInTeam FROM Staff_Contracts WHERE ContractType = 0 AND StaffID = ${staff1ID}`);
-    if (results) {
+    if (results.length) {
       [[staff1StartDay, staff1Team, staff1PIT]] = results[0].values;
     }
 
     results = database.exec(`SELECT StartDay, TeamID, PosInTeam FROM Staff_Contracts WHERE ContractType = 0 AND StaffID = ${staff2ID}`);
-    if (results) {
+    if (results.length) {
       [[staff2StartDay, staff2Team, staff2PIT]] = results[0].values;
     }
 

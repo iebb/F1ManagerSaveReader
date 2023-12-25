@@ -170,7 +170,7 @@ PR1.PracticeSession IS NULL`
             driversInStanding[DriverID] = {
               SeasonID: season,
               DriverID,
-              Points: 0,
+              Points: "N/A",
               LastPointsChange: 0,
               LastPositionChange: 0,
             };

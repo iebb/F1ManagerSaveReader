@@ -342,7 +342,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
                     () => setEditRow({...row})
                   }>edit staff</a><br />
                   {
-                    row.TeamID && StaffType !== 5 && <a onClick={
+                    StaffType !== 5 && <a onClick={
                       () => setSwapRow({...row})
                     }>swap contracts</a>
                   }

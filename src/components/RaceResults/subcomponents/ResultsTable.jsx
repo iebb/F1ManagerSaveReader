@@ -24,7 +24,7 @@ export default function ResultsTable(ctx) {
             <TableCell
               className={`race_header_cell`}
               sx={{ py: 0.2 }}
-              colSpan={3}
+              colSpan={4}
             >Race</TableCell>
             {
               raceSchedule.map(({type, race, span}) => {
@@ -49,6 +49,11 @@ export default function ResultsTable(ctx) {
             <TableCell></TableCell>
           </TableRow>
           <TableRow>
+            <TableCell
+              component="th"
+              sx={{ py: 0 }}
+              style={{ width: 80 }}
+            >#</TableCell>
             <TableCell
               sx={{ py: 0.25 }}
               className={`race_cell_driver`}
@@ -79,6 +84,13 @@ export default function ResultsTable(ctx) {
               key={`${row.DriverID}`}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
+              <TableCell
+                scope="row"
+                sx={{ py: 0.2 }}
+                style={{ maxWidth: 50 }}
+              >
+                {row.Position}
+              </TableCell>
               <TableCell
                 component="th"
                 scope="row"
