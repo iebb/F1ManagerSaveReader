@@ -19,7 +19,7 @@ export default function Header() {
         </div>
       </div>
       <Typography variant="p" component="p" sx={{ py: 1, color: "#ffff77" }}>
-        Bugs / Suggestions? Welcome to <a href="https://github.com/iebb/F1ManagerSaveReader/issues">Github issues</a>
+        Bugs / Suggestions? Welcome to <a href="https://github.com/iebb/F1ManagerSaveReader/issues" target="_blank">Github issues</a>
       </Typography>
       <Divider variant="fullWidth" />
     </Container>

@@ -22,6 +22,8 @@ const affectedCarIndexTables = [
 
 const affectedCarIDTables = [
   `Save_CarAI_Race`,
+  `Save_CarAI_Qualifying`,
+  `Save_CarAI_Practice`,
 ]
 
 
@@ -31,8 +33,11 @@ const DamageParts = ["Body", "FrontWing", "RearWing", "SidePods", "Floor", "Susp
 export default function RaceEditor() {
 
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext)
+  const {version, gameVersion, careerSaveMetadata} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
+
+  let { CurrentRace, RacesInSeason, Day, FirstName, LastName, TeamID, TrackID, CurrentLap, LapCount,
+    RaceWeekendInProgress, SessionInProgress, WeekendStage, TimeRemaining } = careerSaveMetadata;
 
   const [rows, setRows] = useState([]);
   const [raceState, setRaceState] = useState({});
@@ -124,11 +129,11 @@ export default function RaceEditor() {
   for(const row of rows) RacePositions[row.RacePosition] = row;
 
 
-  if (weekend.WeekendStage < 8) {
+  if (!SessionInProgress) {
     return (
-      <Alert severity="error" sx={{ my: 2 }}>
+      <Alert severity="error" sx={{ mb: 2 }}>
         <AlertTitle>Unsupported</AlertTitle>
-        You are not in a Race or a Sprint Race.
+        You must be in a Practice / Qualifying / Sprint / Race session to use this.
       </Alert>
     )
   }

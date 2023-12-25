@@ -23,7 +23,7 @@ export default function Page() {
   return (
     <VTabs options={[
       {name: "Setup", tab: <CarSetup />},
-      {name: "Race", tab: <RaceEditor />, minVersion: "3.0"},
+      {name: "Session", tab: <RaceEditor />, minVersion: "3.0"},
     ]} />
   );
 }
