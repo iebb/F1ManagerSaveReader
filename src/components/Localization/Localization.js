@@ -5,8 +5,9 @@ import {MetadataContext} from "@/js/Contexts";
 
 export const TeamName = ({
                            TeamID = 0,
+                           alpha=1,
                            type = 'text',
-  PosInTeam = 1,
+                           posInTeam = 1,
                            description = "",
                          }) => {
   const {version, gameVersion} = useContext(MetadataContext);
@@ -18,7 +19,7 @@ export const TeamName = ({
       )
     case "fanfare":
       return (
-        <div style={{color: `rgb(var(--team${TeamID}-triplet)`}}>
+        <div style={{color: `rgba(var(--team${TeamID}-triplet), ${alpha})`}}>
           <div>{teamNames(TeamID, version)}</div>
           <div>
             {
@@ -40,8 +41,8 @@ export const TeamName = ({
       )
     case "posinteam":
       return (
-        <div style={{color: `rgb(var(--team${TeamID}-triplet)`}}>
-          <div>{teamNames(TeamID, version)} / #{PosInTeam}</div>
+        <div style={{color: `rgba(var(--team${TeamID}-triplet), ${alpha})`}}>
+          <div>{teamNames(TeamID, version)} / #{posInTeam}</div>
           <div>
             {
               description ? description : [

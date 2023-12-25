@@ -42,6 +42,9 @@ export const getStaff = (ctx, StaffType = 0) => {
         "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
         "LEFT JOIN Staff_CommonData on Staff_CommonData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
+        "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
+        "INNER JOIN (SELECT StaffID, MAX(EndDay) MED FROM Staff_CareerHistory GROUP BY StaffID) b " +
+        "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
       );
     } else if (version === 3) {
@@ -50,6 +53,9 @@ export const getStaff = (ctx, StaffType = 0) => {
         "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
+        "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
+        "INNER JOIN (SELECT StaffID, MAX(EndDay) MED FROM Staff_CareerHistory GROUP BY StaffID) b " +
+        "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
       );
     }
@@ -57,12 +63,18 @@ export const getStaff = (ctx, StaffType = 0) => {
     if (version === 2) {
       [{ columns, values }] = database.exec(
         "SELECT Staff_CommonData.StaffID as StaffID, * FROM Staff_CommonData \n" +
+        "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
+        "INNER JOIN (SELECT StaffID, MAX(EndDay) MED FROM Staff_CareerHistory GROUP BY StaffID) b " +
+        "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED) as PreviousContract on PreviousContract.StaffID = Staff_CommonData.StaffID\n" +
         `LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_CommonData.StaffID AND Staff_Contracts.ContractType = 0 WHERE Staff_CommonData.StaffType = ${StaffType}`
       );
     } else if (version === 3) {
       [{ columns, values }] = database.exec(
         "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_BasicData \n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_BasicData.StaffID\n" +
+        "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
+        "INNER JOIN (SELECT StaffID, MAX(EndDay) MED FROM Staff_CareerHistory GROUP BY StaffID) b " +
+        "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED) as PreviousContract on PreviousContract.StaffID = Staff_BasicData.StaffID\n" +
         `LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_BasicData.StaffID AND Staff_Contracts.ContractType = 0 WHERE Staff_GameData.StaffType = ${StaffType}`
       );
     }

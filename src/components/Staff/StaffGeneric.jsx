@@ -1,3 +1,4 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {resolveName, teamNames, dateToDay, dayToDate, getDriverCode} from "@/js/localization";
 import {getCountryFlag, getCountryShort} from "@/js/localization/ISOCountries";
 import {DataGrid} from "@mui/x-data-grid";
@@ -60,6 +61,12 @@ export default function StaffGeneric({ StaffType = 1 }) {
       <DataGrid
         rows={rows}
         getRowId={r => r.StaffID}
+        isCellEditable={({ row, field, value }) => {
+          if (field === "Salary") {
+            return value > 0;
+          }
+          return true;
+        }}
         onProcessRowUpdateError={e => console.error(e)}
         processRowUpdate={(newRow, oldRow) => {
           for (const stat of staffStats) {
@@ -207,7 +214,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
           ]) : [],
           {
             field: 'DOB' , headerName: "DOB",
-            width: 125,
+            width: 100,
             editable: true,
             valueGetter: ({ value }) => dayToDate(value),
             renderCell: ({ value, row }) => (
@@ -255,10 +262,10 @@ export default function StaffGeneric({ StaffType = 1 }) {
                       <br />
                       {
                         retirementInYears < 5 && (
-                          <sub style={{ color: "lightblue" }} onClick={() => {
+                          <span className="small" style={{ color: "lightblue" }} onClick={() => {
                             database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
                             setUpdated(+new Date());
-                          }}>postpone</sub>
+                          }}>postpone</span>
                         )
                       }
                     </div>
@@ -276,10 +283,10 @@ export default function StaffGeneric({ StaffType = 1 }) {
                   <div>
                     {formatter.format(row.Salary)}
                     <br />
-                    <sub>until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
+                    <span className="small" >until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
                       database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
                       setUpdated(+new Date());
-                      }}>+1</a></sub>
+                      }}>+1</a></span>
                   </div>
                 ) : (
                   "Not contracted"
@@ -291,7 +298,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
           {
             field: 'TeamID',
             headerName: 'Team',
-            width: 150,
+            width: 175,
             valueGetter: ({row}) => {
               if (row.TeamID <= 10) {
                 return row.PosInTeam < 3 ? row.TeamID * 2 + row.PosInTeam : 50 + row.TeamID * 2
@@ -300,17 +307,27 @@ export default function StaffGeneric({ StaffType = 1 }) {
             },
             renderCell: ({ row }) => {
               return row.TeamID ? (
-                <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
-                  {teamNames(row.TeamID, version)}
-                  <br />
-                  {
-                    (StaffType === 0 || StaffType === 2) && (
-                      <sub>Driver {row.PosInTeam}</sub>
-                    )
+                <TeamName
+                  type="fanfare"
+                  TeamID={row.TeamID}
+                  description={
+                    (StaffType === 0 || StaffType === 2) ? (
+                      <span className="small">Driver {row.PosInTeam}</span>
+                    ) : null
                   }
-                </div>
+                />
               ) : (
-                "-"
+                row.PreviousTeamID ? (
+                  <div style={{color: `rgba(var(--team${row.PreviousTeamID}-triplet), 0.5)`}}>
+                    <span className="small">Previous ({dayToDate(row.PreviousContractED - 1).getFullYear()}):</span>
+                    <br/>
+                    <span className="small">
+                      {teamNames(row.PreviousTeamID, version)}
+                    </span>
+                  </div>
+                ) : (
+                  "-"
+                )
               )
             }
           },

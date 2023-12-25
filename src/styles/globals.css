@@ -249,3 +249,7 @@ main {
 body {
   text-shadow: 0 0 1px;
 }
+
+.small {
+  font-size: 90%;
+}

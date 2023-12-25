@@ -180,7 +180,7 @@ export default function CarSetup() {
                     getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
                   }
                   <br />
-                  <sub>{row.Team.TeamName}</sub>
+                  <span className="small">{row.Team.TeamName}</span>
                 </TableCell>
                 {
                   CarSetupParams.map(p => {
