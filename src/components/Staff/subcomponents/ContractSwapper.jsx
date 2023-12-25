@@ -11,6 +11,7 @@ export default function ContractSwapper(props) {
   const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
+  const { player } = basicInfo;
 
   const ctx = { database, version, basicInfo };
   const [swapDriver, setSwapDriver] = useState(null);
@@ -36,6 +37,16 @@ export default function ContractSwapper(props) {
 
     database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 1 AND Accepted = 10`);
     database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 1 AND Accepted = 30`);
+
+    database.exec(`DELETE FROM Staff_CareerHistory WHERE EndDay < StartDay`);
+
+    if (version === 2) {
+      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1})`);
+      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1})`);
+    } else {
+      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1}, ${staff1.PosInTeam})`);
+      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1}, ${staff2.PosInTeam})`);
+    }
 
     if (staffType === 0) {
       let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1ID}`);

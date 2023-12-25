@@ -255,10 +255,10 @@ export default function StaffGeneric({ StaffType = 1 }) {
                       <br />
                       {
                         retirementInYears < 5 && (
-                          <a style={{ color: "lightblue" }} onClick={() => {
+                          <sub style={{ color: "lightblue" }} onClick={() => {
                             database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
                             setUpdated(+new Date());
-                          }}>postpone</a>
+                          }}>postpone</sub>
                         )
                       }
                     </div>
@@ -274,7 +274,12 @@ export default function StaffGeneric({ StaffType = 1 }) {
               renderCell: ({ row }) => {
                 return row.TeamID ? (
                   <div>
-                    {formatter.format(row.Salary)}<br /><sub>until {row.EndSeason}</sub>
+                    {formatter.format(row.Salary)}
+                    <br />
+                    <sub>until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
+                      database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
+                      setUpdated(+new Date());
+                      }}>+1</a></sub>
                   </div>
                 ) : (
                   "Not contracted"
@@ -287,7 +292,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
             field: 'TeamID',
             headerName: 'Team',
             width: 150,
-            valueGetter: ({ row }) => {
+            valueGetter: ({row}) => {
               if (row.TeamID <= 10) {
                 return row.PosInTeam < 3 ? row.TeamID * 2 + row.PosInTeam : 50 + row.TeamID * 2
               }
