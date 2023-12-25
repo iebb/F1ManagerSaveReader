@@ -3,7 +3,7 @@ import {getCountryFlag, getCountryShort} from "@/js/localization/ISOCountries";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {getStaff} from "./commons/drivers";
 import {localeStaffStats, mailSenders} from "./commons/staffCommon";
 import ContractSwapper from "./subcomponents/ContractSwapper";

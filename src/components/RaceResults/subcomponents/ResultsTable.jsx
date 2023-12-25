@@ -4,7 +4,7 @@ import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow}
 import Image from "next/image";
 import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../../Localization/Localization";
 
 export default function ResultsTable(ctx) {

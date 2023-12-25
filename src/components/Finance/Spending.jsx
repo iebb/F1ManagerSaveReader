@@ -9,8 +9,8 @@ import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {dayToDate, teamNames} from "@/js/localization";
-import {teams2023} from "../../js/localization/Teams2023";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {teams2023} from "@/js/localization/Teams2023";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {defaultFontFamily} from "../UI/Fonts";
 import * as Tx from "./consts_transactions"
 

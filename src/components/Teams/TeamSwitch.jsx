@@ -1,10 +1,9 @@
-import {Alert, AlertTitle, Button, ButtonGroup, Divider, Grid, Typography} from "@mui/material";
+import {teamNames} from "@/js/localization";
+import {Alert, AlertTitle, Button, Divider, Grid, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
-import {teamNames} from "@/js/localization";
-import {repack} from "../../js/Parser";
-import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 
 export default function TeamSwitch() {
 

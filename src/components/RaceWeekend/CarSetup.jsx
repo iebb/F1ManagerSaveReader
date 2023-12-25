@@ -15,7 +15,7 @@ import {
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {repack} from "@/js/Parser";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "@/js/Contexts";
 
 
 export const CarSetupParams = [

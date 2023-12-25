@@ -3,7 +3,7 @@ import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {getDriverName, teamNames} from "@/js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {PartCalculationStatsV, PartFactorsV, PartNames, PartStatsCategorizedV,} from "./consts";
 
 import {statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts_2023";

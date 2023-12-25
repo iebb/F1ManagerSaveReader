@@ -13,7 +13,7 @@ import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {dayToDate, formatDate} from "@/js/localization";
-import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {raceFlags, raceAbbrevs, countryNames, circuitNames} from "@/js/localization";
 
 const rainTypes = ["dry", "wet"];
@@ -53,7 +53,7 @@ export default function CustomCalendar() {
   const [weeks, setWeeks] = useState({});
   const [updated, setUpdated] = useState(0);
   const refresh = () => {
-    basicInfoUpdater();
+    basicInfoUpdater({});
     setUpdated(+new Date());
   }
 

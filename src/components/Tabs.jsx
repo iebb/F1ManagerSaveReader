@@ -2,7 +2,7 @@ import {TabContext, TabList, TabPanel} from "@mui/lab";
 import {Box, Tab, Tabs} from "@mui/material";
 import {useRouter} from "next/router";
 import {useContext, useState} from "react";
-import {MetadataContext} from "./Contexts";
+import {MetadataContext} from "@/js/Contexts";
 
 
 export const VTabs = ({ options }) => {

@@ -1,5 +1,5 @@
 import {createTheme} from "@mui/material";
-import {teamColors2023} from "../../js/localization/Teams2023";
+import {teamColors2023} from "@/js/localization/Teams2023";
 import {defaultFontFamily} from "./Fonts";
 
 

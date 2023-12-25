@@ -1,7 +1,7 @@
 import {Alert, AlertTitle} from "@mui/material";
 import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext} from "../../components/Contexts";
+import {BasicInfoContext} from "@/js/Contexts";
 import CarSetup from "../../components/RaceWeekend/CarSetup";
 import RaceEditor from "../../components/RaceWeekend/RaceEditor";
 import {VTabs} from "../../components/Tabs";

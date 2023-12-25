@@ -4,7 +4,7 @@ import {Button, Divider, Step, StepLabel, Stepper, Typography} from "@mui/materi
 import * as React from "react";
 import {useContext} from "react";
 import {dump, repack} from "@/js/Parser";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "@/js/Contexts";
 
 export const BasicInfoHeader = () => {
   const basicInfo = useContext(BasicInfoContext);

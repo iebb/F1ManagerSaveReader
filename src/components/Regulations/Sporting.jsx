@@ -19,7 +19,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 
 
 export default function SportingRegulations() {

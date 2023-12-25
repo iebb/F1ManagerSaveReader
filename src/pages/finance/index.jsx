@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "../../components/Contexts";
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "@/js/Contexts";
 import CostCap from "../../components/Finance/CostCap";
 import Finance from "../../components/Finance/Finance";
 import Spending from "../../components/Finance/Spending";

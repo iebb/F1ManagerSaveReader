@@ -6,7 +6,7 @@ import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {yearToDateRange} from "@/js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 

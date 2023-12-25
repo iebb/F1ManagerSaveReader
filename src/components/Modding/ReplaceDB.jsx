@@ -3,7 +3,7 @@ import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
 import Dropzone from "react-dropzone";
-import {DatabaseUpdaterContext, MetadataContext} from "../Contexts";
+import {DatabaseUpdaterContext, MetadataContext} from "@/js/Contexts";
 
 export default function ReplaceDB() {
   const replaceDatabase = useContext(DatabaseUpdaterContext);

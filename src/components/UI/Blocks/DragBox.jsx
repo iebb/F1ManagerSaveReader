@@ -1,6 +1,6 @@
 import {Container, Typography} from "@mui/material";
 import {useContext} from "react";
-import {EnvContext, MetadataContext} from "../../Contexts";
+import {EnvContext, MetadataContext} from "@/js/Contexts";
 
 export default function DragBox() {
   const {version, gameVersion} = useContext(MetadataContext)

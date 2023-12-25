@@ -3,8 +3,8 @@ import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
 import {teamNames} from "@/js/localization";
-import {repack} from "../../js/Parser";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "../Contexts";
+import {repack} from "@/js/Parser";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 
 export default function Toolbox() {
 
