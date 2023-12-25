@@ -1,8 +1,10 @@
 import {TeamName} from "@/components/Localization/Localization";
 import {resolveName, teamNames, dateToDay, dayToDate, getDriverCode} from "@/js/localization";
 import {getCountryFlag, getCountryShort} from "@/js/localization/ISOCountries";
+import {Alert, AlertTitle} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
+import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {getStaff} from "./commons/drivers";
@@ -21,6 +23,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
 
   const basicDataTable = version === 2 ? "Staff_CommonData" : "Staff_BasicData";
   const retirementDataTable = version === 2 ? "Staff_CommonData" : "Staff_GameData";
+  const { weekend } = basicInfo;
 
 
   const [rows, setRows] = useState([]);
@@ -56,6 +59,14 @@ export default function StaffGeneric({ StaffType = 1 }) {
 
   return (
     <div>
+      {
+        (weekend.WeekendStage >= 8 && StaffType === 0) && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <AlertTitle>Warning</AlertTitle>
+            Swapping Drivers without Qualifying Results before a Race would result in a game crash.
+          </Alert>
+        )
+      }
       <StaffEditor editRow={editRow} setEditRow={setEditRow} refresh={refresh} />
       <ContractSwapper swapRow={swapRow} setSwapRow={setSwapRow} refresh={refresh} />
       <DataGrid
