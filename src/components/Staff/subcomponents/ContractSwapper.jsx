@@ -20,13 +20,18 @@ export default function ContractSwapper(props) {
   const [_, _drivers] = getStaff(ctx, swapRow.StaffType);
 
   /* swap contracts */
-  const swapContracts = (staff1, staff2) => {
+  const swapContracts = (staff1, staff2, pernamentSwap = true) => {
 
     const season = basicInfo.player.CurrentSeason;
     const staff1ID = staff1.StaffID;
     const staffType = staff1.StaffType;
     const staff2ID = staff2.StaffID;
     let results;
+
+    let columns, values;
+
+    [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
+    const [seasonStart, seasonEnd] = values[0];
 
     /* contracts */
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 1, Accepted = 10 WHERE StaffID = ${staff2ID} AND ContractType = 0`);
@@ -35,18 +40,28 @@ export default function ContractSwapper(props) {
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff2ID} AND ContractType = 3`);
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 1, Accepted = 30 WHERE StaffID = ${staff1ID} AND ContractType = 3`);
 
-    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 1 AND Accepted = 10`);
+    if (pernamentSwap) { // add a record in history
+
+      database.exec(`DELETE FROM Staff_CareerHistory WHERE EndDay < StartDay`);
+
+      if (version === 2) {
+        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1})`);
+        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1})`);
+      } else {
+        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1}, ${staff1.PosInTeam})`);
+        database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1}, ${staff2.PosInTeam})`);
+      }
+      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0, StartDay = ${player.Day} WHERE ContractType = 1 AND Accepted = 10`);
+    } else {
+      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 1 AND Accepted = 10`);
+    }
+
+
+    // future contracts are not affected
     database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 1 AND Accepted = 30`);
 
-    database.exec(`DELETE FROM Staff_CareerHistory WHERE EndDay < StartDay`);
 
-    if (version === 2) {
-      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1})`);
-      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1})`);
-    } else {
-      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff1ID}, ${staff1.TeamID}, ${staff1.StartDay}, ${player.Day - 1}, ${staff1.PosInTeam})`);
-      database.exec(`INSERT INTO Staff_CareerHistory VALUES (${staff2ID}, ${staff2.TeamID}, ${staff2.StartDay}, ${player.Day - 1}, ${staff2.PosInTeam})`);
-    }
+
 
     if (staffType === 0) {
       let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1ID}`);
@@ -58,6 +73,7 @@ export default function ContractSwapper(props) {
 
       const driverPairs = [[staff1ID, staff2ID, AssignedCarNumberA], [staff2ID, staff1ID, AssignedCarNumberB]]
       for(const [A, B, acn] of driverPairs) {
+        /* B -> A */
 
         /* race engineers */
         results = database.exec(`SELECT RaceEngineerID FROM Staff_RaceEngineerDriverAssignments WHERE IsCurrentAssignment = 1 AND DriverID = ${A}`);
@@ -78,28 +94,79 @@ export default function ContractSwapper(props) {
         // TODO: 3rd driver in F1 does not need to be included
         if (acn) {
 
-          if (version === 2) {
-            results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
-            if (results.length) {
-              for(let {values: [[RaceFormula]]} of results) {
+
+          switch (version) {
+            case 2:
+
+              results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
+              if (results.length) {
+                /* Version 2 only have F1 */
                 results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season}`);
                 if (!results.length) { // to be added
                   let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season}`);
                   database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0)`);
                 }
-              }
-            }
-          } else {
-            results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
-            if (results.length) {
-              for(let {values: [[RaceFormula]]} of results) {
-                results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
-                if (!results.length) { // to be added
-                  let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
-                  database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${RaceFormula})`);
+                results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
+                if (!results.length) {
+                  database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A}`);
                 }
               }
-            }
+
+
+              break;
+            case 3:
+              results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
+              if (results.length) {
+                for(let {values: [[RaceFormula]]} of results) {
+
+                  let racesCompleted = false;
+                  if (RaceFormula === 1) {
+                    // Competed in Race
+                    results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID 
+WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
+                    if (results.length) {
+                      racesCompleted = true;
+                    }
+                  } else {
+                    results = database.exec(`SELECT * FROM Races_FeatureRaceResults LEFT JOIN Races On Races.RaceID = Races_FeatureRaceResults.RaceID 
+WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
+                    if (results.length) {
+                      racesCompleted = true;
+                    }
+                  }
+
+                  if (!racesCompleted) {
+                    // Competed in Sprint
+                    results = database.exec(`SELECT * FROM Races_SprintResults LEFT JOIN Races On Races.RaceID = Races_SprintResults.RaceID 
+WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
+                    if (results.length) {
+                      racesCompleted = true;
+                    }
+                  }
+//
+//                   if (!racesCompleted) {
+//                     // Competed in Quali
+//                     results = database.exec(`SELECT * FROM Races_QualifyingResults LEFT JOIN Races On Races.RaceID = Races_QualifyingResults.RaceID
+// WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
+//                     if (results.length) {
+//                       racesCompleted = true;
+//                     }
+//                   }
+
+                  if (racesCompleted) {
+                    results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
+                    if (!results.length) { // to be added
+                      let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
+                      database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${RaceFormula})`);
+                    }
+                  } else {
+                    database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A} AND RaceFormula = ${RaceFormula}`);
+                  }
+
+                }
+              }
+
+
           }
         }
       }
