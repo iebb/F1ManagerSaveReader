@@ -46,7 +46,6 @@ export default function ResultsTable(ctx) {
                 </TableCell>
               })
             }
-            <TableCell></TableCell>
           </TableRow>
           <TableRow>
             <TableCell
@@ -62,7 +61,7 @@ export default function ResultsTable(ctx) {
               sx={{ py: 0.25 }}
               className={`race_cell_team`}
             >Team</TableCell>
-            <TableCell sx={{ py: 0 }}>pts</TableCell>
+            <TableCell sx={{ py: 0 }}>Pts</TableCell>
             {
               raceSchedule.map(({type, race}) => {
                 return <TableCell
@@ -75,7 +74,6 @@ export default function ResultsTable(ctx) {
                 </TableCell>
               })
             }
-            <TableCell sx={{ py: 0 }}>pts</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -220,7 +218,6 @@ export default function ResultsTable(ctx) {
                   </TableCell>
                 })
               }
-              <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
             </TableRow>
           ))}
         </TableBody>
