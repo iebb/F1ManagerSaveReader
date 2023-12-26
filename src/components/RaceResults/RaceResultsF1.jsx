@@ -1,3 +1,4 @@
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {Divider, Typography} from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -5,7 +6,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import ResultsTable from "./subcomponents/ResultsTable";
 
 
@@ -233,6 +233,22 @@ PR1.PracticeSession IS NULL`
 
         }
 
+      }
+
+
+      if (season === player.CurrentSeason) {
+        for(const d of driverStandings) {
+            try {
+              [{columns, values}] = database.exec(
+                `SELECT TeamID, PosInTeam FROM 'Staff_Contracts' WHERE StaffID = ${d.DriverID} AND ContractType = 0 ORDER BY StartDay DESC`
+              );
+              const [TeamID, Position] = values[0];
+              if (!driverTeams[d.DriverID]) {
+                driverTeams[d.DriverID] = TeamID;
+              }
+            } catch {
+            }
+        }
       }
 
       setRaceSchedule(raceSchedule);
