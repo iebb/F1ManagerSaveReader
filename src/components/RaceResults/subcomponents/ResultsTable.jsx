@@ -11,10 +11,10 @@ export default function ResultsTable(ctx) {
   const {version, gameVersion} = useContext(MetadataContext)
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
-  const [, setPlayerTeams] = useState([]);
+  const [raceSchedule, setRaceSchedule] = useState([]);
 
   const { driverMap } = basicInfo;
-  const { formulae, driverTeams, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
+  const { formulae, driverTeams, championDriverID, raceSchedule: _raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
 
   useEffect(() => {
     const playerTeams = version >= 3 ? database.getAllRows(`SELECT * FROM Player_History`) : [];
@@ -29,10 +29,11 @@ export default function ResultsTable(ctx) {
       return basicInfo.player.TeamID;
     }
 
-    raceSchedule.map(r => {
+    setRaceSchedule(_raceSchedule.map(r => {
       r.race.PlayerTeamID = playerTeamIDFromDay(r.race.Day);
-    })
-  }, [database, raceSchedule]);
+      return r;
+    }));
+  }, [database, _raceSchedule]);
 
 
 

@@ -51,6 +51,9 @@ export default function SportingRegulations() {
         }
       }
       let regulationDetails = {
+        partResources: {
+        },
+        maxPartResources: 0,
         pointSchemes: {
           1: {name: "2010–Present", scheme: []},
           2: {name: "2003-2009", scheme: []},
@@ -58,8 +61,8 @@ export default function SportingRegulations() {
         },
         maxPointSchemes: 3,
       }
+
       r = database.exec(`SELECT * FROM Regulations_NonTechnical_PointSchemes ORDER BY PointScheme ASC, RacePos ASC`)
-      _rows = [];
       if (r.length) {
         [{columns, values}] = r;
         for (const [PointScheme, RacePos, Points] of values) {
@@ -76,9 +79,27 @@ export default function SportingRegulations() {
           }
         }
       }
+
+      r = database.exec(`SELECT * FROM Regulations_NonTechnical_PartResources ORDER BY ResourcePackage ASC, StandingPos ASC`)
+      if (r.length) {
+        [{columns, values}] = r;
+        for (const [ResourcePackage, Pos, WindTunnel, CFD] of values) {
+          if (!regulationDetails.partResources[ResourcePackage]) {
+            regulationDetails.partResources[ResourcePackage] = {
+              name: `Custom Package ${ResourcePackage}`,
+              scheme: [],
+            }
+          }
+          /* RacePos is ignored in 2022 and 2023 games */
+          regulationDetails.partResources[ResourcePackage].scheme.push({ Pos, WindTunnel, CFD });
+          if (regulationDetails.maxPartResources < ResourcePackage) {
+            regulationDetails.maxPartResources = ResourcePackage;
+          }
+        }
+      }
       setRegulationDetails(regulationDetails);
       setRegulations(regulations);
-    } catch {
+    } catch (e) {
 
     }
 
@@ -266,10 +287,12 @@ export default function SportingRegulations() {
             <TableCell>Point System Details</TableCell>
             <TableCell>
               <Table>
-                <TableRow>{
+                <TableRow>
+                  <TableCell><b>Pos</b></TableCell>{
                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => <TableCell key={x}><b>P{x}</b></TableCell>)
                 }</TableRow>
-                <TableRow>{
+                <TableRow>
+                  <TableCell sx={{ width: 150 }}><b>Points</b></TableCell>{
                   [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(x => {
                     const currentPointsScheme = regulations.PointScheme.CurrentValue;
                     const currentPosition = regulationDetails.pointSchemes[currentPointsScheme].scheme[x]?.RacePos;
@@ -287,6 +310,136 @@ export default function SportingRegulations() {
                               } WHERE PointScheme = ${
                                 currentPointsScheme
                               } AND RacePos = ${
+                                currentPosition
+                              }`
+                            );
+                            refresh();
+                          }}
+                          inputProps={{
+                            step: 1,
+                            min: 0,
+                            type: 'number',
+                            style: { textAlign: "right" },
+                            'aria-labelledby': 'input-slider',
+                          }}
+                        />
+                      </TableCell>
+                    )
+                  })
+                }</TableRow>
+              </Table>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>Wind Tunnel & CFD</TableCell>
+            <TableCell>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item>
+                  <FormControl variant="standard">
+                    <InputLabel id="point-scheme-label">Resource Package</InputLabel>
+                    <Select
+                      labelId="point-scheme-label"
+                      id="point-scheme"
+                      value={regulations.PartDevResourceLimit.CurrentValue}
+                      onChange={(event) => {
+                        database.exec(`UPDATE Regulations_Enum_Changes SET CurrentValue = ${event.target.value} WHERE Name = "PartDevResourceLimit"`);
+                        refresh();
+                      }}
+                      label="System"
+                    >
+                      {
+                        Object.keys(regulationDetails.partResources).map(
+                          k => (
+                            <MenuItem value={k}>{regulationDetails.partResources[k].name}</MenuItem>
+                          )
+                        )
+                      }
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item>
+                  <Button onClick={() => {
+                    const SQL = "INSERT INTO Regulations_NonTechnical_PartResources VALUES " +
+                      "($, 1, 72, 72), ($, 2, 72, 72), ($, 3, 72, 72), ($, 4, 72, 72)," +
+                      " ($, 5, 72, 72), ($, 6, 72, 72), ($, 7, 72, 72), ($, 8, 72, 72)," +
+                      " ($, 9, 72, 72), ($, 10, 72, 72);";
+                    db.exec(SQL.replaceAll('$', (regulationDetails.maxPartResources + 1).toString(10)));
+                    database.exec(`UPDATE Regulations_Enum_Changes SET CurrentValue = ${
+                      (regulationDetails.maxPartResources + 1)
+                    } WHERE Name = "PartDevResourceLimit"`);
+                    refresh();
+                  }}>
+                    Create a new Resource Package
+                  </Button>
+                </Grid>
+              </Grid>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>Resource Package Details</TableCell>
+            <TableCell>
+              <Table>
+                <TableRow>
+                  <TableCell><b>Pos</b></TableCell>{
+                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => <TableCell key={x}><b>P{x}</b></TableCell>)
+                }</TableRow>
+                <TableRow>
+                  <TableCell sx={{ width: 150 }}><b>Wind Tunnel</b></TableCell>
+                  {
+                  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(x => {
+                    const currentPR = regulations.PartDevResourceLimit.CurrentValue;
+                    const currentPosition = regulationDetails.partResources[currentPR].scheme[x]?.Pos;
+                    const currentWindTunnel = regulationDetails.partResources[currentPR].scheme[x]?.WindTunnel || 0;
+                    return (
+                      <TableCell key={x}>
+                        <Input
+                          value={currentWindTunnel}
+                          style={{ maxWidth: 60 }}
+                          onChange={(event) => {
+                            const newValue = Number(event.target.value);
+                            database.exec(
+                              `UPDATE Regulations_NonTechnical_PartResources SET WindTunnelBlocks = ${
+                                newValue
+                              } WHERE ResourcePackage = ${
+                                currentPR
+                              } AND StandingPos = ${
+                                currentPosition
+                              }`
+                            );
+                            refresh();
+                          }}
+                          inputProps={{
+                            step: 1,
+                            min: 0,
+                            type: 'number',
+                            style: { textAlign: "right" },
+                            'aria-labelledby': 'input-slider',
+                          }}
+                        />
+                      </TableCell>
+                    )
+                  })
+                }</TableRow>
+                <TableRow>
+                  <TableCell sx={{ width: 150 }}><b>CFD</b></TableCell>
+                  {
+                  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(x => {
+                    const currentPR = regulations.PartDevResourceLimit.CurrentValue;
+                    const currentPosition = regulationDetails.partResources[currentPR].scheme[x]?.Pos;
+                    const currentCFD = regulationDetails.partResources[currentPR].scheme[x]?.CFD || 0;
+                    return (
+                      <TableCell key={x}>
+                        <Input
+                          value={currentCFD}
+                          style={{ maxWidth: 60 }}
+                          onChange={(event) => {
+                            const newValue = Number(event.target.value);
+                            database.exec(
+                              `UPDATE Regulations_NonTechnical_PartResources SET CfdBlocks = ${
+                                newValue
+                              } WHERE ResourcePackage = ${
+                                currentPR
+                              } AND StandingPos = ${
                                 currentPosition
                               }`
                             );
