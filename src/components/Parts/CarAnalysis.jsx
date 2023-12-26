@@ -164,7 +164,7 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`
               valueGetter: ({value}) => Number(value),
               renderCell: ({row, value}) => {
                 return (
-                  <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                  <div style={{textAlign: "right", padding: 6}}>
                     <span>{stat.render ? stat.render(value) : Number(value).toFixed(stat.displayDigits)}</span>
                   </div>
                 )
@@ -180,7 +180,7 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`
               renderCell: ({row, value}) => {
                 const transformedValue = Number(value) * (stat.bounds[1] - stat.bounds[0]) + stat.bounds[0];
                 return (
-                  <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                  <div style={{textAlign: "right", padding: 6}}>
                     <span>{stat.render ? stat.render(transformedValue) : Number(transformedValue).toFixed(stat.displayDigits)}</span>
                     <br/>
                     <span style={{

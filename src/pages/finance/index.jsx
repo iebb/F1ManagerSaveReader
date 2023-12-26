@@ -1,3 +1,5 @@
+import BoardPayments from "@/components/Finance/BoardPayments";
+import SponsorPayments from "@/components/Finance/SponsorPayments";
 import * as React from "react";
 import {useContext} from "react";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "@/js/Contexts";
@@ -16,6 +18,8 @@ export default function Page() {
 
   return (
     <VTabs options={[
+      {name: "Board Payments", tab: <BoardPayments />},
+      {name: "Sponsor Payments", tab: <SponsorPayments />},
       {name: "Cost Cap", tab: <CostCap />},
       {name: "Finance", tab: <Finance />},
       {name: "Spending Breakdown", tab: <Spending />},

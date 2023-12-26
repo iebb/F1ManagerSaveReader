@@ -44,7 +44,8 @@ export default function CustomCalendar() {
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
   const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
-  const {version, gameVersion} = useContext(MetadataContext)
+  const metadata = useContext(MetadataContext);
+  const {version, gameVersion} = metadata;
 
   const {player} = basicInfo;
 
@@ -53,7 +54,12 @@ export default function CustomCalendar() {
   const [weeks, setWeeks] = useState({});
   const [updated, setUpdated] = useState(0);
   const refresh = () => {
-    basicInfoUpdater({});
+    metadata.gvasMeta.Properties.Properties[0].Properties[0].Properties.forEach(x => {
+      if (x.Name === 'RacesInSeason') {
+        x.Property = races.length + 1;
+      }
+    });
+    basicInfoUpdater({ metadata });
     setUpdated(+new Date());
   }
 
@@ -357,6 +363,7 @@ export default function CustomCalendar() {
                         r[reverseColumns["Temperature" + suffix]] = temperature;
                       }
                       database.exec(`INSERT INTO Races SELECT ${r.join(",")} WHERE NOT EXISTS (SELECT 1 FROM Races WHERE Day = ${r[reverseColumns.Day]});`);
+
                       // database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
                       refresh();
                     }}

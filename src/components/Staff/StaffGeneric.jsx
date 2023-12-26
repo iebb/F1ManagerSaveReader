@@ -173,7 +173,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
               type: 'number',
               renderCell: ({value}) => {
                 return (
-                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                  <span style={{textAlign: "right", padding: 6}}>
                     {value}
                   </span>
                 )
@@ -188,7 +188,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
               type: 'number',
               renderCell: ({value}) => {
                 return (
-                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                  <span style={{textAlign: "right", padding: 6}}>
                     {value}
                   </span>
                 )
@@ -203,7 +203,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
               type: 'number',
               renderCell: ({value}) => {
                 return (
-                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                  <span style={{textAlign: "right", padding: 6}}>
                     {value}
                   </span>
                 )
@@ -216,7 +216,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
               type: 'number',
               renderCell: ({value}) => {
                 return (
-                  <span style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                  <span style={{textAlign: "right", padding: 6}}>
                     {value}
                   </span>
                 )

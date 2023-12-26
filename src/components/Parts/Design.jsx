@@ -256,7 +256,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             valueGetter: ({value}) => Number(value).toFixed(stat.digits),
             renderCell: ({row, value}) => {
               return (
-                <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                <div style={{textAlign: "right", padding: 6}}>
                   <span>{value ?
                     stat.statRenderer ? (
                       stat.statRenderer(Number(value))

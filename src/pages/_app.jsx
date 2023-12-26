@@ -1,4 +1,5 @@
 import '@/styles/globals.css'
+import {DBWrapper} from "@/js/DBWrapper";
 import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
 import Head from "next/head";
 import {SnackbarProvider} from "notistack";
@@ -137,7 +138,7 @@ export default function App({ Component, pageProps }) {
 
 
   return (
-    <DatabaseContext.Provider value={db}>
+    <DatabaseContext.Provider value={DBWrapper(db)}>
       <DatabaseUpdaterContext.Provider value={setDb}>
         <MetadataContext.Provider value={metadata}>
           <BasicInfoContext.Provider value={basicInfo}>

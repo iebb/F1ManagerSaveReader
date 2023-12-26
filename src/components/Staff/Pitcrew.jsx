@@ -122,7 +122,7 @@ export default function PitcrewView() {
             renderCell: ({row, value}) => {
               const delta = value - row["month_start_stat_" + stat.id];
               return (
-                <div style={{textAlign: "right", padding: 6, fontVariantNumeric: 'tabular-nums'}}>
+                <div style={{textAlign: "right", padding: 6}}>
                   <span>{Number(value).toFixed(stat.displayDigits)}</span>
                   <br />
                   {

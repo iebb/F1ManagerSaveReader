@@ -141,7 +141,7 @@ export default function Facilities() {
       renderCell: ({row, value}) => {
         const b = row["building_" + stat.id];
         return (
-          <div style={{ textAlign: "right", paddingRight: 6, fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ textAlign: "right", paddingRight: 6 }}>
             <p>
               {Number(value * 100).toFixed(1) + "%"}
             </p>
