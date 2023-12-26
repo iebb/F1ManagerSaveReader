@@ -12,6 +12,7 @@ import {dayToDate, teamNames} from "@/js/localization";
 import {teams2023} from "@/js/localization/Teams2023";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {defaultFontFamily} from "../UI/Fonts";
+import {Sponsorship} from "./consts_transactions";
 import * as Tx from "./consts_transactions"
 
 const grid = {
@@ -131,6 +132,7 @@ export default function Spending() {
         [Tx.EmergencyEngine]: 8,
         [Tx.RaceWeekendEmergencyEngine]: 8,
 
+        [Tx.Sponsorship]: 9,
         [Tx.SponsorshipGuarantees]: 9,
         [Tx.Dilemma]: 9,
         [Tx.Fine]: 9,
@@ -149,11 +151,8 @@ export default function Spending() {
             teamIDtoCategory[TeamID]
           ] += Value;
         } else {
-          rawData[
-            categoriesMapping[TransactionType]
-            ][
-            9
-            ] += Value;
+          rawData[9][teamIDtoCategory[TeamID]] += Value;
+          console.log("unknown TransactionType", TransactionType)
         }
       }
 

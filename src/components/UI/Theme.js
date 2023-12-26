@@ -38,7 +38,6 @@ export const createTeamColorTheme = (version) => {
       palette['team' + i] = createColor(teamColors2023[i] || "#f7f");
     }
   }
-  console.log(palette);
   return createTheme({
     palette,
     typography: { fontFamily: defaultFontFamily },

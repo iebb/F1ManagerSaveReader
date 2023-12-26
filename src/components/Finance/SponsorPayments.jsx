@@ -108,7 +108,7 @@ export default function SponsorPayments() {
 
   const setSponsorshipValueBySlider = (initialValue, targetGap) => {
     database.exec(
-      `UPDATE Sponsorship_Values SET SponsorValue = ROUND((:initialValue - (StandingPosition - 1) * :targetGap), 0)`, {
+      `UPDATE Sponsorship_Values SET SponsorValue = ROUND((:initialValue - (StandingPosition - 1) * :targetGap) / 10000, 0) * 10000`, {
         ":initialValue": initialValue,
         ":targetGap": targetGap,
       })
@@ -116,7 +116,7 @@ export default function SponsorPayments() {
 
   if (!SponsorshipValues.length) return null;
   const initialValue = SponsorshipValues[0].SponsorValue;
-  const paymentGap = (SponsorshipValues[0].SponsorValue - SponsorshipValues[9].SponsorValue) / 9;
+  const paymentGap = Math.round((SponsorshipValues[0].SponsorValue - SponsorshipValues[9].SponsorValue) / 9);
   const minSponsorValueFor1st = 5000000;
   const maxSponsorValueFor1st = 200000000;
   const maxGap =  10000000;
@@ -330,7 +330,7 @@ export default function SponsorPayments() {
                     min={minGap}
                     max={maxGap}
                     onChange={(event, newValue) => {
-                      setSponsorshipValueBySlider(initialValue, Number(newValue.toFixed(0)))
+                      setSponsorshipValueBySlider(initialValue, Number(newValue))
                       refresh();
                     }}
                     aria-labelledby="input-slider"

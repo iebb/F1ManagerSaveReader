@@ -107,7 +107,13 @@ export default function Finance() {
 
 
       for(let i = 1; i <= 10; i++) {
-        revenueHistoryForTeam[i].push([Math.min(player.Day, seasonEnd - 1), totalRevenueForTeam[i]])
+        revenueHistoryForTeam[i].push([
+          Math.max(
+            revenueHistoryForTeam[i][revenueHistoryForTeam[i].length - 1][0] + 1,
+            Math.min(player.Day, seasonEnd - 1)
+          ),
+          totalRevenueForTeam[i]
+        ])
         const color = getComputedStyle(window.vc).getPropertyValue(`--team${i}`);
         const data = [
           [dayToDate(seasonStart - 1), 0]

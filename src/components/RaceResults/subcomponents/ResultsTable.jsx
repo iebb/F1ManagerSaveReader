@@ -3,7 +3,7 @@ import {getCountryFlag} from "@/js/localization/ISOCountries";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
 import Image from "next/image";
 import * as React from "react";
-import {useContext} from "react";
+import {useContext, useEffect, useState} from "react";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../../Localization/Localization";
 
@@ -11,12 +11,33 @@ export default function ResultsTable(ctx) {
   const {version, gameVersion} = useContext(MetadataContext)
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
+  const [, setPlayerTeams] = useState([]);
 
   const { driverMap } = basicInfo;
-
   const { formulae, driverTeams, championDriverID, raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
 
-  return (
+  useEffect(() => {
+    const playerTeams = version >= 3 ? database.getAllRows(`SELECT * FROM Player_History`) : [];
+    const playerTeamIDFromDay = (day) =>  {
+      if (version === 2) return basicInfo.player.TeamID;
+      const filter = playerTeams.filter(
+        p => p.StartDay <= day && (p.EndDay >= day || !p.EndDay)
+      );
+      if (filter.length) {
+        return filter[0].TeamID;
+      }
+      return basicInfo.player.TeamID;
+    }
+
+    raceSchedule.map(r => {
+      r.race.PlayerTeamID = playerTeamIDFromDay(r.race.Day);
+    })
+  }, [database, raceSchedule]);
+
+
+
+
+    return (
     <TableContainer component={Paper} className={`table_f${formulae}`}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
@@ -24,7 +45,7 @@ export default function ResultsTable(ctx) {
             <TableCell
               className={`race_header_cell`}
               sx={{ py: 0.2 }}
-              colSpan={4}
+              colSpan={3}
             >Race</TableCell>
             {
               raceSchedule.map(({type, race, span}) => {
@@ -46,6 +67,7 @@ export default function ResultsTable(ctx) {
                 </TableCell>
               })
             }
+            <TableCell></TableCell>
           </TableRow>
           <TableRow>
             <TableCell
@@ -61,7 +83,6 @@ export default function ResultsTable(ctx) {
               sx={{ py: 0.25 }}
               className={`race_cell_team`}
             >Team</TableCell>
-            <TableCell sx={{ py: 0 }}>Pts</TableCell>
             {
               raceSchedule.map(({type, race}) => {
                 return <TableCell
@@ -74,6 +95,7 @@ export default function ResultsTable(ctx) {
                 </TableCell>
               })
             }
+            <TableCell sx={{ py: 0 }}>Pts</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -116,7 +138,6 @@ export default function ResultsTable(ctx) {
               >
                 <TeamName TeamID={driverTeams[row.DriverID]} type="fanfare" />
               </TableCell>
-              <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
               {
                 raceSchedule.map(({type, race, span}) => {
 
@@ -134,14 +155,14 @@ export default function ResultsTable(ctx) {
                           sx={{ p: 0.25 }}
                           style={
                             {
-                              ...basicInfo.player.TeamID === result.TeamID ? {
+                              ...race.PlayerTeamID === result.TeamID ? {
                                 background: `repeating-linear-gradient(0deg, 
-                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 5px, 
                             rgba(var(--team${result.TeamID}-triplet), 0.15) 100%)`
                               } : {
                                 background: `repeating-linear-gradient(0deg,
-                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
-                            rgba(var(--team${result.TeamID}-triplet), 0.15) 13px, transparent 20px, transparent 100%)`
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 5px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.15) 10px, transparent 15px, transparent 100%)`
                               },
                               fontSize: "80%",
                               color: "#ff7",
@@ -180,14 +201,14 @@ export default function ResultsTable(ctx) {
                     key={race.RaceID + type}
                     sx={{ p: 0.25 }}
                     style={
-                      basicInfo.player.TeamID === result.TeamID ? {
+                      race.PlayerTeamID === result.TeamID ? {
                         background: `repeating-linear-gradient(0deg, 
-                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
+                            rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 5px, 
                             rgba(var(--team${result.TeamID}-triplet), 0.15) 100%)`
                       } : {
                         background: `repeating-linear-gradient(0deg,
                             rgba(var(--team${result.TeamID}-triplet), 0.5), rgba(var(--team${result.TeamID}-triplet), 0.3) 8px, 
-                            rgba(var(--team${result.TeamID}-triplet), 0.15) 13px, transparent 20px, transparent 100%)`
+                            rgba(var(--team${result.TeamID}-triplet), 0.15) 10px, transparent 15px, transparent 100%)`
                       }
                     }
                   >
@@ -218,6 +239,7 @@ export default function ResultsTable(ctx) {
                   </TableCell>
                 })
               }
+              <TableCell sx={{ py: 0.2 }}>{row.Points}</TableCell>
             </TableRow>
           ))}
         </TableBody>
