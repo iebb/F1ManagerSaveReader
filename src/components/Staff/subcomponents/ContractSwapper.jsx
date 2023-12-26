@@ -49,6 +49,7 @@ export default function ContractSwapper(props) {
     let staff1StartDay, staff2StartDay;
     let staff1PIT, staff2PIT;
 
+
     results = database.exec(`SELECT StartDay, TeamID, PosInTeam FROM Staff_Contracts WHERE ContractType = 0 AND StaffID = ${staff1ID}`);
     if (results.length) {
       [[staff1StartDay, staff1Team, staff1PIT]] = results[0].values;
@@ -59,6 +60,7 @@ export default function ContractSwapper(props) {
       [[staff2StartDay, staff2Team, staff2PIT]] = results[0].values;
     }
 
+    let sameFormula = staff1Team && staff2Team && basicInfo.teamMap[staff1Team].Formula === basicInfo.teamMap[staff2Team].Formula;
 
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 130 WHERE StaffID = ${staff2ID} AND ContractType = 3`);
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 130 WHERE StaffID = ${staff1ID} AND ContractType = 3`);
@@ -111,8 +113,11 @@ export default function ContractSwapper(props) {
       database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff2ID}`, {":acn": AssignedCarNumberA});
       database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": AssignedCarNumberB});
 
-      const driverPairs = [[staff1ID, staff2ID, AssignedCarNumberA], [staff2ID, staff1ID, AssignedCarNumberB]]
-      for(const [A, B, acn] of driverPairs) {
+      const driverPairs = [
+        [staff1ID, staff2ID, AssignedCarNumberA, AssignedCarNumberB],
+        [staff2ID, staff1ID, AssignedCarNumberB, AssignedCarNumberA]
+      ]
+      for(const [A, B, acnA, acnB] of driverPairs) {
         /* B -> A */
 
         /* race engineers */
@@ -132,8 +137,7 @@ export default function ContractSwapper(props) {
 
         /* standings */
         // TODO: 3rd driver in F1 does not need to be included
-        if (acn) {
-
+        if (acnA) { // A should be in standings, do we need to remove A?
 
           switch (version) {
             case 2:
@@ -146,9 +150,12 @@ export default function ContractSwapper(props) {
                   let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season}`);
                   database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0)`);
                 }
-                results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
-                if (!results.length) {
-                  database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A}`);
+
+                if (!(sameFormula && acnB)) { // B not in the same formulae as A
+                  results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
+                  if (!results.length) {
+                    database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A}`);
+                  }
                 }
               }
 
@@ -199,7 +206,7 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
                       let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
                       database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${RaceFormula})`);
                     }
-                  } else {
+                  } else if (!(sameFormula && acnB)) {
                     database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A} AND RaceFormula = ${RaceFormula}`);
                   }
 
