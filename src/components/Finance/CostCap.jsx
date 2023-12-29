@@ -5,7 +5,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {dayToDate, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {defaultFontFamily} from "../UI/Fonts";
+import {defaultFontFamily} from "../../ui/Fonts";
 
 
 export default function CostCap() {

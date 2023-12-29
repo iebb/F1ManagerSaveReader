@@ -65,12 +65,13 @@ export class Serializer {
     }
     readUnicodeString() {
         let length = this.readInt32();
+        let lengthMinus1 = length - 1;
         if (length < 0) {
-            let str = this.read(-length * 2 - 2).toString('utf16le');
+            let str = this.read(-lengthMinus1 * 2).toString('utf16le');
             this.read(2);
             return [str, "utf16le"];
         } else {
-            let str = this.read(length - 1).toString('utf8');
+            let str = this.read(lengthMinus1).toString('utf8');
             this.read(1);
             return [str, "utf8"];
         }
@@ -110,11 +111,9 @@ export class Serializer {
         this._offset = this.Data.writeInt8(0, this.tell);
     }
     writeUTF16String(str) {
-        this._offset = this.Data.writeInt32LE(-str.length - 1, this.tell);
         this._offset += this.Data.write(str + "\0", this.tell, "utf16le");
     }
     writeUTF8String(str) {
-        this._offset = this.Data.writeInt32LE(str.length + 1, this.tell);
         this._offset += this.Data.write(str + "\0", this.tell, "utf8");
     }
     append(buf) {

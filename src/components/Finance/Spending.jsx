@@ -11,7 +11,7 @@ import {useContext, useEffect, useState} from "react";
 import {dayToDate, teamNames} from "@/js/localization";
 import {teams2023} from "@/js/localization/Teams2023";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {defaultFontFamily} from "../UI/Fonts";
+import {defaultFontFamily} from "../../ui/Fonts";
 import {Sponsorship} from "./consts_transactions";
 import * as Tx from "./consts_transactions"
 

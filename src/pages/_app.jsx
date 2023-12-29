@@ -16,10 +16,10 @@ import {
 } from "@/js/Contexts";
 import Nav from "../components/Nav";
 import DragBox from "../components/UI/Blocks/DragBox";
-import {defaultFontFamily} from "../components/UI/Fonts";
+import {defaultFontFamily} from "@/ui/Fonts";
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
-import {createTeamColorTheme} from "../components/UI/Theme";
+import {createTeamColorTheme} from "@/ui/Theme";
 import {parseBasicInfo} from "@/js/BasicInfo";
 import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
 
