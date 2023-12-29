@@ -35,7 +35,7 @@ export class StrProperty extends Property {
                 serial.writeUTF8String(this.Property);
                 break;
             case "utf16le":
-                serial.writeInt32(-this.StringEncodedLength);
+                serial.writeInt32(-(this.StringEncodedLength / 2));
                 serial.writeUTF16String(this.Property);
                 break;
         }

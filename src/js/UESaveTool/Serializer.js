@@ -65,13 +65,12 @@ export class Serializer {
     }
     readUnicodeString() {
         let length = this.readInt32();
-        let lengthMinus1 = length - 1;
         if (length < 0) {
-            let str = this.read(-lengthMinus1 * 2).toString('utf16le');
+            let str = this.read(-length * 2 - 2).toString('utf16le');
             this.read(2);
             return [str, "utf16le"];
         } else {
-            let str = this.read(lengthMinus1).toString('utf8');
+            let str = this.read(length - 1).toString('utf8');
             this.read(1);
             return [str, "utf8"];
         }
