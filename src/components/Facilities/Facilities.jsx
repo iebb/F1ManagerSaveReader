@@ -1,11 +1,9 @@
-import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
-import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import {DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {KeyboardDoubleArrowDown, KeyboardDoubleArrowUp, Refresh} from '@mui/icons-material';
 import {Tab, Tabs} from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../Localization/Localization";
 
 export const BuildingsCategorized = [
@@ -56,6 +54,27 @@ export default function Facilities() {
 
   const BuildingsCategorizedPage = BuildingsCategorized[partPanel].buildings;
 
+  const getBuildingState = b => {
+
+    if (version === 2) {
+      return [
+        "",
+        "",
+        `🡹 ${b.WorkDone}%`, // constructing
+        "-", // open
+        `🗘 ${b.WorkDone}/${b.RefurbishWork}`, // refurb
+        `🡹 ${b.WorkDone}/${b.NextConstructionWork}`, // next level
+      ][b.BuildingState];
+    }
+
+    return [
+      "",
+      `🡹 ${b.WorkDone}%`,
+      "-",
+      `🗘 ${b.WorkDone}/${b.RefurbishWork}`,
+      `🡹 ${b.WorkDone}/${b.NextConstructionWork}`, // next level
+    ][b.BuildingState];
+  }
 
 
   useEffect(() => {
@@ -72,6 +91,7 @@ export default function Facilities() {
       for(const r of values) {
         let row = {};
         r.map((x, _idx) => {row[columns[_idx]] = x});
+
         buildings[row.TeamID]["building_" + row.BuildingType] = row;
         buildings[row.TeamID]["UpgradeLevel_" + row.BuildingType] = row.UpgradeLevel;
         buildings[row.TeamID]["DegradationValue_" + row.BuildingType] = row.DegradationValue;
@@ -116,15 +136,7 @@ export default function Facilities() {
           <div style={{ color: `hsl(${value * 50}, 75%, 60%)`, paddingRight: 6, textAlign: "right"}}>
             {value ? "▰▰▰▰▰".slice(0, value) : "None"}
             <br />
-            <span style={{ fontSize: 12 }}>{
-              [
-                "",
-                `🡹 ${b.WorkDone}%`,
-                "-",
-                `🗘 ${b.WorkDone}/${b.RefurbishWork}`,
-                `🡹 ${b.WorkDone}/${b.NextConstructionWork}`, // next level
-              ][b.BuildingState]
-            }</span>
+            <span style={{ fontSize: 12 }}>{getBuildingState(b)}</span>
           </div>
         )
       },
@@ -147,7 +159,7 @@ export default function Facilities() {
             </p>
             <div>
               <GridActionsCellItem
-                icon={<KeyboardDoubleArrowUpIcon />}
+                icon={<KeyboardDoubleArrowUp />}
                 style={{ width: 18, height: 18 }}
                 disabled={!b.NextBuildingID}
                 label="Upgrade"
@@ -168,7 +180,7 @@ export default function Facilities() {
                 }}
               />
               <GridActionsCellItem
-                icon={<RefreshIcon />}
+                icon={<Refresh />}
                 disabled={value >= 1}
                 style={{ width: 18, height: 18 }}
                 label="Refurbish"
@@ -182,7 +194,7 @@ export default function Facilities() {
                 }}
               />
               <GridActionsCellItem
-                icon={<KeyboardDoubleArrowDownIcon />}
+                icon={<KeyboardDoubleArrowDown />}
                 style={{ width: 18, height: 18 }}
                 disabled={!b.PrevBuildingID}
                 label="Downgrade"

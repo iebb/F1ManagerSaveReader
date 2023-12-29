@@ -91,9 +91,9 @@ export const getStaff = (ctx, StaffType = 0) => {
     let ova = 0;
     let factor = 0;
     for(const stat of StaffStats) {
-      ova += PerformanceStats[row.StaffID][stat] * (factors[stat] || 1);
+      ova += (PerformanceStats?.[row.StaffID]?.[stat] || 0) * (factors[stat] || 1);
       factor += (factors[stat] || 1);
-      row["performance_stats_" + stat] = PerformanceStats[row.StaffID][stat];
+      row["performance_stats_" + stat] = (PerformanceStats?.[row.StaffID]?.[stat] || 0);
     }
     row.Overall = ova / factor;
     return row;

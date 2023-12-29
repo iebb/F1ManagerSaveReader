@@ -130,6 +130,12 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         key={partPanel}
         rows={partStats}
         getRowId={r => r.id}
+        isCellEditable={({ row, field, value }) => {
+          if (field.startsWith("condition_")) {
+            return value > 0;
+          }
+          return true;
+        }}
         onProcessRowUpdateError={e => console.error(e)}
         processRowUpdate={(newRow, oldRow) => {
           for (const partId of PartInfo.parts) {
@@ -233,8 +239,8 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             headerName: (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Condition",
             type: 'number',
             width: 120,
-            valueGetter: ({value}) => Number(value),
-            renderCell: ({row, value}) => `${(value * 100).toFixed(2)}%`,
+            valueGetter: ({value}) => value === null ? null : Number(value),
+            renderCell: ({value}) => value === null ? "N/A" : `${(value * 100).toFixed(2)}%`,
             editable: true,
           })),
 
