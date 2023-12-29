@@ -258,15 +258,13 @@ export const PartStatsCategorized2023 = [
     id: 0,
     category: "Powertrains",
     prefix: "PT",
-    parts: [0, 1, 2],
+    parts: [0],
     stats: [
       {id: "0_6", part: 0, stat: 6, digits: 0, displayDigits: 0},
       {id: "0_10", part: 0, stat: 10, digits: 0, displayDigits: 0},
       {id: "0_11", part: 0, stat: 11, digits: 0, displayDigits: 0},
       {id: "0_12", part: 0, stat: 12, digits: 0, displayDigits: 0},
       {id: "0_14", part: 0, stat: 14, digits: 0, displayDigits: 0},
-      {id: "1_15", part: 1, stat: 15, digits: 0, displayDigits: 0, name: "ERS Lifespan"},
-      {id: "2_15", part: 2, stat: 15, digits: 0, displayDigits: 0, name: "Gearbox Lifespan"},
     ],
   },
   {
@@ -386,6 +384,32 @@ export const PartStatsCategorized2023 = [
         statRenderer: x => x + " km",
         valueToDeltaUnitValue: 240 / 100,
         unitValueToValue: x => (x - 1700) * 100 / 240,
+      },
+    ],
+  },
+  {
+    id: 7,
+    category: "ERS",
+    hideInExpertise: true,
+    prefix: "ERS",
+    parts: [1],
+    stats: [
+      {
+        id: "1_15", part: 1, stat: 15, digits: 0, displayDigits: 0, name: "Lifespan",
+        hideInExpertise: true,
+      },
+    ],
+  },
+  {
+    id: 8,
+    category: "Gearbox",
+    hideInExpertise: true,
+    prefix: "GB",
+    parts: [2],
+    stats: [
+      {
+        id: "2_15", part: 2, stat: 15, digits: 0, displayDigits: 0, name: "Lifespan",
+        hideInExpertise: true,
       },
     ],
   },

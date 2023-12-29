@@ -227,6 +227,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
             field: 'DOB' , headerName: "DOB",
             width: 100,
             editable: true,
+            type: 'date',
             valueGetter: ({ value }) => dayToDate(value),
             renderCell: ({ value, row }) => (
               <div>
@@ -235,7 +236,6 @@ export default function StaffGeneric({ StaffType = 1 }) {
                 <span style={{fontSize: 12}}>Age {Math.floor(row.Age)}</span>
               </div>
             ),
-            type: 'date',
           },
           ...StaffType === 5 ? ([
             {

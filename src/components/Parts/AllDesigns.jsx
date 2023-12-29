@@ -1,15 +1,16 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {Tab, Tabs, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {getDriverName, teamNames} from "@/js/localization";
+import {dayToDate, getDriverName, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {PartCalculationStatsV, PartFactorsV, PartNames, PartStatsCategorizedV,} from "./consts";
 
 import {statRenderer, unitValueToValue, valueToDeltaUnitValue} from "./consts_2023";
 
 
-export default function DesignView() {
+export default function AllDesignView() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
@@ -64,46 +65,46 @@ export default function DesignView() {
       let DSVTable =  version === 2 ? "Parts_DesignStatValues" : "Parts_Designs_StatValues";
 
 
-      const sql = `SELECT *, Parts_CarLoadout.TeamID as TeamID, Parts_CarLoadout.LoadOutID as LoadOutID, 
-Parts_CarLoadout.DesignID as CL_DesignID, ${DSVTable}.Value as Value FROM Parts_CarLoadout 
+      const sql = `SELECT *, Parts_Designs.TeamID as TeamID, 1 as LoadOutID, 
+Parts_Designs.DesignID as CL_DesignID, ${DSVTable}.Value as Value FROM Parts_Designs 
 LEFT JOIN (
-    SELECT TeamID, PartType, MAX(DesignID) as LatestDesign FROM Parts_Designs WHERE ValidFrom <= ${basicInfo.player.CurrentSeason} AND (DayCompleted > 0 OR DayCreated < 0) GROUP BY TeamID, PartType
-) as LatestDesign ON LatestDesign.TeamID = Parts_CarLoadout.TeamID AND LatestDesign.PartType = Parts_CarLoadout.PartType
-LEFT JOIN Parts_Designs ON Parts_Designs.DesignID = COALESCE(Parts_CarLoadout.DesignID, LatestDesign.LatestDesign)
+    SELECT TeamID, PartType, MAX(DesignID) as LatestDesign FROM Parts_Designs 
+    WHERE ValidFrom <= ${basicInfo.player.CurrentSeason} AND (DayCompleted > 0 OR DayCreated < 0) GROUP BY TeamID, PartType
+) as LatestDesign ON LatestDesign.TeamID = Parts_Designs.TeamID AND LatestDesign.PartType = Parts_Designs.PartType
 LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID
-LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Parts_Designs.PartType IN (${PartTypePage.join(",")})`;
+WHERE Parts_Designs.PartType IN (${PartTypePage.join(",")}) AND ValidFrom <= ${basicInfo.player.CurrentSeason} ORDER BY DesignID DESC`;
 
       let partRow = {};
 
       for(const row of database.getAllRows(sql)) {
-        let carID = row.TeamID * 2 + row.LoadOutID;
-        if (!partStats[carID]) {
-          partStats[carID] = {};
+        let designID = row.DesignID;
+        if (!partStats[designID]) {
+          partStats[designID] = {};
         }
         const statId = version === 2 ? row.StatID : row.PartStat;
-        partStats[carID][`val_${row.PartType}_${statId}`] = row.Value;
-        partStats[carID][`unit_${row.PartType}_${statId}`] = row.UnitValue;
-        partStats[carID][`condition_${row.PartType}`] = row.Condition;
-        partStats[carID][`knowledge_${row.PartType}`] = row.PartKnowledge;
-        partRow[carID] = {
+        partStats[designID][`val_${row.PartType}_${statId}`] = row.Value;
+        partStats[designID][`unit_${row.PartType}_${statId}`] = row.UnitValue;
+        partStats[designID][`condition_${row.PartType}`] = row.Condition;
+        partStats[designID][`knowledge_${row.PartType}`] = row.PartKnowledge;
+        partRow[designID] = {
           ...row,
           Part: {},
         };
 
-        partRow[carID].Part[row.PartType] = row;
+        partRow[designID].Part[row.PartType] = row;
       }
-      let loadouts = [];
-      for(let teamId = 1; teamId <= 10; teamId++) {
-        for(let loadout = 1; loadout <= 2; loadout++) {
-          loadouts.push({
-            id: teamId * 2 + loadout - 2,
-            TeamID: teamId,
-            TeamCarID: loadout,
-            ...partRow[teamId * 2 + loadout],
-            ...partStats[teamId * 2 + loadout],
-          });
-        }
+
+      const loadouts = [];
+
+      for(const designID of Object.keys(partRow).sort((x, y) => (y - x))) {
+        loadouts.push({
+          id: Number(designID),
+          TeamID: partRow[designID].TeamID,
+          ...partRow[designID],
+          ...partStats[designID],
+        });
       }
+
 
       setPartStats(loadouts);
 
@@ -204,44 +205,21 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             width: 120,
             renderCell: ({ value, row }) => {
               return (
-                <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, version)}
-                  <div>
-                    {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
-                  </div>
-                </div>
+                <TeamName
+                  TeamID={value}
+                  type="fanfare"
+                  description={`${PartInfo.prefix}-${row.DesignNumber}`}
+                />
               )
             }
           },
           {
-            field: 'TeamCarID',
-            headerName: "Car",
+            field: 'DayCompleted',
+            headerName: "Researched",
+            type: 'date',
+            valueGetter: ({ value }) => value > 0 ? dayToDate( value) : new Date("2099/12/31"),
             width: 120,
-            renderCell: ({ value, row }) => {
-              return (
-                <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
-                  {
-                    getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])
-                  }
-                  <div>
-                    {row.DesignID ? `Part #${row.ManufactureNumber}` : <span style={{color: "white"}}>
-                      Not Installed
-                    </span>}
-                  </div>
-                </div>
-              )
-            }
           },
-          ...PartInfo.parts.map(part => ({
-            field: `condition_` + part,
-            headerName: (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Condition",
-            type: 'number',
-            width: 120,
-            valueGetter: ({value}) => value === null ? null : Number(value),
-            renderCell: ({value}) => value === null ? "N/A" : `${(value * 100).toFixed(2)}%`,
-            editable: true,
-          })),
-
           ...PartInfo.parts.map(part => ({
             field: `knowledge_` + part,
             headerName:  (PartInfo.parts.length > 1 ? PartNames[part] : "") + " Knowledge",

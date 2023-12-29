@@ -287,7 +287,7 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
               swapDriverUpdated?.TeamID && (
                 <TeamName
                   TeamID={swapDriverUpdated?.TeamID}
-                  type="posinteam"
+                  type="fanfare"
                   posInTeam={swapDriverUpdated?.PosInTeam}
                   description={`Contract until ${swapDriverUpdated.EndSeason}`}
                 />

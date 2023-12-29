@@ -93,7 +93,8 @@ export default function RaceResultsF2({ formulae = 2 }) {
     let results;
 
     let raceSchedule = [];
-    [{ columns, values }] = database.exec(
+
+    for(const race of database.getAllRows(
       `select * from Races 
          LEFT JOIN (select RaceID as FR_RaceID, RaceFormula from Races_FeatureRaceResults WHERE RaceFormula = ${formulae} GROUP BY RaceID) as FR ON (
             Races.RaceID = FR.FR_RaceID
@@ -105,13 +106,7 @@ export default function RaceResultsF2({ formulae = 2 }) {
             (FR.RaceFormula = ${formulae} AND State = 2)
          )
         order by Day ASC`
-    );
-
-    for(const r of values) {
-      let race = {};
-      r.map((x, _idx) => {
-        race[columns[_idx]] = x;
-      })
+    )) {
       raceSchedule.push({ type: "sprint", race, span: 0 })
       raceSchedule.push({ type: "feature", race, span: 2 })
     }

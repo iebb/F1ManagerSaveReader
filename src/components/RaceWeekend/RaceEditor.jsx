@@ -1,3 +1,4 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {getDriverName} from "@/js/localization";
 import {Alert, AlertTitle} from "@mui/material";
 import {Button, ButtonGroup, Divider, Grid, Typography} from "@mui/material";
@@ -321,10 +322,12 @@ export default function RaceEditor() {
             width: 140,
             renderCell: ({value, row}) => {
               return (
-                <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, version)} {row.TeamCarID}
-                  <div>{getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])}</div>
-                </div>
+                <TeamName
+                  TeamID={value}
+                  posInTeam={row.TeamCarID}
+                  type="fanfare"
+                  description={getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])}
+                />
               )
             }
           },

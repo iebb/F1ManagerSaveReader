@@ -166,6 +166,7 @@ export default function CustomCalendar() {
         )
       }
       <DataGrid
+        getRowId={r => r.RaceID}
         rows={races.map((x, _idx) => ({id: _idx + 1, ...x}))}
         hideFooter
         isCellEditable={({ row }) => {
@@ -274,7 +275,7 @@ export default function CustomCalendar() {
             },
           ] : [],
           {
-            field: '_',
+            field: '_Date',
             headerName: 'Date',
             width: 120,
             renderCell: ({ row }) => {
@@ -302,7 +303,7 @@ export default function CustomCalendar() {
               }
 
               return (
-                [
+                <div>
                   <GridActionsCellItem
                     icon={<KeyboardDoubleArrowUp />}
                     disabled={row.State !== 0 || row.Day - 7 - 2 /* race weekend */ <= player.Day || row.week <= 2}
@@ -315,7 +316,7 @@ export default function CustomCalendar() {
                       }
                       refresh();
                     }}
-                  />,
+                  />
                   <GridActionsCellItem
                     icon={<KeyboardDoubleArrowDown />}
                     disabled={row.State !== 0 || row.week >= 51}
@@ -328,7 +329,7 @@ export default function CustomCalendar() {
                       }
                       refresh();
                     }}
-                  />,
+                  />
                   <GridActionsCellItem
                     icon={<Delete />}
                     disabled={row.State !== 0 || races.length < 2}
@@ -337,7 +338,7 @@ export default function CustomCalendar() {
                       database.exec(`DELETE FROM Races WHERE RaceID = ${row.RaceID}`);
                       refresh();
                     }}
-                  />,
+                  />
                   <GridActionsCellItem
                     icon={<CopyAll />}
                     disabled={nextAvailableDuplicateWeek === -1}
@@ -367,8 +368,8 @@ export default function CustomCalendar() {
                       // database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
                       refresh();
                     }}
-                  />,
-                ]
+                  />
+                </div>
               )
             }
           },

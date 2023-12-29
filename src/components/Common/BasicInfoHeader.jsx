@@ -17,7 +17,7 @@ export const BasicInfoHeader = () => {
 
   const currentRaceIdx = currentSeasonRaces.map(x => x.RaceID).indexOf(weekend.RaceID);
 
-  let { CurrentRace, RacesInSeason, Day, FirstName, LastName, TeamID, TrackID, CurrentLap, LapCount,
+  let { ScenarioID, CurrentRace, RacesInSeason, Day, FirstName, LastName, TeamID, TrackID, CurrentLap, LapCount,
     RaceWeekendInProgress, SessionInProgress, WeekendStage, TimeRemaining } = careerSaveMetadata;
   if (!WeekendStage && weekend.WeekendStage) {
     WeekendStage = weekend.WeekendStage;
@@ -44,7 +44,7 @@ export const BasicInfoHeader = () => {
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 24, gap: 24 }}>
         <Typography variant="p" component="p" style={{ color: "#ccc", marginBottom: 12, flex: 1, flexBasis: 720 }}>
-          Playing as {FirstName} {LastName} for <span style={{
+          Playing {ScenarioID ? "Scenario Mode" : `as ${FirstName} ${LastName}`} for <span style={{
           color: `var(--team${team.TeamID}-fanfare1)`,
           borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
         }}>{team.TeamName}</span> in {version + 2020} Game (v{metadata.gameVersion}), savefile {metadata.filename}

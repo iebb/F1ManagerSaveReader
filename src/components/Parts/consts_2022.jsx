@@ -404,6 +404,30 @@ export const PartStatsCategorized2022 = [
       },
     ],
   },
+  {
+    id: 7,
+    category: "ERS",
+    prefix: "ERS",
+    parts: [1],
+    stats: [
+      {
+        id: "1_15", part: 1, stat: 15, digits: 0, displayDigits: 0, name: "Lifespan",
+        hideInExpertise: true,
+      },
+    ],
+  },
+  {
+    id: 8,
+    category: "Gearbox",
+    prefix: "GB",
+    parts: [2],
+    stats: [
+      {
+        id: "2_15", part: 2, stat: 15, digits: 0, displayDigits: 0, name: "Lifespan",
+        hideInExpertise: true,
+      },
+    ],
+  },
 ].map(
   category => {
     for(const stat of category.stats) {
