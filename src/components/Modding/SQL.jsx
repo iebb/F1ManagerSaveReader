@@ -108,7 +108,7 @@ export default function DataBrowser() {
                 if (nv) {
                   setCurrentTable(nv);
                   setStmt(`SELECT * FROM ${nv}`);
-                  exec(`SELECT _rowid_ as _rowid_, * FROM ${nv}`);
+                  exec(`SELECT *, _rowid_ as _rowid_ FROM ${nv}`);
                   setIsSimple(true);
                 }
               }}
@@ -131,11 +131,17 @@ export default function DataBrowser() {
             for(const key of columns) {
               if (key === "id" || key === "_rowid_") continue;
               if (newRow[key] !== oldRow[key]) {
+                if (typeof oldRow[key] === "number") {
+                  newRow[key] = Number(newRow[key]);
+                }
+                if (typeof oldRow[key] === "string") {
+                  newRow[key] = String(newRow[key]);
+                }
                 database.exec(`UPDATE ${currentTable} SET ${key} = :value WHERE _rowid_ = :rowid`, {
                   ":value": newRow[key],
                   ":rowid": newRow._rowid_,
                 })
-                exec(`SELECT _rowid_ as _rowid_, * FROM ${currentTable}`);
+                exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`);
               }
             }
             // refresh();
@@ -146,12 +152,19 @@ export default function DataBrowser() {
         rows={values.map((x, _idx) => (
           {id: x.row ? x.row : _idx, ...x}
         ))}
-        columns={columns.map((x, _idx) => ({
-          field: x,
-          headerName: x === "_rowid_" ? "#" : x,
-          flex: maxSizes[_idx],
-          editable: isSimple && (x !== "_rowid_"),
-        }))}
+        columns={[
+          ...columns.filter(x => x === "_rowid_").map((x, _idx) => ({
+            field: x,
+            headerName: "#",
+            flex: maxSizes[_idx],
+          })),
+          ...columns.filter(x => x !== "_rowid_").map((x, _idx) => ({
+            field: x,
+            headerName: x === "_rowid_" ? "#" : x,
+            flex: maxSizes[_idx],
+            editable: isSimple && (x !== "_rowid_"),
+          }))
+        ]}
         density="compact"
         initialState={{
           pagination: { paginationModel: { pageSize: 20 } },
