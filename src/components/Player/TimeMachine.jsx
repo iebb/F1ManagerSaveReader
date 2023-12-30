@@ -154,10 +154,16 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
       if (
         // table.startsWith("Board_Confidence") ||
         table.startsWith("Teams_RaceRecord") ||
-        (table.startsWith("Races") && table.endsWith("Results")) ||
         0
       ) {
         database.exec(`DELETE FROM ${table}`);
+      }
+      if (
+        (table.startsWith("Races") && table.endsWith("Results")) ||
+        0
+      ) {
+        database.exec(`DELETE FROM ${table} WHERE SeasonID != ${vanillaSeason}`);
+        database.exec(`UPDATE ${table} SET SeasonID = SeasonID - ${yd} WHERE SeasonID = ${vanillaSeason}`);
       }
     }
 
