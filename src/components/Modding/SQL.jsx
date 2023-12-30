@@ -18,7 +18,7 @@ export default function DataBrowser() {
   const [columns, setColumns] = useState([]);
   const [maxSizes, setMaxSizes] = useState([]);
   const [values, setValues] = useState([]);
-  const [stmt, setStmt] = useState("SELECT * from Player");
+  const [stmt, setStmt] = useState("");
 
   const exec = stmt => {
     try {
@@ -32,7 +32,13 @@ export default function DataBrowser() {
           val.map((x, _idx) => {
             if (x !== null) {
               row[columns[_idx]] = x;
-              if (x.length > maxSizes[_idx]) maxSizes[_idx] = x.length;
+              let sl = String(x).length;
+              if (typeof x === 'number' && Math.round(x) !== x) {
+                sl = x.toFixed(3).length;
+              }
+              if (sl > maxSizes[_idx]) {
+                maxSizes[_idx] = sl;
+              }
             }
           })
           return row;
@@ -54,18 +60,22 @@ export default function DataBrowser() {
 
   useEffect(() => {
     try {
-      let [{ values }] = database.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name ASC");
-      setTables(values.map(x => x[0]));
-      setCurrentTable(currentTable);
-      setStmt(`SELECT * FROM ${currentTable}`);
-      exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`);
+      if (database) {
+        let [{ values }] = database.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name ASC");
+        setTables(values.map(x => x[0]));
+        setCurrentTable(currentTable);
+        if (stmt !== `SELECT * FROM ${currentTable}`) {
+          setStmt(`SELECT * FROM ${currentTable}`);
+          exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`);
+        }
+      }
     } catch {
 
     }
 
   }, [database])
 
-
+  const totalColumnWidth = maxSizes.reduce((x, y) => x + y, 0);
 
 
   return (
@@ -156,12 +166,12 @@ export default function DataBrowser() {
           ...columns.filter(x => x === "_rowid_").map((x, _idx) => ({
             field: x,
             headerName: "#",
-            flex: maxSizes[_idx],
+            width: 70,
           })),
           ...columns.filter(x => x !== "_rowid_").map((x, _idx) => ({
             field: x,
             headerName: x === "_rowid_" ? "#" : x,
-            flex: maxSizes[_idx],
+            width: maxSizes[_idx] * 15 + 10,
             editable: isSimple && (x !== "_rowid_"),
           }))
         ]}

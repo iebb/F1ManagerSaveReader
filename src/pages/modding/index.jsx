@@ -8,7 +8,7 @@ import {VTabs} from "@/components/Tabs";
 export default function Page() {
   return (
     <VTabs options={[
-      {name: "SQL Browser", tab: <DataBrowser />},
+      {name: "SQL Editor", tab: <DataBrowser />},
       {name: "Replace Database", tab: <ReplaceDB />},
       {name: "Metadata Editor", tab: <MetadataEditor />},
       {name: "Toolbox", tab: <Toolbox />, devOnly: true },
