@@ -63,7 +63,11 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
     database.exec(`DELETE FROM Races WHERE SeasonID != ${vanillaSeason}`);
     database.exec(`DELETE FROM Seasons WHERE SeasonID != ${vanillaSeason}`);
 
-    database.exec(`UPDATE Races SET SeasonID = ${wayBackSeason}, Day = Day - ${dd} WHERE SeasonID = ${vanillaSeason}`);
+    if (extend) {
+      database.exec(`UPDATE Races SET SeasonID = ${wayBackSeason}, Day = Day - ${dd}, State = 2 WHERE SeasonID = ${vanillaSeason}`);
+    } else {
+      database.exec(`UPDATE Races SET SeasonID = ${wayBackSeason}, Day = Day - ${dd} WHERE SeasonID = ${vanillaSeason}`);
+    }
     database.exec(
       `UPDATE Seasons_Deadlines SET SeasonID = SeasonID - ${yd}, Day = Day - ${dd}`
     );
