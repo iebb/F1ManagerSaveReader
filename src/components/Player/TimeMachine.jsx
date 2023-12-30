@@ -22,8 +22,6 @@ export default function TimeMachine() {
   const [travelYear, setTravelYear] = useState(basicInfo.player.CurrentSeason);
   const [travelDate, setTravelDate] = useState(dayjs(dayToDate(basicInfo.player.Day)));
 
-  console.log(dayjs(dayToDate(basicInfo.player.Day)));
-
   const timeTravelWithData = ( dayNumber, extend = false ) => {
     if (version !== 3) {
     }
@@ -46,11 +44,8 @@ export default function TimeMachine() {
     });
 
     database.exec(`UPDATE Player_State SET Day = ${dayNumber}`);
-    database.exec(`UPDATE Player SET FirstGameDay = ${dayNumber}`);
-    database.exec(`UPDATE Player_State SET CurrentSeason = ${wayBackSeason}`);
 
-    database.exec(`UPDATE Player_Record SET StartSeason = ${wayBackSeason}`);
-    database.exec(`UPDATE Player_History SET StartDay = ${seasonStartDayNumber}`);
+    database.exec(`UPDATE Player_State SET CurrentSeason = ${wayBackSeason}`);
 
     database.exec(`UPDATE Calendar_LastActivityDates SET 
 LastScoutDate = ${seasonStartDayNumber}, LastEngineerDate = ${seasonStartDayNumber}, 
@@ -68,19 +63,32 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
     database.exec(`DELETE FROM Races WHERE SeasonID != ${vanillaSeason}`);
     database.exec(`DELETE FROM Seasons WHERE SeasonID != ${vanillaSeason}`);
 
-    database.exec(`UPDATE Races SET SeasonID = ${wayBackSeason}, Day = Day - ${dd}, State = 2 WHERE SeasonID = ${vanillaSeason}`);
+    database.exec(`UPDATE Races SET SeasonID = ${wayBackSeason}, Day = Day - ${dd} WHERE SeasonID = ${vanillaSeason}`);
     database.exec(
       `UPDATE Seasons_Deadlines SET SeasonID = SeasonID - ${yd}, Day = Day - ${dd}`
     );
 
-    database.exec(
-      `UPDATE Staff_PitCrew_DevelopmentPlan SET Day = Day - ${dd} WHERE Day > 40000`
-    );
+    if (version === 3) {
+      database.exec(`UPDATE Player SET FirstGameDay = ${dayNumber}`);
+      database.exec(`UPDATE Player_Record SET StartSeason = ${wayBackSeason}`);
+      database.exec(`UPDATE Player_History SET StartDay = ${seasonStartDayNumber}`);
+      database.exec(
+        `UPDATE Staff_PitCrew_DevelopmentPlan SET Day = Day - ${dd} WHERE Day > 40000`
+      );
+      database.exec(
+        `UPDATE Onboarding_Tutorial_RestrictedActions SET TutorialIsActiveSetting = 0`
+      );
+
+    }
+
+    if (version === 2) {
+      database.exec(
+        `UPDATE Onboarding_Tutorial_RestrictedActions SET Allowed = 0`
+      );
+
+    }
 
 
-    database.exec(
-      `UPDATE Onboarding_Tutorial_RestrictedActions SET TutorialIsActiveSetting = 0`
-    );
 
 
     const moddingPairs = [
@@ -98,6 +106,7 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
         table: ["Mail_EventPool_Cooldown"],
         modDay: ["NextTriggerDay"],
         modSeason: [],
+        versions: [3],
       },
       {
         table: ["Board_Confidence"],
@@ -110,27 +119,7 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
         modSeason: ["StartYear", "TargetEndYear"],
       },
       {
-        table: ["Board_Prestige", "Board_SeasonObjectives"],
-        modDay: [],
-        modSeason: ["SeasonID"],
-      },
-      {
-        table: ["Seasons"],
-        modDay: [],
-        modSeason: ["SeasonID"],
-      },
-      {
-        table: ["Parts_TeamHistory"],
-        modDay: [],
-        modSeason: ["SeasonID"],
-      },
-      {
-        table: ["Races_Strategies"],
-        modDay: [],
-        modSeason: ["SeasonID"],
-      },
-      {
-        table: ["Staff_Driver_RaceRecordPerSeason"],
+        table: ["Board_Prestige", "Board_SeasonObjectives", "Seasons", "Parts_TeamHistory", "Races_Strategies", "Staff_Driver_RaceRecordPerSeason"],
         modDay: [],
         modSeason: ["SeasonID"],
       },
@@ -140,11 +129,31 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
         modSeason: [],
       },
       {
-        table: ["Races_DriverStandings", "Races_TeamStandings", "Races_PitCrewStandings"],
+        table: ["Races_DriverStandings", "Races_TeamStandings"],
         modDay: [],
         modSeason: ["SeasonID"],
+      },
+      {
+        table: ["Races_PitCrewStandings"],
+        modDay: [],
+        modSeason: ["SeasonID"],
+        versions: [3],
       }
     ]
+
+    for(const pair of moddingPairs) {
+      if (pair.versions && !pair.versions.includes(version)) {
+        continue;
+      }
+      for(const table of pair.table) {
+        for(const md of pair.modDay) {
+          database.exec(`UPDATE ${table} SET ${md} = ${md} - ${dd}`);
+        }
+        for(const ms of pair.modSeason) {
+          database.exec(`UPDATE ${table} SET ${ms} = ${ms} - ${yd}`);
+        }
+      }
+    }
 
 
 
@@ -158,23 +167,15 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
       ) {
         database.exec(`DELETE FROM ${table}`);
       }
-      if (
-        (table.startsWith("Races") && table.endsWith("Results")) ||
-        0
-      ) {
+
+      if (table === "Races_Results") {
+        console.log(table);
+        database.exec(`DELETE FROM ${table} WHERE Season != ${vanillaSeason}`);
+        database.exec(`UPDATE ${table} SET Season = Season - ${yd} WHERE Season = ${vanillaSeason}`);
+      } else if ((table.startsWith("Races") && table.endsWith("Results"))) {
+        console.log(table);
         database.exec(`DELETE FROM ${table} WHERE SeasonID != ${vanillaSeason}`);
         database.exec(`UPDATE ${table} SET SeasonID = SeasonID - ${yd} WHERE SeasonID = ${vanillaSeason}`);
-      }
-    }
-
-    for(const pair of moddingPairs) {
-      for(const table of pair.table) {
-        for(const md of pair.modDay) {
-          database.exec(`UPDATE ${table} SET ${md} = ${md} - ${dd}`);
-        }
-        for(const ms of pair.modSeason) {
-          database.exec(`UPDATE ${table} SET ${ms} = ${ms} - ${yd}`);
-        }
       }
     }
 
