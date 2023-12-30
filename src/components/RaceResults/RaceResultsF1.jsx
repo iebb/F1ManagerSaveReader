@@ -51,20 +51,24 @@ export default function RaceResultsF1() {
     let results;
 
     let raceSchedule = [];
-    [{ columns, values }] = database.exec(
-      `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
-    );
-    for(const r of values) {
-      let race = {};
-      r.map((x, _idx) => {
-        race[columns[_idx]] = x;
-      })
-      if (version === 3 && race.WeekendType === 1) {
-        raceSchedule.push({ type: "sprint", race, span: 2 })
-        raceSchedule.push({ type: "race", race, span: 0 })
-      } else {// 2 is ATA
-        raceSchedule.push({ type: "race", race, span: 1 })
+    try {
+      [{ columns, values }] = database.exec(
+        `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
+      );
+      for(const r of values) {
+        let race = {};
+        r.map((x, _idx) => {
+          race[columns[_idx]] = x;
+        })
+        if (version === 3 && race.WeekendType === 1) {
+          raceSchedule.push({ type: "sprint", race, span: 2 })
+          raceSchedule.push({ type: "race", race, span: 0 })
+        } else {// 2 is ATA
+          raceSchedule.push({ type: "race", race, span: 1 })
+        }
       }
+    } catch {
+
     }
 
     let driverTeams = {};

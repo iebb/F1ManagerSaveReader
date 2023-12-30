@@ -2,21 +2,195 @@ import {Button, Divider, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
-import {teamNames} from "@/js/localization";
+import {dateToDay, teamNames} from "@/js/localization";
 import {repack} from "@/js/Parser";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 
 export default function Toolbox() {
 
   const database = useContext(DatabaseContext);
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
+  const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
   const myTeam = basicInfo.player.TeamID;
   let columns, values;
   const { enqueueSnackbar } = useSnackbar();
 
-
   const tools = [ {
+    category: "Misc",
+    commands: [{
+      name: "Wayback Machine",
+      command: () => {
+
+
+        try {
+          database.exec(`CREATE TABLE IF NOT EXISTS Modding (Key TEXT PRIMARY KEY, Value TEXT)`);
+          database.exec(`INSERT INTO Modding VALUES ("TimeTravel", "1")`);
+        } catch {
+          enqueueSnackbar("You have time travelled before!");
+          return;
+        }
+
+
+        const wayBackSeasonPlusOne = 2020;
+
+
+        const wayBackSeason = wayBackSeasonPlusOne - 1;
+        const vanillaSeason = 2023;
+        const dayNumber = dateToDay(new Date(`${wayBackSeason}-12-27`));
+        const seasonStartDayNumber = dateToDay(new Date(`${wayBackSeason}-01-01`));
+        const vanillaDayNumber = dateToDay(new Date(`${vanillaSeason}-01-01`));
+        const dd = vanillaDayNumber - seasonStartDayNumber;
+        const yd = vanillaSeason - wayBackSeason;
+
+
+
+        const metaProperty = metadata.gvasMeta.Properties.Properties.filter(p => p.Name === "MetaData")[0];
+        metaProperty.Properties[0].Properties.forEach(x => {
+          if (x.Name === 'Day') {
+            x.Property = dayNumber;
+          }
+        });
+
+        database.exec(`UPDATE Player_State SET Day = ${dayNumber}`);
+        database.exec(`UPDATE Player SET FirstGameDay = ${dayNumber}`);
+        database.exec(`UPDATE Player_State SET CurrentSeason = ${wayBackSeason}`);
+
+        database.exec(`UPDATE Player_Record SET StartSeason = ${wayBackSeason}`);
+        database.exec(`UPDATE Player_History SET StartDay = ${seasonStartDayNumber}`);
+
+        database.exec(`UPDATE Calendar_LastActivityDates SET 
+LastScoutDate = ${seasonStartDayNumber}, LastEngineerDate = ${seasonStartDayNumber}, 
+LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${seasonStartDayNumber}`);
+
+
+        database.exec(`UPDATE Parts_Designs SET DayCreated = DayCreated - ${dd} WHERE DayCreated > 0`);
+        database.exec(`UPDATE Parts_Designs SET DayCompleted = DayCompleted - ${dd} WHERE DayCompleted > 0`);
+        database.exec(`UPDATE Parts_Designs SET ValidFrom = ValidFrom - ${yd}`);
+
+        database.exec(`DELETE FROM Sponsorship_GuaranteesAndIncentives`); // delete all
+
+
+
+        database.exec(`DELETE FROM Races WHERE SeasonID != ${vanillaSeason}`);
+        database.exec(`DELETE FROM Seasons WHERE SeasonID != ${vanillaSeason}`);
+
+        database.exec(`UPDATE Races SET SeasonID = ${wayBackSeason}, Day = Day - ${dd}, State = 2 WHERE SeasonID = ${vanillaSeason}`);
+        database.exec(
+          `UPDATE Seasons_Deadlines SET SeasonID = SeasonID - ${yd}, Day = Day - ${dd}`
+        );
+
+        database.exec(
+          `UPDATE Staff_PitCrew_DevelopmentPlan SET Day = Day - ${dd} WHERE Day > 40000`
+        );
+
+
+        database.exec(
+          `UPDATE Onboarding_Tutorial_RestrictedActions SET TutorialIsActiveSetting = 0`
+        );
+
+
+        const moddingPairs = [
+          {
+            table: ["Staff_Contracts"],
+            modDay: ["StartDay"],
+            modSeason: ["EndSeason"],
+          },
+          {
+            table: ["Staff_CareerHistory"],
+            modDay: ["StartDay", "EndDay"],
+            modSeason: [],
+          },
+          {
+            table: ["Mail_EventPool_Cooldown"],
+            modDay: ["NextTriggerDay"],
+            modSeason: [],
+          },
+          {
+            table: ["Board_Confidence"],
+            modDay: [],
+            modSeason: ["Season"],
+          },
+          {
+            table: ["Board_Objectives"],
+            modDay: [],
+            modSeason: ["StartYear", "TargetEndYear"],
+          },
+          {
+            table: ["Board_Prestige", "Board_SeasonObjectives"],
+            modDay: [],
+            modSeason: ["SeasonID"],
+          },
+          {
+            table: ["Seasons"],
+            modDay: [],
+            modSeason: ["SeasonID"],
+          },
+          {
+            table: ["Parts_TeamHistory"],
+            modDay: [],
+            modSeason: ["SeasonID"],
+          },
+          {
+            table: ["Races_Strategies"],
+            modDay: [],
+            modSeason: ["SeasonID"],
+          },
+          {
+            table: ["Staff_Driver_RaceRecordPerSeason"],
+            modDay: [],
+            modSeason: ["SeasonID"],
+          },
+          {
+            table: ["Mail_Inbox", "Sponsorship_ObligationCalendar"],
+            modDay: ["Day"],
+            modSeason: [],
+          },
+          {
+            table: ["Races_DriverStandings", "Races_TeamStandings", "Races_PitCrewStandings"],
+            modDay: [],
+            modSeason: ["SeasonID"],
+          }
+        ]
+
+
+
+
+        let [{ values }] = database.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name ASC");
+        for(const [ table ] of values) {
+          if (
+            // table.startsWith("Board_Confidence") ||
+            table.startsWith("Teams_RaceRecord") ||
+            (table.startsWith("Races") && table.endsWith("Results")) ||
+            0
+          ) {
+            database.exec(`DELETE FROM ${table}`);
+          }
+        }
+
+        for(const pair of moddingPairs) {
+          for(const table of pair.table) {
+            for(const md of pair.modDay) {
+              database.exec(`UPDATE ${table} SET ${md} = ${md} - ${dd}`);
+            }
+            for(const ms of pair.modSeason) {
+              database.exec(`UPDATE ${table} SET ${ms} = ${ms} - ${yd}`);
+            }
+          }
+        }
+
+
+        database.exec(
+          `UPDATE Staff_Contracts SET EndSeason = EndSeason + 1`
+        ); // one more year
+
+
+        basicInfoUpdater({ metadata });
+
+      }
+    }]
+  }
+  /*,  {
     category: "Facilities",
     commands: [{
       name: "Refurbish My Facilities",
@@ -126,7 +300,7 @@ WHERE Parts_Designs.DesignNumber < tt.OldThreshold AND LoadoutID IS NULL )`)
 
       }
     }]
-  }]
+  }*/]
 
 
   return (

@@ -64,18 +64,22 @@ export const parseBasicInfo = ({db, metadata}) => {
       })
     }
 
+    try {
 
-    [{columns, values}] = db.exec(
-      "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
-    );
-    for (const r of values) {
-      basicInfo.races[r[0]] = {};
-      r.map((x, _idx) => {
-        basicInfo.races[r[0]][columns[_idx]] = x;
-      })
-      if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
-        basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
+      [{columns, values}] = db.exec(
+        "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
+      );
+      for (const r of values) {
+        basicInfo.races[r[0]] = {};
+        r.map((x, _idx) => {
+          basicInfo.races[r[0]][columns[_idx]] = x;
+        })
+        if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
+          basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
+        }
       }
+    } catch {
+
     }
 
     try {
@@ -153,18 +157,22 @@ export const parseBasicInfo = ({db, metadata}) => {
       })
     }
 
+    try {
 
-    [{ columns, values }] = db.exec(
-      "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
-    );
-    for(const r of values) {
-      basicInfo.races[r[0]] = {};
-      r.map((x, _idx) => {
-        basicInfo.races[r[0]][columns[_idx]] = x;
-      })
-      if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
-        basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
+      [{columns, values}] = db.exec(
+        "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
+      );
+      for (const r of values) {
+        basicInfo.races[r[0]] = {};
+        r.map((x, _idx) => {
+          basicInfo.races[r[0]][columns[_idx]] = x;
+        })
+        if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
+          basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
+        }
       }
+    } catch {
+
     }
 
     try {

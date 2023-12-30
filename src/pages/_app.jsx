@@ -73,6 +73,7 @@ export default function App({ Component, pageProps }) {
   const [db, setDb] = useState(null);
   const [metadata, setMetadata] = useState({});
   const [inApp, setInApp] = useState(false);
+  const [haveBackup, setHaveBackup] = useState(false);
   const [filePath, setFilePath] = useState("");
   const [basicInfo, setBasicInfo] = useState(null);
 
@@ -127,8 +128,10 @@ export default function App({ Component, pageProps }) {
       });
 
       window.document.addEventListener('loadFile', e => {
+        console.log(e.detail);
         openFile(e.detail.file);
         setFilePath(e.detail.path);
+        setHaveBackup(e.detail.haveBackup);
         setInApp(true);
         window.mode = "app";
         window.file_path = e.detail.path;
@@ -166,7 +169,7 @@ export default function App({ Component, pageProps }) {
                       }
                       updateBasicInfo()
                     }}>
-                      <EnvContext.Provider value={{ inApp, filePath }}>
+                      <EnvContext.Provider value={{ inApp, filePath, haveBackup }}>
                         <Dropzone
                           onDropAccepted={files => openFile(files[0])}
                           noClick

@@ -56,7 +56,20 @@ export const BasicInfoHeader = () => {
             {
               env.inApp && (
                 <Button color="error" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
-                  Overwrite DB
+                  Overwrite Save
+                </Button>
+              )
+            }
+            {
+              env.haveBackup && (
+                <Button color="secondary" variant="contained" sx={{ mr: 2 }} onClick={() => {
+                  window.parent.document.dispatchEvent( new CustomEvent('load-backup-file', {
+                    detail: {
+                      filepath: window.file_path,
+                    }
+                  }))
+                }}>
+                  Restore Backup
                 </Button>
               )
             }

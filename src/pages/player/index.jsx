@@ -1,3 +1,4 @@
+import TimeMachine from "@/components/Player/TimeMachine";
 import * as React from "react";
 import {VTabs} from "@/components/Tabs";
 import TeamSwitch from "@/components/Player/TeamSwitch";
@@ -8,6 +9,7 @@ export default function Page() {
     <VTabs options={[
       {name: "Switch Teams", tab: <TeamSwitch />},
       {name: "Rename", tab: <Rename />},
+      {name: "Time Machine", tab: <TimeMachine />},
     ]} />
   );
 }
