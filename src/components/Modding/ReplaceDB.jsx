@@ -34,7 +34,7 @@ export default function ReplaceDB() {
               } catch (ex) {
                 enqueueSnackbar(
                   "Is it a valid database file? Error:" + ex,
-                  { variant: "danger" }
+                  { variant: "error" }
                 );
               }
             }

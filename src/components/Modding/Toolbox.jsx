@@ -16,31 +16,7 @@ export default function Toolbox() {
   const { enqueueSnackbar } = useSnackbar();
 
 
-  const tools = [{
-    category: "Team Switching",
-    commands: [{
-      name: "Switch to McLaren",
-      command: () => {
-        enqueueSnackbar(
-          `All ${teamNames(myTeam, metadata.version)} facilities are 50% newer now.`,
-          { variant: "success" }
-        );
-
-        database.exec(`UPDATE Player SET TeamID = 2`);
-        database.exec(`UPDATE Player_History SET EndDay = ${basicInfo.player.Day - 1} WHERE EndDay IS NULL`);
-        database.exec(`INSERT INTO Player_History VALUES (2, ${basicInfo.player.Day}, NULL)`);
-        metadata.gvasMeta.Properties.Properties[0].Properties[0].Properties.forEach(x => {
-          if (x.Name === 'TeamID') {
-            x.Property = 2;
-          }
-          if (x.Name === 'Team') {
-            x.Property = "McLaren Mercedes";
-          }
-        });
-        repack(database, metadata, true);
-      }
-    }]
-  }, {
+  const tools = [ {
     category: "Facilities",
     commands: [{
       name: "Refurbish My Facilities",

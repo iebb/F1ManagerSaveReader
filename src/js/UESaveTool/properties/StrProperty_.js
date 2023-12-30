@@ -8,6 +8,7 @@ export class StrProperty extends Property {
     constructor() {
         super();
         this.Property = "";
+        this.Encoding = "latin1";
     }
 
     get Encoding() {
@@ -24,7 +25,7 @@ export class StrProperty extends Property {
     }
     deserialize(serial) {
         serial.seek(5);
-        [this.Property, ] = serial.readUnicodeString();
+        [this.Property, this.Encoding] = serial.readUnicodeString();
         return this;
     }
     serialize() {
@@ -50,6 +51,20 @@ export class StrProperty extends Property {
     }
     static from(obj) {
         let prop = new StrProperty();
+        if (obj.Encoding === "utf8") {
+            obj.Encoding = "latin1";
+            console.warn("utf8 should be latin1");
+        }
+
+        if (obj.Encoding === "latin1") {
+            if (!is8Bit(obj.Property)) {
+                throw Error(`${obj.Name} = ${obj.Property} is outside latin1. consider using utf16le?`)
+            }
+        } else if (obj.Encoding === "utf16le") {
+        } else if (!obj.Encoding) {
+        } else {
+            throw Error(`${obj.Name}: ${obj.Encoding} is unsupported. valid options are: [latin1, utf16le]`)
+        }
         Object.assign(prop, obj);
         return prop;
     }

@@ -1,3 +1,4 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {Tab, Tabs, Typography} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
@@ -201,34 +202,34 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
           {
             field: 'TeamID',
             headerName: "Team",
-            width: 120,
+            width: 140,
             renderCell: ({ value, row }) => {
               return (
-                <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, version)}
-                  <div>
-                    {row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
-                  </div>
-                </div>
+                <TeamName
+                  TeamID={value}
+                  type="fanfare"
+                  posInTeam={row.TeamCarID}
+                  description={
+                    getDriverName(driverMap[teamMap[value][`Driver${row.TeamCarID}ID`]])
+                  }
+                />
               )
             }
           },
           {
-            field: 'TeamCarID',
-            headerName: "Car",
-            width: 120,
+            field: 'DesignNumber',
+            headerName: "Design",
+            width: 100,
             renderCell: ({ value, row }) => {
               return (
-                <div style={{color: `rgb(var(--team${row.TeamID}-triplet)`}}>
-                  {
-                    getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])
-                  }
-                  <div>
-                    {row.DesignID ? `Part #${row.ManufactureNumber}` : <span style={{color: "white"}}>
+                <TeamName
+                  TeamID={row.TeamID}
+                  type="fanfare"
+                  header={row.DesignNumber ? `${PartInfo.prefix}-${row.DesignNumber}` : `Missing Part`}
+                  description={row.DesignID ? `Part #${row.ManufactureNumber}` : <span style={{color: "white"}}>
                       Not Installed
-                    </span>}
-                  </div>
-                </div>
+                  </span>}
+                />
               )
             }
           },

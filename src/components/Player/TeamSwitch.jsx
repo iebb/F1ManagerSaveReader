@@ -49,7 +49,8 @@ export default function TeamSwitch() {
                     database.exec(`DELETE FROM Player_History WHERE EndDay < StartDay`);
                     database.exec(`INSERT INTO Player_History VALUES (${team.TeamID}, ${basicInfo.player.Day}, NULL)`);
                   }
-                  metadata.gvasMeta.Properties.Properties[0].Properties[0].Properties.forEach(x => {
+                  const metaProperty = metadata.gvasMeta.Properties.Properties.filter(p => p.Name === "MetaData")[0];
+                  metaProperty.Properties[0].Properties.forEach(x => {
                     if (x.Name === 'TeamID') {
                       x.Property = team.TeamID;
                     }

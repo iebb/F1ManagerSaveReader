@@ -45,7 +45,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
       console.error(e);
       enqueueSnackbar(
         `The database might be corrupt`,
-        { variant: "danger" }
+        { variant: "error" }
       );
     }
   }, [database, updated])

@@ -45,7 +45,7 @@ export default function DataBrowser() {
     } catch (e) {
       enqueueSnackbar(
         `Error: ${e}`,
-        { variant: "danger" }
+        { variant: "error" }
       );
     }
   }

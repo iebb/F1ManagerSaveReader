@@ -54,7 +54,8 @@ export default function CustomCalendar() {
   const [weeks, setWeeks] = useState({});
   const [updated, setUpdated] = useState(0);
   const refresh = () => {
-    metadata.gvasMeta.Properties.Properties[0].Properties[0].Properties.forEach(x => {
+    const metaProperty = metadata.gvasMeta.Properties.Properties.filter(p => p.Name === "MetaData")[0];
+    metaProperty.Properties[0].Properties.forEach(x => {
       if (x.Name === 'RacesInSeason') {
         x.Property = races.length + 1;
       }

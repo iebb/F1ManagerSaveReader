@@ -29,8 +29,11 @@ export class Serializer {
         this.seek(4);
         let int2 = this.Data.readInt32LE(this.tell);
         this.seek(4);
-        // return (BigInt(int2) << BigInt(32)) + BigInt(int1);
-        return int1; // TODO: Day Number won't exceed 4294967296; but...
+        const val = (BigInt(int2) << 32n) + BigInt(int1);
+        if (val > (1n << 52n)) {
+            return val.toString()
+        }
+        return Number(val);
     }
     readInt16() {
         let int = this.Data.readInt16LE(this.tell);
@@ -59,7 +62,7 @@ export class Serializer {
     }
     readString() {
         let length = this.readInt32();
-        let str = this.read(length - 1).toString('utf8');
+        let str = this.read(length - 1).toString('latin1');
         this.read(1);
         return str;
     }
@@ -70,17 +73,20 @@ export class Serializer {
             this.read(2);
             return [str, "utf16le"];
         } else {
-            let str = this.read(length - 1).toString('utf8');
+            let str = this.read(length - 1).toString('latin1');
             this.read(1);
-            return [str, "utf8"];
+            return [str, "latin1"];
         }
     }
     write(buf) {
         this._offset += buf.copy(this.Data, this.tell);
     }
     writeInt64(num) {
-        this._offset = this.Data.writeInt32LE(num, this.tell);
-        this._offset = this.Data.writeInt32LE(0, this.tell);
+        let bi = BigInt.asIntN(64, BigInt(num));
+        let high = Number(bi >> 32n);
+        let low = Number(bi & ((1n << 32n) - 1n));
+        this._offset = this.Data.writeUInt32LE(low, this.tell);
+        this._offset = this.Data.writeInt32LE(high, this.tell);
         // TODO: this._offset = this.Data.writeBigInt64LE(num, this.tell);
     }
     writeUInt32(num) {
@@ -112,8 +118,8 @@ export class Serializer {
     writeUTF16String(str) {
         this._offset += this.Data.write(str + "\0", this.tell, "utf16le");
     }
-    writeUTF8String(str) {
-        this._offset += this.Data.write(str + "\0", this.tell, "utf8");
+    writeLatin1String(str) {
+        this._offset += this.Data.write(str + "\0", this.tell, "latin1");
     }
     append(buf) {
         this._data = Buffer.concat([this.Data, buf]);
