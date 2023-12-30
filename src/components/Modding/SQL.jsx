@@ -20,19 +20,20 @@ export default function DataBrowser() {
   const [values, setValues] = useState([]);
   const [stmt, setStmt] = useState("");
 
-  const exec = stmt => {
+  const exec = (stmt, isSimple = false) => {
     try {
       let r = database.exec(stmt);
       if (r.length) {
         let [{ columns, values }] = r;
         let maxSizes = columns.map(x => Math.min(x.length, 10));
         setColumns(columns);
+        setIsSimple(isSimple);
         setValues(values.map(val => {
           let row = {};
           val.map((x, _idx) => {
             if (x !== null) {
               row[columns[_idx]] = x;
-              let sl = String(x).length;
+              let sl = Math.min(String(x).length, 50);
               if (typeof x === 'number' && Math.round(x) !== x) {
                 sl = x.toFixed(3).length;
               }
@@ -45,10 +46,12 @@ export default function DataBrowser() {
         }));
         setMaxSizes(maxSizes);
       }
-      enqueueSnackbar(
-        `Executed successfully`,
-        { variant: "success" }
-      );
+      if (!isSimple) {
+        enqueueSnackbar(
+          `Executed successfully`,
+          { variant: "success" }
+        );
+      }
     } catch (e) {
       enqueueSnackbar(
         `Error: ${e}`,
@@ -66,7 +69,7 @@ export default function DataBrowser() {
         setCurrentTable(currentTable);
         if (stmt !== `SELECT * FROM ${currentTable}`) {
           setStmt(`SELECT * FROM ${currentTable}`);
-          exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`);
+          exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`, true);
         }
       }
     } catch {
@@ -81,7 +84,7 @@ export default function DataBrowser() {
   return (
     <div>
       <Typography variant="h5" component="h5">
-        SQLite Browser / Editor
+        Database Browser / Editor
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <Grid container spacing={2} alignItems="center">
@@ -99,14 +102,12 @@ export default function DataBrowser() {
         <Grid item>
           <Button color="warning" variant="contained" sx={{ my: 1 }} onClick={() => {
             exec(stmt);
-            setIsSimple(false);
           }}>
             Execute
           </Button>
         </Grid>
       </Grid>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} alignItems="center" sx={{ mt: 0.5 }}>
         <Grid item flex={1}>
           <FormControl variant="standard" sx={{ display: "inline-block", verticalAlign: "middle", width: "100%" }}>
             <Autocomplete
@@ -118,8 +119,7 @@ export default function DataBrowser() {
                 if (nv) {
                   setCurrentTable(nv);
                   setStmt(`SELECT * FROM ${nv}`);
-                  exec(`SELECT *, _rowid_ as _rowid_ FROM ${nv}`);
-                  setIsSimple(true);
+                  exec(`SELECT *, _rowid_ as _rowid_ FROM ${nv}`, true);
                 }
               }}
               renderInput={(params) => <TextField
@@ -151,7 +151,7 @@ export default function DataBrowser() {
                   ":value": newRow[key],
                   ":rowid": newRow._rowid_,
                 })
-                exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`);
+                exec(`SELECT *, _rowid_ as _rowid_ FROM ${currentTable}`, true);
               }
             }
             // refresh();

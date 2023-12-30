@@ -3857,7 +3857,7 @@ export const driverCodes = {
   "DriverCode_Tra": "TRA",
   "DriverCode_Tran": "TRA",
   "DriverCode_Tri": "TRI",
-  "DriverCode_Tru": "Tru",
+  "DriverCode_Tru": "TRU",
   "DriverCode_Tso": "TSO",
   "DriverCode_Tsu": "TSU",
   "DriverCode_Tsunoda": "TSU",
