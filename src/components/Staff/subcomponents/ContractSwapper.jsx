@@ -106,18 +106,23 @@ export default function ContractSwapper(props) {
 
 
     if (staffType === 0) {
-      let [{values: [[AssignedCarNumberA]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1ID}`);
-      let [{values: [[AssignedCarNumberB]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2ID}`);
+      let [{values: [[AssignedCarNumber1]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1ID}`);
+      let [{values: [[AssignedCarNumber2]]}] = database.exec(`SELECT AssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2ID}`);
 
       /* car numbers */
-      database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff2ID}`, {":acn": AssignedCarNumberA});
-      database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": AssignedCarNumberB});
+      database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff2ID}`, {":acn": AssignedCarNumber1});
+      database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": AssignedCarNumber2});
+
+      const formulaStaff1 = AssignedCarNumber1 ? basicInfo.teamMap[staff1Team].Formula : 0;
+      const formulaStaff2 = AssignedCarNumber2 ? basicInfo.teamMap[staff2Team].Formula : 0;
+
+
 
       const driverPairs = [
-        [staff1ID, staff2ID, AssignedCarNumberA, AssignedCarNumberB],
-        [staff2ID, staff1ID, AssignedCarNumberB, AssignedCarNumberA]
+        [staff1ID, staff2ID, formulaStaff1, formulaStaff2],
+        [staff2ID, staff1ID, formulaStaff2, formulaStaff1]
       ]
-      for(const [A, B, acnA, acnB] of driverPairs) {
+      for(const [A, B, formulaA, formulaB] of driverPairs) {
         /* B -> A */
 
         /* race engineers */
@@ -135,79 +140,91 @@ export default function ContractSwapper(props) {
           }
         }
 
+
+
         /* standings */
         // TODO: 3rd driver in F1 does not need to be included
-        if (acnA) { // A should be in standings, do we need to remove A?
-
+        if (formulaA) { // A should be in standings, do we need to remove A?
+          console.log("standing test");
           switch (version) {
             case 2:
+              if (formulaA === 1) {
+                results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
+                if (results.length) {
+                  /* Version 2 only have F1 */
+                  results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season}`);
+                  if (!results.length) { // to be added
+                    let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season}`);
+                    database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0)`);
+                    console.log("adding", B, "to leaderboard");
+                  }
 
-              results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
-              if (results.length) {
-                /* Version 2 only have F1 */
-                results = database.exec(`SELECT 1 FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season}`);
-                if (!results.length) { // to be added
-                  let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season}`);
-                  database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0)`);
-                }
-
-                if (!(sameFormula && acnB)) { // B not in the same formulae as A
-                  results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
-                  if (!results.length) {
-                    database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A}`);
+                  if (!(sameFormula && !acnB)) { // B not in the same formulae as A
+                    results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
+                    // check if had raced before in this season
+                    if (!results.length) {
+                      database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A}`);
+                      console.log("deleting", A, "from leaderboard");
+                    }
                   }
                 }
               }
 
-
               break;
             case 3:
+              if (formulaA > 0) {
+                results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${formulaA}`);
+                if (!results.length) { // to be added
+                  let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${formulaA}`);
+                  database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${formulaA})`);
+                  console.log("adding", B, "to leaderboard");
+                }
+              }
+
+
               results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${A} AND SeasonID = ${season}`);
               if (results.length) {
                 for(let {values: [[RaceFormula]]} of results) {
 
-                  let racesCompleted = false;
-                  if (RaceFormula === 1) {
-                    // Competed in Race
-                    results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID 
+                  if (RaceFormula !== formulaB) { // if they are on same formula don't delete
+                    let racesCompleted = false;
+                    if (RaceFormula === 1) {
+                      // Competed in Race
+                      results = database.exec(`SELECT * FROM Races_Results LEFT JOIN Races On Races.RaceID = Races_Results.RaceID 
 WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd}`);
-                    if (results.length) {
-                      racesCompleted = true;
-                    }
-                  } else {
-                    results = database.exec(`SELECT * FROM Races_FeatureRaceResults LEFT JOIN Races On Races.RaceID = Races_FeatureRaceResults.RaceID 
+                      if (results.length) {
+                        racesCompleted = true;
+                      }
+                    } else {
+                      results = database.exec(`SELECT * FROM Races_FeatureRaceResults LEFT JOIN Races On Races.RaceID = Races_FeatureRaceResults.RaceID 
 WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
-                    if (results.length) {
-                      racesCompleted = true;
+                      if (results.length) {
+                        racesCompleted = true;
+                      }
                     }
-                  }
 
-                  if (!racesCompleted) {
-                    // Competed in Sprint
-                    results = database.exec(`SELECT * FROM Races_SprintResults LEFT JOIN Races On Races.RaceID = Races_SprintResults.RaceID 
+                    if (!racesCompleted) {
+                      // Competed in Sprint
+                      results = database.exec(`SELECT * FROM Races_SprintResults LEFT JOIN Races On Races.RaceID = Races_SprintResults.RaceID 
 WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
-                    if (results.length) {
-                      racesCompleted = true;
+                      if (results.length) {
+                        racesCompleted = true;
+                      }
                     }
-                  }
-//
-//                   if (!racesCompleted) {
-//                     // Competed in Quali
-//                     results = database.exec(`SELECT * FROM Races_QualifyingResults LEFT JOIN Races On Races.RaceID = Races_QualifyingResults.RaceID
-// WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
-//                     if (results.length) {
-//                       racesCompleted = true;
-//                     }
-//                   }
 
-                  if (racesCompleted) {
-                    results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
-                    if (!results.length) { // to be added
-                      let [{values: [[Position]]}] = database.exec(`SELECT MAX(Position) + 1 FROM Races_DriverStandings WHERE SeasonID = ${season} AND RaceFormula = ${RaceFormula}`);
-                      database.exec(`INSERT INTO Races_DriverStandings VALUES (${season}, ${B}, 0, ${Position}, 0, 0, ${RaceFormula})`);
+                    if (!racesCompleted) {
+                      // Competed in Quali
+                      results = database.exec(`SELECT * FROM Races_QualifyingResults LEFT JOIN Races On Races.RaceID = Races_QualifyingResults.RaceID
+WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND RaceFormula = ${RaceFormula}`);
+                      if (results.length) {
+                        racesCompleted = true;
+                      }
                     }
-                  } else if (!(sameFormula && acnB)) {
-                    database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A} AND RaceFormula = ${RaceFormula}`);
+
+                    if (!racesCompleted) {
+                      database.exec(`DELETE FROM Races_DriverStandings WHERE SeasonID = ${season} AND DriverID = ${A} AND RaceFormula = ${RaceFormula}`);
+                      console.log("deleting", A, "from leaderboard");
+                    }
                   }
 
                 }
