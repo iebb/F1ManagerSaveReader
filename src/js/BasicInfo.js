@@ -49,51 +49,6 @@ export const parseBasicInfo = ({db, metadata}) => {
       }
       basicInfo.driverMap[r[0]] = d;
     }
-
-    [{columns, values}] = db.exec("select * from Player");
-    for (const r of values) {
-      r.map((x, _idx) => {
-        basicInfo.player[columns[_idx]] = x;
-      })
-    }
-
-    [{columns, values}] = db.exec("select * from Player_State");
-    for (const r of values) {
-      r.map((x, _idx) => {
-        basicInfo.player[columns[_idx]] = x;
-      })
-    }
-
-    try {
-
-      [{columns, values}] = db.exec(
-        "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
-      );
-      for (const r of values) {
-        basicInfo.races[r[0]] = {};
-        r.map((x, _idx) => {
-          basicInfo.races[r[0]][columns[_idx]] = x;
-        })
-        if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
-          basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
-        }
-      }
-    } catch {
-
-    }
-
-    try {
-      [{columns, values}] = db.exec("select * from Save_Weekend");
-      for (const r of values) {
-        r.map((x, _idx) => {
-          basicInfo.weekend[columns[_idx]] = x;
-        })
-      }
-    } catch {
-      basicInfo.weekend = {
-        RaceID: -1
-      };
-    }
     basicInfo.player.StartSeason = 2022; // TODO: a mod for pre-2022 seasons
   }
 
@@ -138,54 +93,35 @@ export const parseBasicInfo = ({db, metadata}) => {
       basicInfo.driverMap[r[0]] = d;
     }
 
-    [{ columns, values }] = db.exec("select * from Player");
-    for(const r of values) {
-      r.map((x, _idx) => {
-        basicInfo.player[columns[_idx]] = x;
-      })
-    }
     [{ columns, values }] = db.exec("select * from Player_Record");
     for(const r of values) {
       r.map((x, _idx) => {
         basicInfo.player[columns[_idx]] = x;
       })
     }
-    [{ columns, values }] = db.exec("select * from Player_State");
-    for(const r of values) {
-      r.map((x, _idx) => {
-        basicInfo.player[columns[_idx]] = x;
-      })
-    }
 
-    try {
+  }
 
-      [{columns, values}] = db.exec(
-        "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
-      );
-      for (const r of values) {
-        basicInfo.races[r[0]] = {};
-        r.map((x, _idx) => {
-          basicInfo.races[r[0]][columns[_idx]] = x;
-        })
-        if (basicInfo.races[r[0]].SeasonID === basicInfo.player.CurrentSeason) {
-          basicInfo.currentSeasonRaces.push(basicInfo.races[r[0]])
-        }
-      }
-    } catch {
+  basicInfo.weekend = {
+    RaceID: -1
+  };
 
-    }
+  for (const r of db.getAllRows("select * from Save_Weekend")) {
+    basicInfo.weekend = r;
+  }
+  for (const r of db.getAllRows("select * from Player_State")) {
+    basicInfo.player = {...basicInfo.player, ...r};
+  }
+  for (const r of db.getAllRows("select * from Player")) {
+    basicInfo.player = {...basicInfo.player, ...r};
+  }
 
-    try {
-      [{ columns, values }] = db.exec("select * from Save_Weekend");
-      for(const r of values) {
-        r.map((x, _idx) => {
-          basicInfo.weekend[columns[_idx]] = x;
-        })
-      }
-    } catch {
-      basicInfo.weekend = {
-        RaceID: -1
-      };
+  for (const r of db.getAllRows(
+    "select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID order by Day ASC"
+  )) {
+    basicInfo.races[r.RaceID] = r;
+    if (r.SeasonID === basicInfo.player.CurrentSeason) {
+      basicInfo.currentSeasonRaces.push(r)
     }
   }
 

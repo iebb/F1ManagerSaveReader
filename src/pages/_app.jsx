@@ -1,11 +1,5 @@
 import '@/styles/globals.css'
-import {DBWrapper} from "@/js/DBWrapper";
-import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
-import Head from "next/head";
-import {SnackbarProvider} from "notistack";
-import {useContext, useEffect, useState} from "react";
-import Dropzone from "react-dropzone";
-import {BasicInfoHeader} from "../components/Common/BasicInfoHeader";
+import {parseBasicInfo} from "@/js/BasicInfo";
 import {
   BasicInfoContext,
   BasicInfoUpdaterContext,
@@ -14,14 +8,19 @@ import {
   EnvContext,
   MetadataContext,
 } from "@/js/Contexts";
+import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
+import {defaultFontFamily} from "@/ui/Fonts";
+import {createTeamColorTheme} from "@/ui/Theme";
+import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
+import Head from "next/head";
+import {SnackbarProvider} from "notistack";
+import {useContext, useEffect, useState} from "react";
+import Dropzone from "react-dropzone";
+import {BasicInfoHeader} from "../components/Common/BasicInfoHeader";
 import Nav from "../components/Nav";
 import DragBox from "../components/UI/Blocks/DragBox";
-import {defaultFontFamily} from "@/ui/Fonts";
 import Footer from "../components/UI/Footer";
 import Header from "../components/UI/Header";
-import {createTeamColorTheme} from "@/ui/Theme";
-import {parseBasicInfo} from "@/js/BasicInfo";
-import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
 
 const defaultTheme = createTheme({
   palette: {
@@ -124,6 +123,19 @@ export default function App({ Component, pageProps }) {
         locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
       }).then(SQL => {
         window.SQL = SQL;
+        SQL.Database.prototype.getAllRows = function(...params) {
+          let rows = [];
+          const result = this.exec(...params);
+          if (result.length) {
+            let [{ values, columns }] = result;
+            for (const r of values) {
+              let row = {};
+              r.map((x, _idx) => { row[columns[_idx]] = x })
+              rows.push(row);
+            }
+          }
+          return rows;
+        }
         setLoaded(true);
       });
 
@@ -141,7 +153,7 @@ export default function App({ Component, pageProps }) {
 
 
   return (
-    <DatabaseContext.Provider value={DBWrapper(db)}>
+    <DatabaseContext.Provider value={db}>
       <DatabaseUpdaterContext.Provider value={setDb}>
         <MetadataContext.Provider value={metadata}>
           <BasicInfoContext.Provider value={basicInfo}>

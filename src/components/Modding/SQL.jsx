@@ -23,7 +23,6 @@ export default function DataBrowser() {
   const exec = (stmt, isSimple = false) => {
     try {
       let r = database.exec(stmt);
-      console.log(r);
       if (r.length) {
         let [{ columns, values }] = r;
         let maxSizes = columns.map(x => Math.min(x.length, 10));

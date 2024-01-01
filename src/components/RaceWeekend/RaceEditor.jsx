@@ -208,14 +208,28 @@ export default function RaceEditor() {
             color="warning"
             disabled={(raceState.RaceEventFlags & (64 | 256)) !== 0 /* VSC is 64+4 */}
           >
-            <Button
-              onClick={() => {
-                database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 7`); // won't end
-                refresh();
-              }}
-            >
-              VSC
-            </Button>
+            {
+              (raceState.RaceEventFlags & 4) !== 0 ? (
+                <Button
+                  color="success"
+                  onClick={() => {
+                    database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 0`); // won't end
+                    refresh();
+                  }}
+                >
+                  End VSC
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 7`); // won't end
+                    refresh();
+                  }}
+                >
+                  VSC
+                </Button>
+              )
+            }
             <Button
               onClick={() => {
                 database.exec(`UPDATE Save_RaceSimManager SET RaceEventFlags = 4`);
