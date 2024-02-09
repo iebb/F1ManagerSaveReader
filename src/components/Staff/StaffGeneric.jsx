@@ -23,7 +23,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
 
   const basicDataTable = version === 2 ? "Staff_CommonData" : "Staff_BasicData";
   const retirementDataTable = version === 2 ? "Staff_CommonData" : "Staff_GameData";
-  const { weekend } = basicInfo;
+  const { weekend, player } = basicInfo;
 
 
   const [rows, setRows] = useState([]);
@@ -294,10 +294,20 @@ export default function StaffGeneric({ StaffType = 1 }) {
                   <div>
                     {formatter.format(row.Salary)}
                     <br />
+                    <span>
+
                     <span className="small" >until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
                       database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
                       setUpdated(+new Date());
-                      }}>+1</a></span>
+                    }}>+1</a> {
+                      row.EndSeason > player.CurrentSeason ? (
+                        <a style={{color: "lightblue"}} onClick={() => {
+                          database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
+                          setUpdated(+new Date());
+                        }}>-1</a>
+                      ) : null
+                    }</span>
+                    </span>
                   </div>
                 ) : (
                   "Not contracted"
