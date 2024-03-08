@@ -42,6 +42,19 @@ export default function ContractSwapper(props) {
 
     let columns, values;
 
+
+    const teamFormulas = {};
+
+    results = database.exec(`SELECT TeamID, Formula FROM Teams`);
+    if (results.length) {
+      for(const [TeamID, Formula] of results[0].values) {
+        teamFormulas[TeamID] = Formula;
+      }
+    }
+
+
+
+
     [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
     const [seasonStart, seasonEnd] = values[0];
 
@@ -60,7 +73,7 @@ export default function ContractSwapper(props) {
       [[staff2StartDay, staff2Team, staff2PIT]] = results[0].values;
     }
 
-    let sameFormula = staff1Team && staff2Team && basicInfo.teamMap[staff1Team].Formula === basicInfo.teamMap[staff2Team].Formula;
+    let sameFormula = staff1Team && staff2Team && teamFormulas[staff1Team] === teamFormulas[staff2Team];
 
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff1ID}, ContractType = 130 WHERE StaffID = ${staff2ID} AND ContractType = 3`);
     database.exec(`UPDATE Staff_Contracts SET StaffID = ${staff2ID}, ContractType = 130 WHERE StaffID = ${staff1ID} AND ContractType = 3`);
@@ -113,8 +126,9 @@ export default function ContractSwapper(props) {
       database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff2ID}`, {":acn": AssignedCarNumber1});
       database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": AssignedCarNumber2});
 
-      const formulaStaff1 = AssignedCarNumber1 ? basicInfo.teamMap[staff1Team].Formula : 0;
-      const formulaStaff2 = AssignedCarNumber2 ? basicInfo.teamMap[staff2Team].Formula : 0;
+
+      const formulaStaff1 = AssignedCarNumber1 ? teamFormulas[staff1Team] : 0;
+      const formulaStaff2 = AssignedCarNumber2 ? teamFormulas[staff2Team] : 0;
 
 
 
@@ -123,6 +137,7 @@ export default function ContractSwapper(props) {
         [staff2ID, staff1ID, formulaStaff2, formulaStaff1]
       ]
       for(const [A, B, formulaA, formulaB] of driverPairs) {
+        console.log(">", A, B, formulaA, formulaB);
         /* B -> A */
 
         /* race engineers */
