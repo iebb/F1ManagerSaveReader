@@ -5,7 +5,7 @@ import { SerializationError } from '../PropertyErrors';
 export class Int64Property extends Property {
     constructor() {
         super();
-        this.Property = 0;
+        this.Property = 0n;
         this.Index = 0;
     }
     get Size() {

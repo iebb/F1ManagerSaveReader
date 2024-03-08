@@ -25,7 +25,7 @@ export class Serializer {
         return int;
     }
     readInt64() {
-        let int1 = this.Data.readInt32LE(this.tell);
+        let int1 = this.Data.readUInt32LE(this.tell);
         this.seek(4);
         let int2 = this.Data.readInt32LE(this.tell);
         this.seek(4);
