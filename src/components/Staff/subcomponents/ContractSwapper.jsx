@@ -137,7 +137,6 @@ export default function ContractSwapper(props) {
         [staff2ID, staff1ID, formulaStaff2, formulaStaff1]
       ]
       for(const [A, B, formulaA, formulaB] of driverPairs) {
-        console.log(">", A, B, formulaA, formulaB);
         /* B -> A */
 
         /* race engineers */
