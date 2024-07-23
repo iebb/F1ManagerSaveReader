@@ -33,7 +33,7 @@
     "react-dom": "18.2.0",
     "react-dropzone": "^14.2.3",
     "semver-compare": "^1.0.0",
-    "sql.js": "^1.9.0",
+    "sql.js": "^1.10.3",
     "typescript": "5.1.6",
     "vanilla-jsoneditor": "^0.21.1"
   }
