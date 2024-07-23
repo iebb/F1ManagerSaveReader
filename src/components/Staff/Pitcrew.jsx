@@ -79,7 +79,7 @@ export default function PitcrewView() {
                 ":value": newRow['stat_' + stat.id],
                 ":statID": stat.id,
               })
-            } else if (version === 3) {
+            } else if (version >= 3) {
               if (newRow['stat_' + stat.id] !== oldRow['stat_' + stat.id]) {
                 let delta = (newRow['stat_' + stat.id] - oldRow['stat_' + stat.id]);
                 if (stat.id === 38) {

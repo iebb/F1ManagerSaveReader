@@ -25,7 +25,7 @@ export const getStaff = (ctx, StaffType = 0) => {
   }
 
   if (StaffType === 5) {
-    if (version === 3) {
+    if (version >= 3) {
       // [{ columns, values }] = database.exec(
       //   "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_NarrativeData \n" +
       //   `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID WHERE Staff_NarrativeData.IsActive = 1\n`
@@ -47,7 +47,7 @@ export const getStaff = (ctx, StaffType = 0) => {
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
       );
-    } else if (version === 3) {
+    } else if (version >= 3) {
       console.log(  "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
         "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
@@ -76,7 +76,7 @@ export const getStaff = (ctx, StaffType = 0) => {
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_CommonData.StaffID\n" +
         `LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_CommonData.StaffID AND Staff_Contracts.ContractType = 0 WHERE Staff_CommonData.StaffType = ${StaffType}`
       );
-    } else if (version === 3) {
+    } else if (version >= 3) {
       [{ columns, values }] = database.exec(
         "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_BasicData \n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_BasicData.StaffID\n" +

@@ -93,16 +93,15 @@ export default function CarSetup() {
 
   useEffect(() => {
     let values;
-    let _teamID = (version === 3) ? `TeamID` : basicInfo.player.TeamID;
+    let _teamID = (version >= 3) ? `TeamID` : basicInfo.player.TeamID;
     try {
-
       [{ values }] = database.exec(
         `select LoadOutID, ${_teamID}, PerfectSetupFrontWingAngle, PerfectSetupRearWingAngle, PerfectSetupAntiRollBars, PerfectSetupCamber, PerfectSetupToe  from Save_CarConfig`
       );
       const _rows = values.map(val => ({
         LoadOutID: val[0],
-        TeamID: val[1],
-        Team: teamMap[val[1]],
+        TeamID: val[1] === 11 ? 32 : val[1],
+        Team: teamMap[val[1] === 11 ? 32 : val[1]],
         Setups: [val[2], val[3], val[4], val[5], val[6]],
       }));
       setRows(_rows);
@@ -166,7 +165,9 @@ export default function CarSetup() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.filter(teamOnly ? (row => basicInfo.player.TeamID === row.TeamID) : () => true).map(row => ({
+            {rows.filter(teamOnly ? (row => (
+              basicInfo.player.TeamID === row.TeamID
+            )) : () => true).map(row => ({
               ...row,
               order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
             })).sort((x, y) => x.order - y.order).map((row) => (

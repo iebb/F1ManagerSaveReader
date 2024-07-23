@@ -311,7 +311,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         hideFooter
       />
       {
-        version === 3 && (
+        version >= 3 && (
           <Typography variant="p" component="p" style={{ color: "#ccc", margin: 12, flex: 1, flexBasis: 720 }}>
             Effects per 100 attribute (10%) in {PartInfo.category}: <br/>
             {

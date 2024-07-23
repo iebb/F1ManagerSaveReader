@@ -60,7 +60,7 @@ export default function RaceResultsF1() {
         r.map((x, _idx) => {
           race[columns[_idx]] = x;
         })
-        if (version === 3 && race.WeekendType === 1) {
+        if (version >= 3 && race.WeekendType === 1) {
           raceSchedule.push({ type: "sprint", race, span: 2 })
           raceSchedule.push({ type: "race", race, span: 0 })
         } else {// 2 is ATA
@@ -79,7 +79,7 @@ export default function RaceResultsF1() {
     try {
 
       [{ columns, values }] = database.exec(
-        version === 3 ?
+        version >= 3 ?
           `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND RaceFormula = 1 AND Position = 1` :
 
           `SELECT DriverID FROM 'Races_DriverStandings' WHERE SeasonID = ${season - 1} AND Position = 1`
@@ -88,7 +88,7 @@ export default function RaceResultsF1() {
 
       let [championDriverID] = values[0]; // for Car Number 1
       [{ columns, values }] = database.exec(
-        version === 3 ?
+        version >= 3 ?
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = 1 ORDER BY Position ASC` :
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} ORDER BY Position ASC`
       );
@@ -105,7 +105,7 @@ export default function RaceResultsF1() {
         driversInStanding[driverStanding.DriverID] = driverStanding;
       }
 
-      if (version === 3) {
+      if (version >= 3) {
         results = database.exec(
           // `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND ChampionshipPoints > 0 ORDER BY RaceID ASC` // only F1 has Q3
           `SELECT RaceID, DriverID, ChampionshipPoints FROM 'Races_QualifyingResults' WHERE SeasonID = ${season} AND QualifyingStage = 3 AND FinishingPos = 1 ORDER BY RaceID ASC` // only F1 has Q3
@@ -122,7 +122,7 @@ export default function RaceResultsF1() {
 
 
       results = database.exec(
-        version === 3 ?
+        version >= 3 ?
           `SELECT Races_PracticeResults.RaceID, Races_PracticeResults.DriverID, Races_PracticeResults.TeamID, PR1.PracticeSession, PR2.PracticeSession FROM 'Races_PracticeResults' 
 LEFT JOIN 'Races_PracticeResults' as PR1
   ON Races_PracticeResults.RaceID = PR1.RaceID 
@@ -213,7 +213,7 @@ PR1.PracticeSession IS NULL`
         }
       }
 
-      if (version === 3) {
+      if (version >= 3) {
 
         try {
           [{columns, values}] = database.exec(

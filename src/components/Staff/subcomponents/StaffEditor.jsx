@@ -122,7 +122,7 @@ export default function StaffEditor(props) {
         [{ values }] = database.exec(
           "SELECT FirstName, LastName FROM Staff_BasicData ORDER BY StaffID DESC"
         );
-      } else if (version === 3) {
+      } else if (version >= 3) {
         [{ values }] = database.exec(
           "SELECT FirstName, LastName FROM Staff_CommonData ORDER BY StaffID DESC"
         );
@@ -337,7 +337,7 @@ export default function StaffEditor(props) {
                   const extendedRetirementAge = retirementInYears < 5 ? row.RetirementAge + 5 - retirementInYears : row.RetirementAge;
                   if (version === 2) {
                     database.exec(`UPDATE Staff_CommonData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
-                  } else if (version === 3) {
+                  } else if (version >= 3) {
                     database.exec(`UPDATE Staff_GameData SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${editRow.StaffID}`);
                   }
                   refresh();
@@ -346,7 +346,7 @@ export default function StaffEditor(props) {
                 <Button color="error" variant="contained" onClick={() => {
                   if (version === 2) {
                     database.exec(`UPDATE Staff_CommonData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
-                  } else if (version === 3) {
+                  } else if (version >= 3) {
                     database.exec(`UPDATE Staff_GameData SET Retired = 1 WHERE StaffID = ${editRow.StaffID}`);
                   }
                   refresh();
@@ -365,7 +365,7 @@ export default function StaffEditor(props) {
 
               if (version === 2) {
                 database.exec(`UPDATE Staff_CommonData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}", Gender = ${gender} WHERE StaffID = ${editRow.StaffID}`);
-              } else if (version === 3) {
+              } else if (version >= 3) {
                 database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}", Gender = ${gender} WHERE StaffID = ${editRow.StaffID}`);
               }
 
@@ -373,7 +373,7 @@ export default function StaffEditor(props) {
                 const FaceIndex = faceIndex % faceCount[faceType][gender];
                 if (version === 2) {
                   database.exec(`UPDATE Staff_CommonData SET FaceIndex = ${FaceIndex}, FaceType = ${faceType}, AgeType = ${ageType} WHERE StaffID = ${editRow.StaffID}`);
-                } else if (version === 3) {
+                } else if (version >= 3) {
                   database.exec(`UPDATE Staff_BasicData SET FaceIndex = ${FaceIndex}, FaceType = ${faceType}, AgeType = ${ageType} WHERE StaffID = ${editRow.StaffID}`);
                 }
               }

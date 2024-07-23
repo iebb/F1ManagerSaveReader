@@ -72,7 +72,7 @@ LastDesignProjectDate = ${seasonStartDayNumber}, LastResearchProjectDate = ${sea
       `UPDATE Seasons_Deadlines SET SeasonID = SeasonID - ${yd}, Day = Day - ${dd}`
     );
 
-    if (version === 3) {
+    if (version >= 3) {
       database.exec(`UPDATE Player SET FirstGameDay = ${dayNumber}`);
       database.exec(`UPDATE Player_Record SET StartSeason = ${wayBackSeason}`);
       database.exec(`UPDATE Player_History SET StartDay = ${seasonStartDayNumber}`);

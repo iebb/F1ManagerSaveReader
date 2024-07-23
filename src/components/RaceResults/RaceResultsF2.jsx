@@ -128,7 +128,7 @@ export default function RaceResultsF2({ formulae = 2 }) {
       }
 
       [{ columns, values }] = database.exec(
-        version === 3 ?
+        version >= 3 ?
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} AND RaceFormula = ${formulae} ORDER BY Position ASC` :
           `SELECT * FROM 'Races_DriverStandings' WHERE SeasonID = ${season} ORDER BY Position ASC`
       );

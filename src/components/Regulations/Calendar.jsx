@@ -159,7 +159,7 @@ export default function CustomCalendar() {
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       {
-        version === 3 && (
+        version >= 3 && (
           <Alert severity="warning" sx={{ my: 2 }}>
             <AlertTitle>Warning</AlertTitle>
             Feeder Series race are based on <b>Track</b> rather than <b>Race</b>. Enabling F2 and F3 races for unsupported tracks might result in weird lap times.
