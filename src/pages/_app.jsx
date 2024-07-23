@@ -120,7 +120,7 @@ export default function App({ Component, pageProps }) {
     if (!window.initialized) {
       window.initialized = true;
       require('sql.js')({
-        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
+        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
       }).then(SQL => {
         window.SQL = SQL;
         SQL.Database.prototype.getAllRows = function(...params) {

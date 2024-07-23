@@ -23,6 +23,7 @@ PropertyFactory.Properties['EnumProperty'] = EnumProperty;
 PropertyFactory.Properties['FloatProperty'] = FloatProperty;
 PropertyFactory.Properties['IntProperty'] = IntProperty;
 PropertyFactory.Properties['Int64Property'] = Int64Property;
+PropertyFactory.Properties['UInt64Property'] = Int64Property;
 PropertyFactory.Properties['Int8Property'] = Int8Property;
 PropertyFactory.Properties['Int16Property'] = Int16Property;
 PropertyFactory.Properties['ObjectProperty'] = ObjectProperty;
