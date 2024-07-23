@@ -4,6 +4,7 @@ export default function Nav(props) {
   return (
     <NavTabs options={[
       {name: "Weekend", navigator: '/weekend'},
+      {name: "Player", navigator: '/player'},
       {name: "Results", navigator: '/results'},
       {name: "Regulations", navigator: '/regulations'},
       {name: "Finance", navigator: '/finance'},
@@ -11,7 +12,6 @@ export default function Nav(props) {
       {name: "Facilities", navigator: '/facilities'},
       {name: "Parts", navigator: '/parts'},
       {name: "Modding", navigator: '/modding'},
-      {name: "Player", navigator: '/player'},
     ]} />
   )
 }

@@ -86,7 +86,7 @@ export default function CarSetup() {
   const basicInfo = useContext(BasicInfoContext);
 
   const [rows, setRows] = useState([]);
-  const [teamOnly, setTeamOnly] = useState(true);
+  const [teamOnly, setTeamOnly] = useState(false);
 
   const {driverMap, teamMap, weekend, player, races } = basicInfo;
   const trackId = weekend.RaceID > 0 ? races[weekend.RaceID].TrackID : player.LastRaceTrackID;
@@ -186,7 +186,7 @@ export default function CarSetup() {
                 {
                   CarSetupParams.map(p => {
                     const val = p.render(p.min + (p.max - p.min) * row.Setups[p.index]);
-                    return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val}</TableCell>
+                    return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val} {row.Setups[p.index]}</TableCell>
                   })
                 }
               </TableRow>

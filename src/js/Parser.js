@@ -43,7 +43,7 @@ export const analyzeFileToDatabase = async (file) => {
             }
             if (BuildId.indexOf("volta24") !== -1) {
               version = 4;
-              gameVersion = BuildId.substring(BuildId.indexOf("24+") + 3);
+              gameVersion = BuildId.substring(BuildId.indexOf("24+") + 8);
               gameVersionWithBuild = `${gameVersion}.${Build & 0x7fffffff}`;
             }
             break;
