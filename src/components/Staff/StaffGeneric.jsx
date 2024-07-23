@@ -40,6 +40,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
     try {
       const [StaffStats, results] = getStaff({basicInfo, database, version}, StaffType);
       setStaffStats(StaffStats);
+      console.log(results);
       setRows(results);
     } catch (e) {
       console.error(e);
