@@ -17,7 +17,7 @@ export default function CarAnalysis() {
   const {version, gameVersion} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
-  const {driverMap, teamMap } = basicInfo;
+  const {driverMap, teamMap, teamIds } = basicInfo;
 
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
@@ -65,6 +65,7 @@ LEFT JOIN Parts_Designs ON Parts_Designs.DesignID = COALESCE(Parts_CarLoadout.De
 LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`;
 
       for(const row of database.getAllRows(sql)) {
+
         let carID = row.TeamID * 2 + row.LoadOutID;
         if (!partStats[carID]) {
           partStats[carID] = {};
@@ -79,7 +80,7 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`;
 
 
       let loadouts = [];
-      for(let teamId = 1; teamId <= 10; teamId++) {
+      for(const teamId of teamIds) {
         for(let loadoutId = 1; loadoutId <= 2; loadoutId++) {
           const loadOut = {
             id: teamId * 2 + loadoutId - 2,
@@ -101,6 +102,10 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`;
           loadouts.push(loadOut);
         }
       }
+
+      console.log(loadouts);
+      console.log(driverMap);
+      console.log(teamMap);
 
       setPartStats(loadouts);
 

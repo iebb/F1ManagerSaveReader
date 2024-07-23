@@ -186,7 +186,7 @@ export default function CarSetup() {
                 {
                   CarSetupParams.map(p => {
                     const val = p.render(p.min + (p.max - p.min) * row.Setups[p.index]);
-                    return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val} {row.Setups[p.index]}</TableCell>
+                    return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val}</TableCell>
                   })
                 }
               </TableRow>

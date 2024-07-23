@@ -79,18 +79,8 @@ export const getStaff = (ctx, StaffType = 0) => {
         "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
         "INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_CareerHistory GROUP BY StaffID) b " +
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
-        "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
+        "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID AND Staff_DriverNumbers.Number != 1\n"
       );
-
-      console.log("SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber, Countries.EnumName as Nationality from Staff_DriverData \n" +
-        "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
-        "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
-        `LEFT JOIN Countries on Countries.CountryID = Staff_BasicData.CountryID\n` +
-        "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
-        "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
-        "INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_CareerHistory GROUP BY StaffID) b " +
-        "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
-        "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID AND Staff_DriverNumbers.Number != 1\n");
     }
   } else {
     if (version === 2) {

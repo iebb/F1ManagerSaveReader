@@ -34,6 +34,10 @@ export default function SponsorPayments() {
 
   const [prestiges, setPrestiges] = useState([]);
   const [SponsorshipValues, setSponsorshipValues] = useState([]);
+  
+  if (version === 4) {
+    return null;
+  }
 
   const season = player.CurrentSeason;
 
