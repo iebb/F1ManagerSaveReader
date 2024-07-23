@@ -111,6 +111,8 @@ export default function CarSetup() {
 
   }, [database])
 
+  const alternativeId = basicInfo.player.TeamID === 32 ? 11 : basicInfo.player.TeamID
+
 
   return (
     <div>
@@ -127,7 +129,7 @@ export default function CarSetup() {
             "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
             "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
             "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
-            `WHERE TeamID = ${basicInfo.player.TeamID}`
+            `WHERE TeamID = ${alternativeId}`
           );
           repack(database, metadata, true);
         }}>
@@ -143,7 +145,7 @@ export default function CarSetup() {
             "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
             "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
             "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
-            `WHERE TeamID = ${basicInfo.player.TeamID}`
+            `WHERE TeamID = ${alternativeId}`
           );
         }}>
           {
