@@ -1,4 +1,4 @@
-import {DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {KeyboardDoubleArrowDown, KeyboardDoubleArrowUp, Refresh} from '@mui/icons-material';
 import {Tab, Tabs} from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
@@ -46,6 +46,7 @@ export default function Facilities() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
+  const {teamIds} = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -78,38 +79,35 @@ export default function Facilities() {
 
 
   useEffect(() => {
-    const buildings = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
-    try {
-      let [{ columns, values }] = database.exec(
-        `SELECT Buildings_HQ.*, Buildings.*, 
+    const buildings = {};
+    let [{ columns, values }] = database.exec(
+      `SELECT Buildings_HQ.*, Buildings.*, 
             NextLevel.BuildingID as NextBuildingID, PrevLevel.BuildingID as PrevBuildingID, NextLevel.ConstructionWork as NextConstructionWork FROM Buildings_HQ 
             LEFT JOIN Buildings ON Buildings_HQ.BuildingID = Buildings.BuildingID
             LEFT JOIN Buildings as NextLevel ON Buildings.Type = NextLevel.Type AND Buildings.UpgradeLevel + 1 = NextLevel.UpgradeLevel
             LEFT JOIN Buildings as PrevLevel ON Buildings.Type = PrevLevel.Type AND Buildings.UpgradeLevel - 1 = PrevLevel.UpgradeLevel
             `
-      );
-      for(const r of values) {
-        let row = {};
-        r.map((x, _idx) => {row[columns[_idx]] = x});
-
-        buildings[row.TeamID]["building_" + row.BuildingType] = row;
-        buildings[row.TeamID]["UpgradeLevel_" + row.BuildingType] = row.UpgradeLevel;
-        buildings[row.TeamID]["DegradationValue_" + row.BuildingType] = row.DegradationValue;
+    );
+    for(const r of values) {
+      let row = {};
+      r.map((x, _idx) => {row[columns[_idx]] = x});
+      if (!buildings[row.TeamID]) {
+        buildings[row.TeamID] = {};
       }
-      setBuildings(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
-          teamIndex => ({
-            id: teamIndex,
-            TeamID: teamIndex,
-            ...buildings[teamIndex]
-          })
-        )
-      );
 
-    } catch {
-
+      buildings[row.TeamID]["building_" + row.BuildingType] = row;
+      buildings[row.TeamID]["UpgradeLevel_" + row.BuildingType] = row.UpgradeLevel;
+      buildings[row.TeamID]["DegradationValue_" + row.BuildingType] = row.DegradationValue;
     }
-
+    setBuildings(
+      teamIds.map(
+        teamIndex => ({
+          id: teamIndex,
+          TeamID: teamIndex,
+          ...buildings[teamIndex]
+        })
+      )
+    );
   }, [database, updated])
 
   const columns = [];

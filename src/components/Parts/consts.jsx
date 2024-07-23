@@ -4,22 +4,26 @@ import {PartCalculationStats2023, PartStats2023, PartStatsCategorized2023, PSF20
 export const PartStatsV = {
   2: PartStats2022,
   3: PartStats2023,
+  4: PartStats2023,
 }
 
 export const PartFactorsV = {
   2: PSF2022,
   3: PSF2023,
+  4: PSF2023,
 }
 
 export const PartCalculationStatsV = {
   2: PartCalculationStats2022,
   3: PartCalculationStats2023,
+  4: PartCalculationStats2023,
 }
 
 
 export const PartStatsCategorizedV = {
   2: PartStatsCategorized2023,
-  3: PartStatsCategorized2023
+  3: PartStatsCategorized2023,
+  4: PartStatsCategorized2023,
 };
 
 

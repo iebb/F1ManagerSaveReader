@@ -2,7 +2,7 @@ import {Button, Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../Localization/Localization";
 import {PartStatsCategorizedV} from "./consts";
 
@@ -11,6 +11,7 @@ export default function ExpertiseView() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
+  const {teamIds} = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -23,7 +24,7 @@ export default function ExpertiseView() {
 
 
   useEffect(() => {
-    const partStats = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
+    const partStats = {};
     try {
       let [{ columns, values }] = database.exec(
         version === 2 ? (
@@ -33,12 +34,15 @@ export default function ExpertiseView() {
         )
       );
       for(const r of values) {
+        if (!partStats[r[0]]) {
+          partStats[r[0]] = {};
+        }
         partStats[r[0] /* TeamID */ ]["stat_" + r[1] + "_" + r[2] /* PartStat */ ] = r[3];
         // partStats[r[0] /* TeamID */ ]["stat_" + r[1] + "_" + r[2] /* PartStat */ ] = r[4];
         partStats[r[0] /* TeamID */ ]["season_start_stat_" + r[1] + "_" + r[2] /* PartStat */ ] = r[5];
       }
       setPartStats(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
+        teamIds.map(
           teamIndex => ({
             id: teamIndex,
             TeamID: teamIndex,

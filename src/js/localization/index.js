@@ -196,7 +196,19 @@ export const getDriverName = (d) => {
 }
 
 
+export const literal = /^LITERAL:Value=\|(.*)\|$/
+
 export const resolveName = (_nameString) => {
+  let nameString = _nameString.replace("[", "").replace("]", "")
+  if (staffNames[nameString]) return staffNames[nameString];
+  const split = nameString.split("_");
+  return split[split.length - 1]
+}
+
+export const resolveNameV4 = (_nameString) => {
+  if (literal.match(_nameString)) {
+    return literal.exec(_nameString)[1];
+  }
   let nameString = _nameString.replace("[", "").replace("]", "")
   if (staffNames[nameString]) return staffNames[nameString];
   const split = nameString.split("_");

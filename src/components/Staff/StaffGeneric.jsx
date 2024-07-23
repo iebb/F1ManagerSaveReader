@@ -1,5 +1,5 @@
 import {TeamName} from "@/components/Localization/Localization";
-import {resolveName, teamNames, dateToDay, dayToDate, getDriverCode} from "@/js/localization";
+import {resolveName, teamNames, dateToDay, dayToDate, getDriverCode, resolveNameV4} from "@/js/localization";
 import {getCountryFlag, getCountryShort} from "@/js/localization/ISOCountries";
 import {Alert, AlertTitle} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";

@@ -1,4 +1,11 @@
-import {getDriverName, resolveDriverCode, resolveName, unresolveDriverCode, unresolveName} from "@/js/localization";
+import {
+  getDriverName,
+  resolveDriverCode,
+  resolveName,
+  resolveNameV4,
+  unresolveDriverCode,
+  unresolveName
+} from "@/js/localization";
 import {
   Autocomplete,
   Box,
@@ -365,8 +372,12 @@ export default function StaffEditor(props) {
 
               if (version === 2) {
                 database.exec(`UPDATE Staff_CommonData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}", Gender = ${gender} WHERE StaffID = ${editRow.StaffID}`);
-              } else if (version >= 3) {
+              } else if (version === 3) {
                 database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}", Gender = ${gender} WHERE StaffID = ${editRow.StaffID}`);
+              } else if (version >= 4) {
+                let [{ values }] = database.exec(`SELECT CountryID FROM Countries WHERE EnumName = "${country}"`);
+                let value = values[0];
+                database.exec(`UPDATE Staff_BasicData SET FirstName = "${_firstName}", LastName = "${_lastName}", CountryID = ${value}, Gender = ${gender} WHERE StaffID = ${editRow.StaffID}`);
               }
 
               if (editRow.IsGeneratedStaff) {

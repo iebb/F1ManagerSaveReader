@@ -290,13 +290,14 @@ export default function SportingRegulations() {
                 <TableHead>
                   <TableRow>
                     <TableCell><b>Pos</b></TableCell>{
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => <TableCell key={x}><b>P{x}</b></TableCell>)
+                    regulationDetails.pointSchemes[1].scheme.map((x) => <TableCell key={x}><b>P{x.RacePos}</b></TableCell>)
                   }</TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
                     <TableCell sx={{ width: 150 }}><b>Points</b></TableCell>{
-                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(x => {
+
+                    regulationDetails.pointSchemes[1].scheme.map((_, x) => {
                       const currentPointsScheme = regulations.PointScheme.CurrentValue;
                       const currentPosition = regulationDetails.pointSchemes[currentPointsScheme].scheme[x]?.RacePos;
                       const currentPoints = regulationDetails.pointSchemes[currentPointsScheme].scheme[x]?.Points || 0;
@@ -386,14 +387,14 @@ export default function SportingRegulations() {
                 <TableHead>
                   <TableRow>
                     <TableCell><b>Prev Standing</b></TableCell>{
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => <TableCell key={x}><b>P{x}</b></TableCell>)
+                    regulationDetails.partResources[1].scheme.map(x => <TableCell key={x}><b>P{x.Pos}</b></TableCell>)
                   }</TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
                     <TableCell sx={{ width: 150 }}><b>Wind Tunnel</b></TableCell>
                     {
-                      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(x => {
+                      regulationDetails.partResources[1].scheme.map((_, x) => {
                         const currentPR = regulations.PartDevResourceLimit.CurrentValue;
                         const currentPosition = regulationDetails.partResources[currentPR].scheme[x]?.Pos;
                         const currentWindTunnel = regulationDetails.partResources[currentPR].scheme[x]?.WindTunnel || 0;
@@ -430,7 +431,7 @@ export default function SportingRegulations() {
                   <TableRow>
                     <TableCell sx={{ width: 150 }}><b>CFD</b></TableCell>
                     {
-                      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(x => {
+                      regulationDetails.partResources[1].scheme.map((_, x) => {
                         const currentPR = regulations.PartDevResourceLimit.CurrentValue;
                         const currentPosition = regulationDetails.partResources[currentPR].scheme[x]?.Pos;
                         const currentCFD = regulationDetails.partResources[currentPR].scheme[x]?.CFD || 0;

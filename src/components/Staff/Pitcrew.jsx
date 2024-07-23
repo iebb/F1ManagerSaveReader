@@ -25,6 +25,20 @@ const PitCrewStatsList = {
 
     {id: 36, digits: 6, displayDigits: 6, name: "Speed"},
     {id: 38, digits: 6, displayDigits: 6, negative: true, name: "Fatigue"},
+  ],
+  4: [
+    {id: 32, digits: 6, displayDigits: 6, name: "Jacks"},
+    {id: 41, digits: 6, displayDigits: 6, name: "Tyres Off"},
+    {id: 42, digits: 6, displayDigits: 6, name: "Tyres On"},
+    {id: 40, digits: 6, displayDigits: 6, name: "Wheel Gun"},
+    {id: 35, digits: 6, displayDigits: 6, name: "Car Release"},
+    {id: 39, digits: 6, displayDigits: 6, name: "Car Building"},
+    // {id: 33,	name: "Tyres"},
+    {id: 34, digits: 0, displayDigits: 0, name: "Wings"},
+    //  {id: 37,	name: "Consistency"},
+
+    {id: 36, digits: 6, displayDigits: 6, name: "Speed"},
+    {id: 38, digits: 6, displayDigits: 6, negative: true, name: "Fatigue"},
   ]
 }
 
@@ -32,6 +46,7 @@ export default function PitcrewView() {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext);
+  const {teamIds} = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
@@ -39,29 +54,26 @@ export default function PitcrewView() {
 
 
   useEffect(() => {
-    const pitCrewStats = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
-    try {
-      let [{ columns, values }] = database.exec(
-        `select * from Staff_PitCrew_PerformanceStats`
-      );
-      for(const r of values) {
-        pitCrewStats[r[0] /* TeamID */ ]["stat_" + r[1] /* StatID */ ] = r[2];
-        pitCrewStats[r[0] /* TeamID */ ]["month_start_stat_" + r[1] /* StatID */ ] = r[3];
+    const pitCrewStats = {};
+    let [{ columns, values }] = database.exec(
+      `select * from Staff_PitCrew_PerformanceStats`
+    );
+    for(const r of values) {
+      if (!pitCrewStats[r[0] /* TeamID */ ]) {
+        pitCrewStats[r[0] /* TeamID */ ] = {};
       }
-      setPitCrewStats(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
-          teamIndex => ({
-            id: teamIndex,
-            TeamID: teamIndex,
-            ...pitCrewStats[teamIndex]
-          })
-        )
-      );
-
-    } catch {
-
+      pitCrewStats[r[0] /* TeamID */ ]["stat_" + r[1] /* StatID */ ] = r[2];
+      pitCrewStats[r[0] /* TeamID */ ]["month_start_stat_" + r[1] /* StatID */ ] = r[3];
     }
-
+    setPitCrewStats(
+      teamIds.map(
+        teamIndex => ({
+          id: teamIndex,
+          TeamID: teamIndex,
+          ...pitCrewStats[teamIndex]
+        })
+      )
+    );
   }, [database, updated])
 
   return (

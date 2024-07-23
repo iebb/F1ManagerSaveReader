@@ -25,7 +25,7 @@ export const getStaff = (ctx, StaffType = 0) => {
   }
 
   if (StaffType === 5) {
-    if (version >= 3) {
+    if (version === 3) {
       // [{ columns, values }] = database.exec(
       //   "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_NarrativeData \n" +
       //   `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID WHERE Staff_NarrativeData.IsActive = 1\n`
@@ -33,6 +33,17 @@ export const getStaff = (ctx, StaffType = 0) => {
       [{ columns, values }] = database.exec(
         "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_NarrativeData \n" +
         `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID\n`
+      );
+      // TODO: 1.3.0 Does not have IsActive
+    } else if (version >= 4) {
+      // [{ columns, values }] = database.exec(
+      //   "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_NarrativeData \n" +
+      //   `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID WHERE Staff_NarrativeData.IsActive = 1\n`
+      // );
+      [{ columns, values }] = database.exec(
+        "SELECT Staff_BasicData.StaffID as StaffID, Countries.EnumName as Nationality, * from Staff_NarrativeData \n" +
+        `LEFT JOIN Staff_BasicData on Staff_NarrativeData.StaffID = Staff_BasicData.StaffID\n` +
+          `LEFT JOIN Countries on Countries.CountryID = Staff_BasicData.CountryID\n`
       );
       // TODO: 1.3.0 Does not have IsActive
     }
@@ -47,19 +58,23 @@ export const getStaff = (ctx, StaffType = 0) => {
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
       );
-    } else if (version >= 3) {
-      console.log(  "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
+    } else if (version === 3) {
+      [{ columns, values }] = database.exec(
+        "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
         "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
         "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
         "INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_CareerHistory GROUP BY StaffID) b " +
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_DriverData.StaffID\n" +
-        "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n");
+        "LEFT JOIN Staff_DriverNumbers on Staff_DriverNumbers.CurrentHolder = Staff_DriverData.StaffID\n"
+      );
+    } else if (version >= 4) {
       [{ columns, values }] = database.exec(
-        "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber from Staff_DriverData \n" +
+        "SELECT Staff_DriverData.StaffID as StaffID, *, Staff_DriverNumbers.Number as CurrentNumber, Countries.EnumName as Nationality from Staff_DriverData \n" +
         "LEFT JOIN Staff_BasicData on Staff_BasicData.StaffID = Staff_DriverData.StaffID\n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_DriverData.StaffID\n" +
+        `LEFT JOIN Countries on Countries.CountryID = Staff_BasicData.CountryID\n` +
         "LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_DriverData.StaffID AND Staff_Contracts.ContractType = 0\n" +
         "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
         "INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_CareerHistory GROUP BY StaffID) b " +
@@ -76,10 +91,20 @@ export const getStaff = (ctx, StaffType = 0) => {
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_CommonData.StaffID\n" +
         `LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_CommonData.StaffID AND Staff_Contracts.ContractType = 0 WHERE Staff_CommonData.StaffType = ${StaffType}`
       );
-    } else if (version >= 3) {
+    } else if (version === 3) {
       [{ columns, values }] = database.exec(
         "SELECT Staff_BasicData.StaffID as StaffID, * from Staff_BasicData \n" +
         "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_BasicData.StaffID\n" +
+        "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
+        "INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_CareerHistory GROUP BY StaffID) b " +
+        "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_BasicData.StaffID\n" +
+        `LEFT JOIN Staff_Contracts on Staff_Contracts.StaffID = Staff_BasicData.StaffID AND Staff_Contracts.ContractType = 0 WHERE Staff_GameData.StaffType = ${StaffType}`
+      );
+    } else if (version >= 4) {
+      [{ columns, values }] = database.exec(
+        "SELECT Staff_BasicData.StaffID as StaffID, *, Countries.EnumName as Nationality from Staff_BasicData \n" +
+        "LEFT JOIN Staff_GameData on Staff_GameData.StaffID = Staff_BasicData.StaffID\n" +
+        `LEFT JOIN Countries on Countries.CountryID = Staff_BasicData.CountryID\n` +
         "LEFT JOIN (SELECT Staff_CareerHistory.StaffID, Staff_CareerHistory.TeamID as PreviousTeamID, EndDay as PreviousContractED, StartDay as PreviousContractSD FROM Staff_CareerHistory\n" +
         "INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_CareerHistory GROUP BY StaffID) b " +
         "ON Staff_CareerHistory.StaffID = b.StaffID AND Staff_CareerHistory.EndDay = b.MED AND Staff_CareerHistory.StartDay = b.MSD) as PreviousContract on PreviousContract.StaffID = Staff_BasicData.StaffID\n" +

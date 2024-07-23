@@ -9,6 +9,8 @@ export const parseBasicInfo = ({db, metadata}) => {
     player: {},
     weekend: {},
     misc: {},
+    teamIds: [],
+    teamRankings: [],
   };
 
 
@@ -133,8 +135,9 @@ export const parseBasicInfo = ({db, metadata}) => {
       })
     }
 
-    [{ columns, values }] = db.exec("SELECT * FROM 'Staff_DriverData' " +
+    [{ columns, values }] = db.exec("SELECT *, Countries.EnumName as Nationality FROM 'Staff_DriverData' " +
       "LEFT JOIN 'Staff_BasicData' ON Staff_DriverData.StaffID = Staff_BasicData.StaffID " +
+      `LEFT JOIN Countries on Countries.CountryID = Staff_BasicData.CountryID\n` +
       "LEFT JOIN 'Staff_DriverNumbers' ON Staff_DriverData.StaffID = Staff_DriverNumbers.CurrentHolder");
     for(const r of values) {
       let d = {};
@@ -156,6 +159,14 @@ export const parseBasicInfo = ({db, metadata}) => {
       })
     }
 
+  }
+
+
+  [{ columns, values }] = db.exec("select TeamID from Teams WHERE Formula = 1");
+  let i = 0;
+  for(const r of values) {
+    basicInfo.teamIds.push(r[0]);
+    basicInfo.teamRankings.push(++i);
   }
 
   basicInfo.weekend = {
