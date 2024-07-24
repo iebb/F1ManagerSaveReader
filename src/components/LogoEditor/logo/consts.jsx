@@ -52,8 +52,8 @@ export const gameToJson = (elements) => {
             "rotation": rotationDeg,
             "draggable": true,
             "resizable": true,
-            "src": obj.url,
             "keepRatio": false,
+            "src": obj.url,
             "borderColor": "black",
             "borderSize": 0,
             "cornerRadius": 0,
@@ -104,18 +104,15 @@ export const jsonToGame = (data) => {
 
 export const EditorSections = logoElements.map(section => {
   const Logo = section.logo;
-  return ({
+  return {
     name: section.name,
-    Tab: (props) => (
-      <SectionTab name={section.name} {...props}>
+    Tab: (props) => <SectionTab name={section.name} {...props}>
         <Logo style={{ fontSize: 18 }} />
-      </SectionTab>
-    ),
+      </SectionTab>,
     // we need observer to update component automatically on any store changes
     Panel: observer(({ store }) => {
       const images = section.icons;
-      return (
-        <div style={{ overflowY: 'auto', height: '100%' }}>
+      return <div style={{ overflowY: 'auto', height: '100%' }}>
           <ImagesGrid
             images={images}
             getPreview={(image) => image.url}
@@ -128,14 +125,16 @@ export const EditorSections = logoElements.map(section => {
                 height: defaultSize,
                 x: pos?.x || 0,
                 y: pos?.y || 0,
+                draggable: true,
+                resizable: true,
+                keepRatio: false,
               });
             }}
             rowsNumber={4}
             isLoading={!images.length}
             loadMore={false}
           />
-        </div>
-      );
+        </div>;
     }),
-  })
+  }
 });
