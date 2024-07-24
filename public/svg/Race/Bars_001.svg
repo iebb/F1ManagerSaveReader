@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="RaceShapes" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <g id="Bars_001">
+    <polygon class="cls-1" points="60.57 30.99 54.56 41.3 58.27 41.3 64.27 30.99 60.57 30.99"/>
+    <polygon class="cls-1" points="66.55 31.1 60.69 41.38 63.17 41.38 69.03 31.1 66.55 31.1"/>
+    <polygon class="cls-1" points="13.7 30.65 7.69 40.96 11.4 40.96 17.41 30.65 13.7 30.65"/>
+    <polygon class="cls-1" points="8.83 30.62 2.97 40.9 5.45 40.9 11.31 30.62 8.83 30.62"/>
+    <polygon class="cls-1" points="56.16 34.9 17.51 34.9 13.67 40.96 52.38 40.98 56.16 34.9"/>
+    <polygon class="cls-1" points="58.29 31.03 19.64 31.03 18.21 33.25 56.86 33.25 58.29 31.03"/>
+  </g>
+</svg>

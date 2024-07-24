@@ -10,6 +10,7 @@ import {
     Int64Property,
     Int8Property,
     IntProperty,
+    UInt32Property,
     ObjectProperty,
     SoftObjectProperty,
     StrProperty,
@@ -22,6 +23,7 @@ PropertyFactory.Properties['BoolProperty'] = BoolProperty;
 PropertyFactory.Properties['EnumProperty'] = EnumProperty;
 PropertyFactory.Properties['FloatProperty'] = FloatProperty;
 PropertyFactory.Properties['IntProperty'] = IntProperty;
+PropertyFactory.Properties['UInt32Property'] = UInt32Property;
 PropertyFactory.Properties['Int64Property'] = Int64Property;
 PropertyFactory.Properties['UInt64Property'] = Int64Property;
 PropertyFactory.Properties['Int8Property'] = Int8Property;

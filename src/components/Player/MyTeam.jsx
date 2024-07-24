@@ -1,11 +1,8 @@
-import {teamNames} from "@/js/localization";
-import {Tuple} from "@/js/UESaveTool";
-import {Alert, AlertTitle, Button, Container, Divider, Grid, Typography} from "@mui/material";
-import Image from "next/image";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {Alert, AlertTitle, Divider, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
-import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import Dropzone from "react-dropzone";
 
 export default function MyTeam() {

@@ -12,6 +12,7 @@ import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
 import {defaultFontFamily} from "@/ui/Fonts";
 import {createTeamColorTheme} from "@/ui/Theme";
 import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
@@ -84,21 +85,25 @@ export default function App({ Component, pageProps }) {
   }, [metadata.version]);
 
   const openFile = (f) => {
-    analyzeFileToDatabase(f).then(({db, metadata}) => {
-      setDb(db);
-      setMetadata(metadata);
-      if (metadata.version) {
-        try {
-          setBasicInfo(parseBasicInfo({ db, metadata }))
-          refresh();
-        } catch (e) {
-          console.error(e);
+    try {
+      analyzeFileToDatabase(f).then(({db, metadata}) => {
+        setDb(db);
+        setMetadata(metadata);
+        if (metadata.version) {
+          try {
+            setBasicInfo(parseBasicInfo({ db, metadata }))
+            refresh();
+          } catch (e) {
+            console.error(e);
+            setBasicInfo(null);
+          }
+        } else {
           setBasicInfo(null);
         }
-      } else {
-        setBasicInfo(null);
-      }
-    });
+      });
+    } catch (e) {
+
+    }
   }
 
   const updateBasicInfo = () => {
