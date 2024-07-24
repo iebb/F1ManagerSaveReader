@@ -1,7 +1,6 @@
 import {Gvas, Serializer} from "./UESaveTool";
-
-const pako = require("pako");
-const { saveAs } = require("file-saver");
+import pako from "pako";
+import { saveAs } from "file-saver";
 
 export const parseGvasProps = (Properties) => {
   const careerSaveMetadata = {};

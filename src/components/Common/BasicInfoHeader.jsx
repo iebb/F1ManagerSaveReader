@@ -93,7 +93,7 @@ export const BasicInfoHeader = () => {
             <Step key={race.RaceID}>
               <StepLabel
                 StepIconComponent={() => <img
-                  src={require(`../../assets/flags/${raceFlags[race.TrackID]}.svg`).default.src}
+                  src={`/flags/${raceFlags[race.TrackID]}.svg`}
                   width={24} height={18}
                   alt={race.Name}
                   style={{ opacity: race.Day >= Day ? 1 : 0.3 }}

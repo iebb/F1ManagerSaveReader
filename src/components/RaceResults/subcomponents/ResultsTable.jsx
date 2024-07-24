@@ -57,7 +57,7 @@ export default function ResultsTable(ctx) {
                   colSpan={ span }
                 >
                   <img
-                    src={require(`../../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
+                    src={`/flags/${raceFlags[race.TrackID]}.svg`}
                     key={race.TrackID}
                     width={20} height={15}
                     alt={race.Name}

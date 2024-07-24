@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint f1msavereadergen2 --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@blueprintjs/core": "^5.10.5",
@@ -22,6 +22,7 @@
     "@types/react": "18.2.17",
     "@types/react-dom": "18.2.7",
     "@types/sql.js": "^1.4.9",
+    "@vitejs/plugin-react": "^4.3.1",
     "axios": "^1.4.0",
     "canvas": "^2.11.2",
     "dayjs": "^1.11.10",
@@ -40,6 +41,9 @@
     "semver-compare": "^1.0.0",
     "sql.js": "1.10.3",
     "typescript": "5.1.6",
-    "vanilla-jsoneditor": "^0.21.1"
+    "vanilla-jsoneditor": "^0.21.1",
+    "vite": "^5.3.4",
+    "vite-plugin-node-polyfills": "^0.22.0",
+    "vite-plugin-require": "^1.2.14"
   }
 }

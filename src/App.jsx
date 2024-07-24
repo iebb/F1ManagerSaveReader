@@ -1,4 +1,5 @@
 import '@/styles/globals.css'
+import {BasicInfoHeader} from "@/components/Common/BasicInfoHeader";
 import {parseBasicInfo} from "@/js/BasicInfo";
 import {
   BasicInfoContext,
@@ -12,15 +13,14 @@ import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
 import {defaultFontFamily} from "@/ui/Fonts";
 import {createTeamColorTheme} from "@/ui/Theme";
 import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
-import Head from "next/head";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
-import {BasicInfoHeader} from "@/components/Common/BasicInfoHeader";
-import Nav from "../components/Nav";
-import DragBox from "../components/UI/Blocks/DragBox";
-import Footer from "../components/UI/Footer";
-import Header from "../components/UI/Header";
+import MainNav from "./components/Nav";
+import Nav from "./components/Nav";
+import DragBox from "./components/UI/Blocks/DragBox";
+import Footer from "./components/UI/Footer";
+import Header from "./components/UI/Header";
 
 const defaultTheme = createTheme({
   palette: {
@@ -35,7 +35,7 @@ const defaultTheme = createTheme({
 
 
 
-export function DataView({ children }) {
+export function DataView() {
   const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
@@ -58,13 +58,13 @@ export function DataView({ children }) {
   return (
     <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
       <BasicInfoHeader />
-      {children}
+      <MainNav />
     </div>
   )
 }
 
 
-export default function App({ Component, pageProps }) {
+export default function App() {
 
   const [theme, setTheme] = useState(defaultTheme);
   const [loaded, setLoaded] = useState(false);
@@ -161,12 +161,12 @@ export default function App({ Component, pageProps }) {
         <MetadataContext.Provider value={metadata}>
           <BasicInfoContext.Provider value={basicInfo}>
             <ThemeProvider theme={theme}>
-              <Head>
-                <meta name="viewport" content="initial-scale=1, width=device-width"/>
-                <title>F1 Manager Save Browser - F1Setup.CFD</title>
-                <meta name="description" content="F1 Manager Save Browser by ieb"/>
-                <link rel="icon" href="/favicon.ico"/>
-              </Head>
+              {/*<Head>*/}
+              {/*  <meta name="viewport" content="initial-scale=1, width=device-width"/>*/}
+              {/*  <title>F1 Manager Save Browser - F1Setup.CFD</title>*/}
+              {/*  <meta name="description" content="F1 Manager Save Browser by ieb"/>*/}
+              {/*  <link rel="icon" href="/favicon.ico"/>*/}
+              {/*</Head>*/}
               <SnackbarProvider
                 maxSnack={10}
                 anchorOrigin={{vertical: 'top', horizontal: 'right'}}
@@ -196,9 +196,7 @@ export default function App({ Component, pageProps }) {
                               <input {...getInputProps()} hidden />
                               <DragBox />
                               <Container maxWidth={false} component="main">
-                                <DataView key={updated}>
-                                  <Component {...pageProps} />
-                                </DataView>
+                                <DataView key={updated} />
                               </Container>
                               <Footer />
                             </div>

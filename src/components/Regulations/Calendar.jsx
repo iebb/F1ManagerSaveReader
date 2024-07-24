@@ -222,7 +222,7 @@ export default function CustomCalendar() {
               return (
                 <>
                   <img
-                    src={require(`../../assets/flags/${raceFlags[row.TrackID]}.svg`).default.src}
+                    src={`/flags/${raceFlags[row.TrackID]}.svg`}
                     width={24} height={18}
                     alt={row.Name}
                     style={{ opacity: row.Day >= row.Day ? 1 : 0.3 }}

@@ -6,7 +6,7 @@ import CarSetup from "../../components/RaceWeekend/CarSetup";
 import RaceEditor from "../../components/RaceWeekend/RaceEditor";
 import {VTabs} from "../../components/Tabs";
 
-export default function Page() {
+export default function Weekend() {
   const basicInfo = useContext(BasicInfoContext);
 
   const { weekend } = basicInfo;
