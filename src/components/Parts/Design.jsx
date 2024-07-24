@@ -16,7 +16,7 @@ export default function DesignView() {
   const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
-  const {driverMap, teamMap } = basicInfo;
+  const {driverMap, teamMap, teamIds } = basicInfo;
 
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
@@ -94,7 +94,7 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         partRow[carID].Part[row.PartType] = row;
       }
       let loadouts = [];
-      for(let teamId = 1; teamId <= 10; teamId++) {
+      for(const teamId of teamIds) {
         for(let loadout = 1; loadout <= 2; loadout++) {
           loadouts.push({
             id: teamId * 2 + loadout - 2,
