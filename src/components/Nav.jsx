@@ -1,13 +1,13 @@
-
-import Weekend from "@/pages/weekend";
-import Player from "@/pages/player";
-import Results from "@/pages/results";
-import Regulations from "@/pages/regulations";
-import Finance from "@/pages/finance";
-import Staff from "@/pages/staff";
+import LogoEditor from "@/components/LogoEditor/LogoEditor";
 import Facilities from "@/pages/facilities";
-import Parts from "@/pages/parts";
+import Finance from "@/pages/finance";
 import Modding from "@/pages/modding";
+import Parts from "@/pages/parts";
+import Player from "@/pages/player";
+import Regulations from "@/pages/regulations";
+import Results from "@/pages/results";
+import Staff from "@/pages/staff";
+import Weekend from "@/pages/weekend";
 import * as React from "react";
 import {VTabs} from "./Tabs";
 
@@ -16,6 +16,7 @@ export default function MainNav(props) {
     <VTabs options={[
       {name: "Weekend", tab: <Weekend />},
       {name: "Player", tab: <Player />},
+      {name: "Logo Editor", tab:  <LogoEditor />, minVersion: "4.0"},
       {name: "Results", tab: <Results />},
       {name: "Regulations", tab: <Regulations />},
       {name: "Finance", tab: <Finance />},

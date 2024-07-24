@@ -1,22 +1,25 @@
-import {EditorSections, gameToJson, jsonToGame} from "@/components/Player/logo/consts";
+import React, {useContext, useEffect} from 'react';
+import {EditorSections, gameToJson, jsonToGame} from "@/components/LogoEditor/logo/consts";
 import {BasicInfoContext, DatabaseContext} from "@/js/Contexts";
-import {Button} from '@blueprintjs/core';
-import {Alert, AlertTitle} from "@mui/material";
+
+import {Alert, AlertTitle, Button} from "@mui/material";
 import {observer} from "mobx-react-lite";
 import {PolotnoContainer, SidePanelWrap, WorkspaceWrap} from 'polotno';
-import {Workspace} from 'polotno/canvas/workspace';
 
+import {Workspace} from 'polotno/canvas/workspace';
 import {createStore} from 'polotno/model/store';
 import {SidePanel} from 'polotno/side-panel';
 import {Toolbar} from 'polotno/toolbar/toolbar';
 import {ZoomButtons} from 'polotno/toolbar/zoom-buttons';
-import React, {useContext, useEffect} from 'react';
+
 
 const store = createStore({
   key: 'X1QnNnMmJajDWNsBKuVD',
 });
 
 const ColorPicker = observer(({ store, element: e, elements: t }) => {
+  console.log(e);
+
   return (
     <div>
       <input
@@ -56,7 +59,7 @@ export default function LogoEditor() {
     return (
       <div>
         <Button
-          intent="primary"
+          variant="contained"
           onClick={() => {
             const game = jsonToGame(store.toJSON());
             database.exec("DELETE FROM Teams_Custom_LogoElements");

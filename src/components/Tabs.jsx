@@ -1,8 +1,7 @@
-import {TabContext, TabList, TabPanel} from "@mui/lab";
-import {Box, Tab, Tabs} from "@mui/material";
-import {useRouter} from "next/router";
-import {useContext, useState} from "react";
 import {MetadataContext} from "@/js/Contexts";
+import {TabContext, TabList, TabPanel} from "@mui/lab";
+import {Box, Tab} from "@mui/material";
+import {useContext, useState} from "react";
 
 
 export const VTabs = ({ options }) => {
@@ -41,35 +40,4 @@ export const VTabs = ({ options }) => {
       {t.tab}
     </TabPanel>)}
   </TabContext>;
-}
-
-export const NavTabs = ({ options }) => {
-  const router = useRouter();
-  let currentRoute = 0;
-  const path = router.asPath;
-  options.forEach((option, _idx) => {
-    if (option.navigator === path) {
-      currentRoute = _idx;
-    }
-    if (path.startsWith(option.navigator + "/")) {
-      currentRoute = _idx;
-    }
-  });
-  const [value, setValue] = useState(currentRoute);
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-    router.push(options[newValue].navigator);
-  };
-  return (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider', my: 1 }}>
-      <Tabs value={value} aria-label="basic tabs example" onChange={handleChange}>
-        {
-          options.map((t, _idx) => (
-            <Tab label={t.name} value={_idx} key={_idx} />
-          ))
-        }
-      </Tabs>
-    </Box>
-  );
 }

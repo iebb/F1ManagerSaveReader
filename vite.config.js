@@ -9,12 +9,15 @@ export default defineConfig({
   plugins: [
     react(),
     vitePluginRequire(),
-    nodePolyfills()
+    nodePolyfills(),
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src/"),
     },
+  },
+  rollupOptions: {
+    external: ['polotno']
   },
 })
 

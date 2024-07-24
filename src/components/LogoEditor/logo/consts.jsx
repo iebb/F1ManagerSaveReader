@@ -1,4 +1,4 @@
-import {logoElements} from "@/components/Player/logo/logos";
+import {logoElements} from "@/components/LogoEditor/logo/logos";
 import {observer} from "mobx-react-lite";
 import {ImagesGrid, SectionTab} from "polotno/side-panel";
 import FaShapes from '@meronex/icons/fa/FaShapes';

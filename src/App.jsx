@@ -16,8 +16,8 @@ import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@m
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
+import {Helmet} from "react-helmet";
 import MainNav from "./components/Nav";
-import Nav from "./components/Nav";
 import DragBox from "./components/UI/Blocks/DragBox";
 import Footer from "./components/UI/Footer";
 import Header from "./components/UI/Header";
@@ -161,12 +161,12 @@ export default function App() {
         <MetadataContext.Provider value={metadata}>
           <BasicInfoContext.Provider value={basicInfo}>
             <ThemeProvider theme={theme}>
-              {/*<Head>*/}
-              {/*  <meta name="viewport" content="initial-scale=1, width=device-width"/>*/}
-              {/*  <title>F1 Manager Save Browser - F1Setup.CFD</title>*/}
-              {/*  <meta name="description" content="F1 Manager Save Browser by ieb"/>*/}
-              {/*  <link rel="icon" href="/favicon.ico"/>*/}
-              {/*</Head>*/}
+              <Helmet>
+                <meta name="viewport" content="initial-scale=1, width=device-width"/>
+                <title>F1 Manager Save Browser - F1Setup.CFD</title>
+                <meta name="description" content="F1 Manager Save Browser by ieb"/>
+                <link rel="icon" href="/favicon.ico"/>
+              </Helmet>
               <SnackbarProvider
                 maxSnack={10}
                 anchorOrigin={{vertical: 'top', horizontal: 'right'}}

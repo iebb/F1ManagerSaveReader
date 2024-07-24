@@ -1,4 +1,4 @@
-import LogoEditor from "@/components/Player/LogoEditor";
+import LogoEditor from "@/components/LogoEditor/LogoEditor";
 import MyTeam from "@/components/Player/MyTeam";
 import Rename from "@/components/Player/Rename";
 import TeamSwitch from "@/components/Player/TeamSwitch";
@@ -10,7 +10,6 @@ export default function Page() {
 
   return (
     <VTabs options={[
-      {name: "Logo Editor", tab:  <LogoEditor />, minVersion: "4.0"},
       {name: "My Team", tab: <MyTeam />, minVersion: "4.0"},
       {name: "Switch Teams", tab: <TeamSwitch />},
       {name: "Rename", tab: <Rename />},
