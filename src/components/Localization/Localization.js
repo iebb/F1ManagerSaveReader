@@ -13,10 +13,14 @@ export const TeamName = ({
                          }) => {
   const {version, gameVersion} = useContext(MetadataContext);
   if (!TeamID) return null;
+
+  const teamName = teamNames(TeamID, version);
+
+
   switch(type) {
     case "text":
       return (
-        <span>{teamNames(TeamID, version)}</span>
+        <span>{teamName}</span>
       )
     case "fanfare":
       return (
@@ -24,7 +28,7 @@ export const TeamName = ({
           <div>
             {
               header ? header : (
-                `${teamNames(TeamID, version)}${posInTeam ? ` #${posInTeam}` : ""}`
+                `${teamName}${posInTeam ? ` #${posInTeam}` : ""}`
               )
             }
           </div>
@@ -36,11 +40,13 @@ export const TeamName = ({
                     width: 12, height: 12, borderRadius: 6,
                     display: "inline-block", marginRight: 3,
                     background: `var(--team${TeamID}-fanfare1)`,
+                    border: `1px solid var(--team${TeamID}-fanfare2)`,
                   }}/>
                   <div style={{
                     width: 12, height: 12, borderRadius: 6,
                     display: "inline-block", marginRight: 3,
                     background: `var(--team${TeamID}-fanfare2)`,
+                    border: `1px solid var(--team${TeamID}-fanfare1)`,
                   }}/>
                 </>
               )
@@ -51,7 +57,7 @@ export const TeamName = ({
     case "colored":
       return (
         <span style={{color: `rgb(var(--team${value}-triplet)`}}>
-          {teamNames(TeamID, version)}
+          {teamName}
         </span>
       )
   }

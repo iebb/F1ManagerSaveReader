@@ -1,4 +1,4 @@
-import {teamColors2023, teams2023} from "./Teams2023";
+import {teamColors2023, teams2023, teams2024} from "./Teams2023";
 import {staffNames, driverCodes} from "./staffNames";
 
 Date.prototype.getWeek = function() {
@@ -22,11 +22,9 @@ export const yearToDateRange = y => [
 export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
 
 
-export const teamColors =  (x) => {
-  return teamColors2023[x];
-}
 export const teamNames = (x, version) => {
-  return teams2023[x];
+  if (x === 3) return teams2023[x];
+  return teams2024[x];
 }
 
 

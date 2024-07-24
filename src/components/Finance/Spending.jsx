@@ -1,5 +1,5 @@
-import {raceAbbrevs} from "@/js/localization";
-import {Alert, AlertTitle} from "@mui/material";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {teamNames} from "@/js/localization";
 import {Divider, Typography} from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -8,12 +8,8 @@ import Select from '@mui/material/Select';
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, teamNames} from "@/js/localization";
-import {teams2023} from "@/js/localization/Teams2023";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {defaultFontFamily} from "../../ui/Fonts";
-import {Sponsorship} from "./consts_transactions";
-import * as Tx from "./consts_transactions"
+import * as Tx from "./consts_transactions";
 
 const grid = {
   left: 100,

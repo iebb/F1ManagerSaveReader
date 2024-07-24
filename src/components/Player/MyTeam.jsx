@@ -29,7 +29,7 @@ export default function MyTeam() {
         This feature might be unstable. Use with caution.
       </Alert>
       <Typography variant="h5" component="h5">
-        Logo and Livery
+        Logo and Livery Preview
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       {

@@ -113,6 +113,7 @@ export default function RaceResultsF2({ formulae = 2 }) {
 
     let driverTeams = {};
     let driverResults = {};
+    let driverPosInTeam = {};
     let driverStandings = [];
     let fastestLapOfRace = {};
     let polePositionPoints = {};
@@ -206,17 +207,21 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
 
       }
 
+
+
       try {
         for(const d of driverStandings) {
 
           let [sd, ed] = yearToDateRange(season);
 
           d.DriverAssignedNumber = "N/A";
+          console.log(season, player.CurrentSeason);
 
           if (season === player.CurrentSeason) {
             try {
               [{ columns, values }] = database.exec(
-                `SELECT TeamID, PosInTeam FROM 'Staff_Contracts' WHERE StaffID = ${d.DriverID} AND ContractType = 0 AND StartDay <= ${sd} AND EndSeason >= ${season} ORDER BY StartDay DESC`
+                `SELECT Staff_Contracts.TeamID, PosInTeam FROM 'Staff_Contracts' LEFT JOIN Teams ON Teams.TeamID = Staff_Contracts.TeamID WHERE Staff_Contracts.StaffID = ${d.DriverID} AND ContractType = 0 
+AND StartDay <= ${player.Day} AND EndSeason >= ${season} AND ContractType = 0 AND Formula = ${formulae} ORDER BY StartDay DESC`
               );
               const [TeamID, Position] = values[0];
               const teamOrder = teamStandings[TeamID] - 1;
@@ -227,6 +232,7 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
               }
               driverTeams[d.DriverID] = TeamID;
             } catch (e) {
+              console.log(e);
               const TeamID = driverTeams[d.DriverID];
               const teamOrder = teamStandings[TeamID] - 1;
               d.DriverAssignedNumber = teamNumbers[teamOrder].join("/");

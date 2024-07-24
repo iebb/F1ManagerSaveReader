@@ -12,6 +12,21 @@ export const teamColors2023 = [
   "#C92D4B",
   "#22594a",
 ]
+
+export const teamColors2024 = [
+  "",
+  "#F91536",
+  "#F58020",
+  "#3671C6",
+  "#79edd6",
+  "#2293D1",
+  "#37BEDD",
+  "#B6BABD",
+  "#5E8FAA",
+  "#C92D4B",
+  "#22594a",
+]
+
 export const teams2023 = [
   "",
   "Ferrari",
@@ -48,4 +63,40 @@ export const teams2023 = [
   "Rodin Carlin",
   "Jenzer Motorsport",
   "PHM Racing by Charouz",
+];
+
+export const teams2024 = [
+  "",
+  "Ferrari",
+  "McLaren",
+  "Red Bull",
+  "Mercedes",
+  "Alpine",
+  "Williams",
+  "Haas",
+  "RB",
+  "Kick Sauber",
+  "Aston Martin",
+  "PREMA Racing",
+  "Invicta Racing",
+  "Rodin Motorsport",
+  "Hitech Pulse-Eight",
+  "ART Grand Prix",
+  "MP Motorsport",
+  "PHM AIX Racing",
+  "DAMS Lucas Oil",
+  "Campos Racing",
+  "Van Amersfoort Racing",
+  "Trident",
+  "PREMA Racing",
+  "Trident",
+  "ART Grand Prix",
+  "Hitech Pulse-Eight",
+  "Van Amersfoort Racing",
+  "MP Motorsport",
+  "Campos Racing",
+  "Rodin Motorsport",
+  "Jenzer Motorsport",
+  "PHM AIX Racing",
+  "Custom Team",
 ];

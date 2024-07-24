@@ -1,10 +1,9 @@
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {dateToDay} from "@/js/localization";
 import {Button, Divider, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext} from "react";
-import {dateToDay, teamNames} from "@/js/localization";
-import {repack} from "@/js/Parser";
-import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 
 export default function Toolbox() {
 
