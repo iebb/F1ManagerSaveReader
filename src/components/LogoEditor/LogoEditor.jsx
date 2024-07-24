@@ -1,3 +1,4 @@
+import {enqueueSnackbar} from "notistack";
 import React, {useContext, useEffect} from 'react';
 import {EditorSections, gameToJson, jsonToGame} from "@/components/LogoEditor/logo/consts";
 import {BasicInfoContext, DatabaseContext} from "@/js/Contexts";
@@ -44,10 +45,8 @@ const ActionControls = ({ store }) => {
             database.exec(`INSERT INTO Teams_Custom_LogoElements VALUES(${
               row.ElementID
             }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
-            console.log(`INSERT INTO Teams_Custom_LogoElements VALUES(${
-              row.ElementID
-            }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
           }
+          enqueueSnackbar("Team Logo Saved.")
         }}
       >
         Save

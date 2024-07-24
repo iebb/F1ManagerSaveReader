@@ -123,6 +123,7 @@ export const EditorSections = logoElements.map(section => {
               store.activePage.addElement({
                 type: 'svg',
                 src: image.url,
+                name: `${image.hash}`,
                 width: defaultSize,
                 height: defaultSize,
                 x: pos?.x || 0,
