@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --mode development",
-    "build_prod": "vite build",
     "lint": "eslint f1msavereadergen2 --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

@@ -18,8 +18,6 @@ const store = createStore({
 });
 
 const ColorPicker = observer(({ store, element: e, elements: t }) => {
-  console.log(e);
-
   return (
     <div>
       <input
@@ -33,6 +31,30 @@ const ColorPicker = observer(({ store, element: e, elements: t }) => {
   );
 });
 
+const ActionControls = ({ store }) => {
+  const database = useContext(DatabaseContext);
+  return (
+    <div>
+      <Button
+        variant="contained"
+        onClick={() => {
+          const game = jsonToGame(store.toJSON());
+          database.exec("DELETE FROM Teams_Custom_LogoElements");
+          for(const row of game) {
+            database.exec(`INSERT INTO Teams_Custom_LogoElements VALUES(${
+              row.ElementID
+            }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
+            console.log(`INSERT INTO Teams_Custom_LogoElements VALUES(${
+              row.ElementID
+            }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
+          }
+        }}
+      >
+        Save
+      </Button>
+    </div>
+  );
+};
 
 export default function LogoEditor() {
 
@@ -54,27 +76,6 @@ export default function LogoEditor() {
     )
   }
 
-// it is important to define component onside of `MyToolbar` render function
-  const ActionControls = ({ store }) => {
-    return (
-      <div>
-        <Button
-          variant="contained"
-          onClick={() => {
-            const game = jsonToGame(store.toJSON());
-            database.exec("DELETE FROM Teams_Custom_LogoElements");
-            for(const row of game) {
-              database.exec(`INSERT INTO Teams_Custom_LogoElements VALUES(${
-                row.ElementID
-              }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
-            }
-          }}
-        >
-          Save
-        </Button>
-      </div>
-    );
-  };
 
   return (
     <div className="bp5-dark">

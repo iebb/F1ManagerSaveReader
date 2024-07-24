@@ -1,7 +1,6 @@
 import {logoElements} from "@/components/LogoEditor/logo/logos";
 import {observer} from "mobx-react-lite";
 import {ImagesGrid, SectionTab} from "polotno/side-panel";
-import FaShapes from '@meronex/icons/fa/FaShapes';
 import React from "react";
 
 const imageObjects = Object.fromEntries(
@@ -78,7 +77,7 @@ export const gameToJson = (elements) => {
 export const jsonToGame = (data) => {
   return data.pages[0].children.map((ch, _idx) => {
 
-    const rotation = -ch.rotation / 180 * Math.PI;
+    const rotation = ch.rotation / 180 * Math.PI;
 
     const absX = Math.abs(ch.width / defaultSize);
     const absY = Math.abs(ch.height / defaultSize);
@@ -92,10 +91,10 @@ export const jsonToGame = (data) => {
     return {
       "ElementID": _idx,
       "PartHash": parseInt(ch.name, 10),
-      "Colour": parseInt(ch.colorsReplace["#fff"].replace("#", "ff"), 16),
+      "Colour": parseInt((ch.colorsReplace["#fff"] || "#ffffff").replace("#", "ff"), 16),
       "PositionX": untranslateX,
       "PositionY": untranslateY,
-      "Rotation": rotation,
+      "Rotation": -rotation,
       "ScaleX": absX * (ch.flipX ? -1 : 1),
       "ScaleY": absY * (ch.flipY ? -1 : 1),
     };
@@ -103,36 +102,39 @@ export const jsonToGame = (data) => {
 }
 
 
-export const EditorSections = logoElements.map(section => ({
-  name: section.name,
-  Tab: (props) => (
-    <SectionTab name={section.name} {...props}>
-      <FaShapes icon="new-text-box" />
-    </SectionTab>
-  ),
-  // we need observer to update component automatically on any store changes
-  Panel: observer(({ store }) => {
-    const images = section.icons;
-    return (
-      <div style={{ overflowY: 'auto', height: '100%' }}>
-        <ImagesGrid
-          images={images}
-          getPreview={(image) => image.url}
-          onSelect={async (image, pos, element, event) => {
-            store.activePage.addElement({
-              type: 'svg',
-              src: image.url,
-              width: defaultSize,
-              height: defaultSize,
-              x: pos?.x || 0,
-              y: pos?.y || 0,
-            });
-          }}
-          rowsNumber={4}
-          isLoading={!images.length}
-          loadMore={false}
-        />
-      </div>
-    );
-  }),
-}));
+export const EditorSections = logoElements.map(section => {
+  const Logo = section.logo;
+  return ({
+    name: section.name,
+    Tab: (props) => (
+      <SectionTab name={section.name} {...props}>
+        <Logo style={{ fontSize: 18 }} />
+      </SectionTab>
+    ),
+    // we need observer to update component automatically on any store changes
+    Panel: observer(({ store }) => {
+      const images = section.icons;
+      return (
+        <div style={{ overflowY: 'auto', height: '100%' }}>
+          <ImagesGrid
+            images={images}
+            getPreview={(image) => image.url}
+            onSelect={async (image, pos, element, event) => {
+              store.activePage.addElement({
+                type: 'svg',
+                src: image.url,
+                width: defaultSize,
+                height: defaultSize,
+                x: pos?.x || 0,
+                y: pos?.y || 0,
+              });
+            }}
+            rowsNumber={4}
+            isLoading={!images.length}
+            loadMore={false}
+          />
+        </div>
+      );
+    }),
+  })
+});
