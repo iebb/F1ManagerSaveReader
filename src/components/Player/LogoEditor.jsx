@@ -13,7 +13,7 @@ import {ZoomButtons} from 'polotno/toolbar/zoom-buttons';
 import React, {useContext, useEffect} from 'react';
 
 const store = createStore({
-  key: '',
+  key: 'X1QnNnMmJajDWNsBKuVD',
 });
 
 const ColorPicker = observer(({ store, element: e, elements: t }) => {
@@ -21,7 +21,7 @@ const ColorPicker = observer(({ store, element: e, elements: t }) => {
     <div>
       <input
         type="color"
-        value={e.colorsReplace.get("#fff")}
+        value={e.colorsReplace.get("#fff") || "#fff"}
         onChange={(r) => {
           e.replaceColor("#fff", r.target.value);
         }}
