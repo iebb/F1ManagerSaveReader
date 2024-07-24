@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useContext} from "react";
-import {teamNames} from "@/js/localization";
-import {MetadataContext} from "@/js/Contexts";
+import {resolveLiteral, teamNames} from "@/js/localization";
+import {BasicInfoContext, MetadataContext} from "@/js/Contexts";
 
 export const TeamName = ({
                            TeamID = 0,
@@ -12,9 +12,10 @@ export const TeamName = ({
                            header = "",
                          }) => {
   const {version, gameVersion} = useContext(MetadataContext);
+  const {teamMap} = useContext(BasicInfoContext);
   if (!TeamID) return null;
 
-  const teamName = teamNames(TeamID, version);
+  const teamName = TeamID > 31 ? resolveLiteral(teamMap[TeamID].TeamNameLocKey) : teamNames(TeamID, version);
 
 
   switch(type) {

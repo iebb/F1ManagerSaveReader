@@ -23,7 +23,7 @@ export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', 
 
 
 export const teamNames = (x, version) => {
-  if (x === 3) return teams2023[x];
+  if (version <= 3) return teams2023[x];
   return teams2024[x];
 }
 
@@ -194,8 +194,16 @@ export const getDriverName = (d) => {
 }
 
 
-export const literal = /^LITERAL:Value=\|(.*)\|$/
+export const literal = /LITERAL:Value=\|(.*)\|/
+export const stringLiteral = /^\[STRING_LITERAL:Value=\|(.*)\|]$/
 
+export const resolveLiteral = (_nameString) => {
+  const ex = literal.exec(_nameString);
+  if (ex) {
+    return ex[1];
+  }
+  return _nameString;
+}
 export const resolveName = (_nameString) => {
   let nameString = _nameString.replace("[", "").replace("]", "")
   if (staffNames[nameString]) return staffNames[nameString];
@@ -204,8 +212,9 @@ export const resolveName = (_nameString) => {
 }
 
 export const resolveNameV4 = (_nameString) => {
-  if (literal.match(_nameString)) {
-    return literal.exec(_nameString)[1];
+  const ex = literal.exec(_nameString);
+  if (ex) {
+    return ex[1];
   }
   let nameString = _nameString.replace("[", "").replace("]", "")
   if (staffNames[nameString]) return staffNames[nameString];
