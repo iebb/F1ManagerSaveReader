@@ -16,8 +16,5 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src/"),
     },
   },
-  rollupOptions: {
-    external: ['polotno']
-  },
 })
 
