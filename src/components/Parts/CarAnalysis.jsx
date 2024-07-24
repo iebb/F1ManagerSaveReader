@@ -1,3 +1,4 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
@@ -145,14 +146,12 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`;
             width: 120,
             renderCell: ({ value, row }) => {
               return (
-                <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, version)}
-                  <div>
-                    {
-                      getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])
-                    }
-                  </div>
-                </div>
+                <TeamName
+                  TeamID={value}
+                  posInTeam={row.TeamCarID}
+                  type="fanfare"
+                  description={getDriverName(driverMap[teamMap[row.TeamID][`Driver${row.TeamCarID}ID`]])}
+                />
               )
             }
           },

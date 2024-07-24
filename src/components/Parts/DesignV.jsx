@@ -1,8 +1,9 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {teamNames} from "@/js/localization";
+import {getDriverName, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {PartStatsCategorizedV} from "./consts";
 
@@ -146,12 +147,11 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
             width: 120,
             renderCell: ({ value, row }) => {
               return (
-                <div style={{color: `rgb(var(--team${value}-triplet)`}}>
-                  {teamNames(value, version)}
-                  <div>
-                    {row.DesignID ? `Design ${row.DesignID}` : "Not Installed"}
-                  </div>
-                </div>
+                <TeamName
+                  TeamID={value}
+                  type="fanfare"
+                  description={row.DesignID ? `Design ${row.DesignID}` : "Not Installed"}
+                />
               )
             }
           },

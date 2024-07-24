@@ -1,3 +1,4 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {circuitNames, countryNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
 
 import {Button, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
@@ -47,7 +48,7 @@ export const BasicInfoHeader = () => {
           Playing {ScenarioID ? "Scenario Mode" : `as ${FirstName} ${LastName}`} for <span style={{
           color: `var(--team${team.TeamID}-fanfare1)`,
           borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
-        }}>{team.TeamName}</span> in {version + 2020} Game (v{metadata.gameVersion}), savefile {metadata.filename}
+        }}><TeamName TeamID={team.TeamID} /></span> in {version + 2020} Game (v{metadata.gameVersion}), savefile {metadata.filename}
           <br />
           It's {formatDate(dayToDate(Day))}, {statusMark}.
         </Typography>

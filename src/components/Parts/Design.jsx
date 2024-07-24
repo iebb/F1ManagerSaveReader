@@ -145,10 +145,10 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
                 ":itemID": part.ItemID,
               })
             }
-            if (oldRow['condition_' + partId] !== newRow['condition_' + partId]) {
-              database.exec(`UPDATE Parts_Items SET Condition = :condition WHERE ItemID = :itemID`, {
-                ":condition": newRow['condition_' + partId],
-                ":itemID": part.ItemID,
+            if (oldRow['knowledge_' + partId] !== newRow['knowledge_' + partId]) {
+              database.exec(`UPDATE Parts_Designs SET PartKnowledge = :condition WHERE DesignID = :itemID`, {
+                ":condition": newRow['knowledge_' + partId],
+                ":itemID": part.DesignID,
               })
             }
           }
