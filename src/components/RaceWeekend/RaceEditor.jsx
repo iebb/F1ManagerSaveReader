@@ -96,6 +96,9 @@ export default function RaceEditor() {
           });
           row.id = row.CarIndex;
           row.TeamID = (row.CarIndex >> 1) + 1;
+          if (row.TeamID > 10) {
+            row.TeamID += 21;
+          }
           row.TeamCarID = (row.CarIndex & 1) + 1;
           _rows.push(row);
         }
