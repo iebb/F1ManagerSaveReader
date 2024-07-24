@@ -308,14 +308,15 @@ export default function RaceEditor() {
 
           for (let tyreId = 1; tyreId <= 4; tyreId++) {
             if (newRow[`Tyre${tyreId}Condition`] !== oldRow[`Tyre${tyreId}Condition`]) {
+              console.log(newRow[`Tyre${tyreId}Condition`], oldRow[`Tyre${tyreId}Condition`]);
               let tyreName = Tyres[tyreId];
               database.exec(`UPDATE Save_CarTyreAllocation SET ${tyreName}Wear = :wear WHERE CarId = :CarID AND TyreSetID = :TyreSetID`, {
-                ":wear": newRow[`${tyreName}Wear`],
+                ":wear": newRow[`Tyre${tyreId}Condition`],
                 ":CarID": newRow.CarIndex,
                 ":TyreSetID": newRow.CurrentActiveTyreID,
               })
               database.exec(`UPDATE Save_RaceSimCars_Parts SET Tyre${tyreId}Condition = :wear WHERE CarIndex = :CarID`, {
-                ":wear": newRow[`${tyreX}${tyreY}Wear`],
+                ":wear": newRow[`Tyre${tyreId}Condition`],
                 ":CarID": newRow.CarIndex,
               })
             }
@@ -364,7 +365,7 @@ export default function RaceEditor() {
           },
           ...[1, 2, 3, 4].map(tyre => (
             {
-              field: Tyres[tyre] + 'Wear',
+              field: `Tyre${tyre}Condition`,
               headerName: Tyres[tyre],
               valueGetter: ({value}) => Number(value.toFixed(6)),
               type: "number",
