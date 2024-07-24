@@ -1,4 +1,4 @@
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import MyTeam from "@/components/Player/MyTeam";
 import Rename from "@/components/Player/Rename";
 import TeamSwitch from "@/components/Player/TeamSwitch";

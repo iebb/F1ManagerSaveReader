@@ -1,10 +1,9 @@
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {getDriverCode, getDriverName, raceAbbrevs, raceFlags} from "@/js/localization";
 import {getCountryFlag} from "@/js/localization/ISOCountries";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
-import Image from "next/image";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../../Localization/Localization";
 
 export default function ResultsTable(ctx) {
@@ -57,7 +56,7 @@ export default function ResultsTable(ctx) {
                   className={`nopad race_header_cell race_cell_${type}`}
                   colSpan={ span }
                 >
-                  <Image
+                  <img
                     src={require(`../../../assets/flags/${raceFlags[race.TrackID]}.svg`)}
                     key={race.TrackID}
                     width={20} height={15}
