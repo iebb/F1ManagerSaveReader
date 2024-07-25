@@ -8,13 +8,13 @@ const imageObjects = Object.fromEntries(
 )
 
 
-const defaultSize = 200;
+const defaultSize = 1000;
 
 export const gameToJson = (elements) => {
   return (
     {
-      "width": 200,
-      "height": 200,
+      "width": defaultSize,
+      "height": defaultSize,
       "fonts": [],
       "pages": [{
         "id": "default",
