@@ -190,7 +190,7 @@ export const getDriverCode = (d) => {
 }
 
 export const getDriverName = (d) => {
-  return `${resolveName(d.FirstName)} ${resolveName(d.LastName)}`;
+  return d ? `${resolveName(d.FirstName)} ${resolveName(d.LastName)}` : "-";
 }
 
 

@@ -85,9 +85,18 @@ export const parseBasicInfo = ({db, metadata}) => {
       })
     }
 
-    [{ columns, values }] = db.exec("SELECT * FROM 'Staff_DriverData' " +
-      "LEFT JOIN 'Staff_BasicData' ON Staff_DriverData.StaffID = Staff_BasicData.StaffID " +
-      "LEFT JOIN 'Staff_DriverNumbers' ON Staff_DriverData.StaffID = Staff_DriverNumbers.CurrentHolder");
+    if (version === 4) {
+      [{ columns, values }] = db.exec("SELECT *, Countries.EnumName as Nationality FROM 'Staff_DriverData' " +
+        "LEFT JOIN 'Staff_BasicData' ON Staff_DriverData.StaffID = Staff_BasicData.StaffID " +
+        `LEFT JOIN Countries on Countries.CountryID = Staff_BasicData.CountryID\n` +
+        "LEFT JOIN 'Staff_DriverNumbers' ON Staff_DriverData.StaffID = Staff_DriverNumbers.CurrentHolder");
+    } else {
+      [{ columns, values }] = db.exec("SELECT * FROM 'Staff_DriverData' " +
+        "LEFT JOIN 'Staff_BasicData' ON Staff_DriverData.StaffID = Staff_BasicData.StaffID " +
+        "LEFT JOIN 'Staff_DriverNumbers' ON Staff_DriverData.StaffID = Staff_DriverNumbers.CurrentHolder");
+    }
+
+
     for(const r of values) {
       let d = {};
       r.map((x, _idx) => d[columns[_idx]] = x)
@@ -111,14 +120,6 @@ export const parseBasicInfo = ({db, metadata}) => {
   }
 
 
-
-  [{ columns, values }] = db.exec("select TeamID from Teams WHERE Formula = 1");
-  let i = 0;
-  for(const r of values) {
-    basicInfo.teamIds.push(r[0]);
-    basicInfo.teamRankings.push(++i);
-  }
-
   basicInfo.weekend = {
     RaceID: -1
   };
@@ -131,6 +132,22 @@ export const parseBasicInfo = ({db, metadata}) => {
   }
   for (const r of db.getAllRows("select * from Player")) {
     basicInfo.player = {...basicInfo.player, ...r};
+  }
+
+
+  basicInfo.teamIds = [1,2,3,4,5,6,7,8,9,10];
+  basicInfo.teamRankings = [1,2,3,4,5,6,7,8,9,10];
+  // [{ columns, values }] = db.exec("select TeamID from Teams WHERE Formula = 1");
+  // let i = 0;
+  // for(const r of values) {
+  //   basicInfo.teamIds.push(r[0]);
+  //   basicInfo.teamRankings.push(++i);
+  // }
+
+  if (basicInfo.player.CustomTeamEnabled) {
+    basicInfo.teamIds.push(32);
+    basicInfo.teamRankings.push(11);
+
   }
 
   for (const r of db.getAllRows(

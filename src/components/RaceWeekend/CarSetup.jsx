@@ -1,3 +1,4 @@
+import {TeamName} from "@/components/Localization/Localization";
 import {circuitNames, countryNames, getDriverName} from "@/js/localization";
 import {
   Button,
@@ -179,11 +180,13 @@ export default function CarSetup() {
                 style={basicInfo.player.TeamID === row.TeamID ? { background: "#333333" } : {}}
               >
                 <TableCell component="th" scope="row">
-                  {
-                    getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
-                  }
-                  <br />
-                  <span className="small">{row.Team.TeamName}</span>
+                  <TeamName
+                    TeamID={row.TeamID}
+                    type="fanfare"
+                    description={
+                      getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
+                    }
+                  />
                 </TableCell>
                 {
                   CarSetupParams.map(p => {

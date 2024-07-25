@@ -63,10 +63,9 @@ LEFT JOIN (
     SELECT TeamID, PartType, MAX(DesignID) as LatestDesign FROM Parts_Designs WHERE ValidFrom <= ${basicInfo.player.CurrentSeason} AND (DayCompleted > 0 OR DayCreated < 0) GROUP BY TeamID, PartType
 ) as LatestDesign ON LatestDesign.TeamID = Parts_CarLoadout.TeamID AND LatestDesign.PartType = Parts_CarLoadout.PartType
 LEFT JOIN Parts_Designs ON Parts_Designs.DesignID = COALESCE(Parts_CarLoadout.DesignID, LatestDesign.LatestDesign)
-LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`;
+LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID WHERE Parts_CarLoadout.DesignID IS NOT NULL`;
 
       for(const row of database.getAllRows(sql)) {
-
         let carID = row.TeamID * 2 + row.LoadOutID;
         if (!partStats[carID]) {
           partStats[carID] = {};
@@ -99,14 +98,11 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID`;
             }
             loadOut["calc_" + carStat.id] = value;
           }
-
-          loadouts.push(loadOut);
+          if (partStats[teamId * 2 + loadoutId]) {
+            loadouts.push(loadOut);
+          }
         }
       }
-
-      console.log(loadouts);
-      console.log(driverMap);
-      console.log(teamMap);
 
       setPartStats(loadouts);
 

@@ -35,8 +35,6 @@ export default function ResultsTable(ctx) {
   }, [database, _raceSchedule]);
 
 
-
-
     return (
     <TableContainer component={Paper} className={`table_f${formulae}`}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -61,6 +59,7 @@ export default function ResultsTable(ctx) {
                     key={race.TrackID}
                     width={20} height={15}
                     alt={race.Name}
+                    className="inline-block"
                   />
                   <br />
                   <span style={{ fontSize: 12 }}>{raceAbbrevs[race.TrackID]}</span>
@@ -124,7 +123,7 @@ export default function ResultsTable(ctx) {
                 />
                 {
                   formulae === 1 ? (` ${
-                    (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber
+                    (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber || 'N/A'
                   }`) : (
                     `${row.DriverAssignedNumber}`
                   )
@@ -134,9 +133,11 @@ export default function ResultsTable(ctx) {
               </TableCell>
               <TableCell
                 sx={{ py: 0.5 }}
-                className={`race_cell_team`}
+                className={`race_cell_team overflow-hidden`}
               >
-                <TeamName TeamID={driverTeams[row.DriverID]} type="fanfare" />
+                <div className="w-[500px]">
+                  <TeamName TeamID={driverTeams[row.DriverID]} type="fanfare" />
+                </div>
               </TableCell>
               {
                 raceSchedule.map(({type, race, span}) => {

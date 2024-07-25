@@ -271,7 +271,7 @@ PR1.PracticeSession IS NULL`
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
+        Formula 1 World Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
           <InputLabel id="standard-label">Season</InputLabel>
           <Select
             labelId="standard-label"

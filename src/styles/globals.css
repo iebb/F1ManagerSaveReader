@@ -217,20 +217,25 @@ html {
 
 .table_f1 .race_cell_team {
   min-width: 130px!important;
+  max-width: 130px!important;
   width: 130px;
 }
 
 .table_f2 .race_cell_team {
   min-width: 200px!important;
+  max-width: 200px!important;
   width: 200px;
 }
 
 .table_f3 .race_cell_driver {
   min-width: 200px!important;
+  max-width: 200px!important;
   width: 200px;
 }
+
 .table_f3 .race_cell_team {
   min-width: 220px!important;
+  max-width: 220px!important;
   width: 220px;
 }
 

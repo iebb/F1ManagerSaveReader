@@ -100,7 +100,7 @@ export default function Facilities() {
       buildings[row.TeamID]["DegradationValue_" + row.BuildingType] = row.DegradationValue;
     }
     setBuildings(
-      teamIds.map(
+      teamIds.filter(teamIndex => buildings[teamIndex]).map(
         teamIndex => ({
           id: teamIndex,
           TeamID: teamIndex,

@@ -252,12 +252,12 @@ body {
     --team31-fanfare1-triplet: 123, 50, 18;
     --team31-fanfare2: #7B3212;
     --team31-fanfare2-triplet: 123, 50, 18;
-    --team32: #636363;
-    --team32-triplet: 99, 99, 99;
-    --team32-fanfare1: #636363;
-    --team32-fanfare1-triplet: 99, 99, 99;
-    --team32-fanfare2: #636363;
-    --team32-fanfare2-triplet: 99, 99, 99;
+    --team32: #838383;
+    --team32-triplet: 131, 131, 131;
+    --team32-fanfare1: #838383;
+    --team32-fanfare1-triplet: 131, 131, 131;
+    --team32-fanfare2: #838383;
+    --team32-fanfare2-triplet: 131, 131, 131;
 }
 .game_v3 {
     --team1: #F91536;
