@@ -12,6 +12,8 @@ const defaultSize = 1024;
 export const fPainterToJson = (data) => {
   const shapes = data.shapes;
   const scale = Math.min(shapes[0].data[2], shapes[0].data[3]);
+  const dx = (scale - shapes[0].data[2]) / 2;
+  const dy = (scale - shapes[0].data[3]) / 2;
   const N = 1.4;
   return (
     {
@@ -22,8 +24,8 @@ export const fPainterToJson = (data) => {
         "id": "default",
         "children": shapes.filter(x => x.type === 16).map( (ex, _idx) => {
           const e = {
-            PositionX: 2 * (ex.data[0] / scale - 0.5),
-            PositionY: 2 * (-(ex.data[1] / scale - 0.5)),
+            PositionX: 2 * ((ex.data[0] + dx / 2) / scale - 0.5),
+            PositionY: 2 * (-((ex.data[1] + dy / 2) / scale - 0.5)),
             ScaleX: 2 * ex.data[2] / scale * N,
             ScaleY: -(2 * ex.data[3] / scale) * N,
             Rotation: -ex.data[4] / 180 * Math.PI
@@ -48,8 +50,8 @@ export const fPainterToJson = (data) => {
             "visible": true,
             "selectable": true,
             "removable": true,
-            "x": translateX + xRotated,
-            "y": translateY + yRotated,
+            "x": translateX + xRotated + dx,
+            "y": translateY + yRotated + dy,
             "width": absX * defaultSize,
             "height": absY * defaultSize,
             "rotation": rotationDeg,
