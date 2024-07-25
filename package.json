@@ -46,5 +46,10 @@
     "vite": "^5.3.4",
     "vite-plugin-node-polyfills": "^0.22.0",
     "vite-plugin-require": "^1.2.14"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.6"
   }
 }

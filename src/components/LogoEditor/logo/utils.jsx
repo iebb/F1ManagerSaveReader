@@ -7,8 +7,77 @@ const imageObjects = Object.fromEntries(
   logoElements.map(x => x.icons.map(i => [i.hash, i])).flat()
 )
 
+const defaultSize = 1024;
 
-const defaultSize = 1000;
+export const fPainterToJson = (data) => {
+  const shapes = data.shapes;
+  const scale = Math.min(shapes[0].data[2], shapes[0].data[3]);
+  const N = 1.4;
+  return (
+    {
+      "width": defaultSize,
+      "height": defaultSize,
+      "fonts": [],
+      "pages": [{
+        "id": "default",
+        "children": shapes.filter(x => x.type === 16).map( (ex, _idx) => {
+          const e = {
+            PositionX: 2 * (ex.data[0] / scale - 0.5),
+            PositionY: 2 * (-(ex.data[1] / scale - 0.5)),
+            ScaleX: 2 * ex.data[2] / scale * N,
+            ScaleY: -(2 * ex.data[3] / scale) * N,
+            Rotation: -ex.data[4] / 180 * Math.PI
+          };
+
+          const absX = Math.abs(e.ScaleX);
+          const absY = Math.abs(e.ScaleY);
+          const translateX = (0.5 + e.PositionX / 2 - absX / 2) * defaultSize;
+          const translateY = (0.5 - e.PositionY / 2 - absY / 2) * defaultSize;
+          const rotation = -e.Rotation; //e.Rotation * 180 / Math.PI;
+          const rotationDeg = rotation * 180 / Math.PI;
+          const sinA = Math.sin(rotation);
+          const cosA = Math.cos(rotation);
+          const xRotated = -(absX * cosA - absY * sinA - absX) * defaultSize / 2;
+          const yRotated = -(absX * sinA + absY * cosA - absY) * defaultSize / 2;
+
+          return {
+            "id": `${_idx}`,
+            "type": "svg",
+            "name": `4136501132`,
+            "opacity": 1,
+            "visible": true,
+            "selectable": true,
+            "removable": true,
+            "x": translateX + xRotated,
+            "y": translateY + yRotated,
+            "width": absX * defaultSize,
+            "height": absY * defaultSize,
+            "rotation": rotationDeg,
+            "flipX": e.ScaleX < 0,
+            "flipY": e.ScaleY < 0,
+            "draggable": true,
+            "resizable": true,
+            "keepRatio": false,
+            "src": '/svg/circle/circle.svg',
+            "borderColor": "black",
+            "borderSize": 0,
+            "cornerRadius": 0,
+            "colorsReplace": {
+              "#fff": `#${ex.color[0].toString(16).padStart(2, '0')}${ex.color[1].toString(16).padStart(2, '0')}${ex.color[2].toString(16).padStart(2, '0')}`
+            }
+          }
+        }),
+        "width": defaultSize,
+        "height": defaultSize,
+        "background": "grey",
+        "bleed": 0
+      }],
+      "unit": "px",
+      "dpi": 72
+    }
+  )
+}
+
 
 export const gameToJson = (elements) => {
   return (
@@ -107,34 +176,34 @@ export const EditorSections = logoElements.map(section => {
   return {
     name: section.name,
     Tab: (props) => <SectionTab name={section.name} {...props}>
-        <Logo style={{ fontSize: 18 }} />
-      </SectionTab>,
+      <Logo className="text-xl block m-auto"/>
+    </SectionTab>,
     // we need observer to update component automatically on any store changes
     Panel: observer(({ store }) => {
       const images = section.icons;
       return <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ImagesGrid
-            images={images}
-            getPreview={(image) => image.url}
-            onSelect={async (image, pos, element, event) => {
-              store.activePage.addElement({
-                type: 'svg',
-                src: image.url,
-                name: `${image.hash}`,
-                width: defaultSize,
-                height: defaultSize,
-                x: pos?.x || 0,
-                y: pos?.y || 0,
-                draggable: true,
-                resizable: true,
-                keepRatio: false,
-              });
-            }}
-            rowsNumber={4}
-            isLoading={!images.length}
-            loadMore={false}
-          />
-        </div>;
+        <ImagesGrid
+          images={images}
+          getPreview={(image) => image.url}
+          onSelect={async (image, pos, element, event) => {
+            store.activePage.addElement({
+              type: 'svg',
+              src: image.url,
+              name: `${image.hash}`,
+              width: defaultSize,
+              height: defaultSize,
+              x: pos?.x || 0,
+              y: pos?.y || 0,
+              draggable: true,
+              resizable: true,
+              keepRatio: false,
+            });
+          }}
+          rowsNumber={4}
+          isLoading={!images.length}
+          loadMore={false}
+        />
+      </div>;
     }),
   }
 });
