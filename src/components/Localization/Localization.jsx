@@ -57,7 +57,7 @@ export const TeamName = ({
       )
     case "colored":
       return (
-        <span style={{color: `rgb(var(--team${value}-triplet)`}}>
+        <span style={{color: `rgb(var(--team${TeamID}-triplet)`}}>
           {teamName}
         </span>
       )

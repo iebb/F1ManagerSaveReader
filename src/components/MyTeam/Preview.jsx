@@ -18,7 +18,7 @@ export default function Preview() {
   return (
     <div>
       <Typography variant="h5" component="h5">
-        Team Name
+        Team Preview
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <Alert severity="warning" sx={{ my: 2 }}>

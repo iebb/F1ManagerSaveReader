@@ -13,7 +13,7 @@ import ContractSwapper from "./subcomponents/ContractSwapper";
 import StaffEditor from "./subcomponents/StaffEditor";
 
 
-export default function StaffGeneric({ StaffType = 1 }) {
+export default function StaffDriver2024({ StaffType = 0 }) {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
@@ -118,27 +118,17 @@ export default function StaffGeneric({ StaffType = 1 }) {
             valueGetter: ({ row }) => row.StaffID,
             width: 40,
             renderCell: ({ row }) => {
-              if (StaffType === 0) {
-                return (
-                  <div style={{ fontSize: "90%" }}>
-                    {
-                      row.CurrentNumber
-                    }
-                    <br />
-                    {
-                      getDriverCode(row)
-                    }
-                  </div>
-                )
-              } else {
-                return (
-                  <div style={{ fontSize: "90%" }}>
-                    {
-                      row.StaffID
-                    }
-                  </div>
-                )
-              }
+              return (
+                <div style={{fontSize: "90%"}}>
+                  {
+                    row.CurrentNumber
+                  }
+                  <br/>
+                  {
+                    getDriverCode(row)
+                  }
+                </div>
+              )
             }
           },
           {
@@ -148,7 +138,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
             width: 30,
             renderCell: ({ row }) => {
               return (
-                <img src={getCountryFlag(row.Nationality)} style={{ width: 24 }}/>
+                <img src={getCountryFlag(row.Nationality)} className="w-6 inline-block" />
               )
             }
           },
@@ -166,19 +156,18 @@ export default function StaffGeneric({ StaffType = 1 }) {
               )
             }
           },
-          ...(StaffType < 5) ? ([
-            {
-              field: 'Overall' , headerName: "Overall",
-              valueGetter: ({value}) => Number(value).toFixed(2),
-              type: 'number',
-              renderCell: ({value}) => {
-                return (
-                  <span style={{textAlign: "right", padding: 6}}>
+          {
+            field: 'Overall' , headerName: "Overall",
+            valueGetter: ({value}) => Number(value).toFixed(2),
+            type: 'number',
+            renderCell: ({value}) => {
+              return (
+                <span style={{textAlign: "right", padding: 6}}>
                     {value}
                   </span>
-                )
-              }
-            }]) : [],
+              )
+            }
+          },
           ...staffStats.map(x => (
             {
               field: 'performance_stats_' + x ,
@@ -195,34 +184,32 @@ export default function StaffGeneric({ StaffType = 1 }) {
               },
             }
           )),
-          ...StaffType === 0 ? ([
-            {
-              field: 'Improvability' , headerName: "Impr",
-              flex: 1,
-              editable: true,
-              type: 'number',
-              renderCell: ({value}) => {
-                return (
-                  <span style={{textAlign: "right", padding: 6}}>
-                    {value}
-                  </span>
-                )
-              },
+          {
+            field: 'Improvability' , headerName: "Impr",
+            flex: 1,
+            editable: true,
+            type: 'number',
+            renderCell: ({value}) => {
+              return (
+                <span style={{textAlign: "right", padding: 6}}>
+                  {value}
+                </span>
+              )
             },
-            {
-              field: 'Aggression' , headerName: "Aggr",
-              flex: 1,
-              editable: true,
-              type: 'number',
-              renderCell: ({value}) => {
-                return (
-                  <span style={{textAlign: "right", padding: 6}}>
-                    {value}
-                  </span>
-                )
-              },
+          },
+          {
+            field: 'Aggression' , headerName: "Aggr",
+            flex: 1,
+            editable: true,
+            type: 'number',
+            renderCell: ({value}) => {
+              return (
+                <span style={{textAlign: "right", padding: 6}}>
+                  {value}
+                </span>
+              )
             },
-          ]) : [],
+          },
           {
             field: 'DOB' , headerName: "DOB",
             width: 100,
@@ -237,70 +224,63 @@ export default function StaffGeneric({ StaffType = 1 }) {
               </div>
             ),
           },
-          ...StaffType === 5 ? ([
-            {
-              field: 'JobTitle',
-              headerName: 'Position',
-              flex: 1,
-              renderCell: ({ value }) => {
-                return mailSenders[value.replaceAll(/[\[\]]/g, '')];
-              }
-            },
-          ]) : ([
-            {
-              field: 'RetirementAge',
-              headerName: 'Retire',
-              width: 100,
-              editable: true,
-              renderCell: ({ row }) => {
-                const retirementInYears = Math.ceil(row.RetirementAge - row.Age);
-                const extendedRetirementAge = retirementInYears < 5 ? row.RetirementAge + 5 - retirementInYears : row.RetirementAge;
-                return (
-                  row.Retired ? (
-                    <div>
-                      <span style={{ color: "#ff7777" }}>retired</span>
-                      <br />
-                      <a style={{ color: "lightblue" }} onClick={() => {
-                        database.exec(`UPDATE ${retirementDataTable} SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${row.StaffID}`);
-                        setUpdated(+new Date());
-                      }}>unretire</a>
-                    </div>
-                  ) : (
-                    <div>
+          {
+            field: 'RetirementAge',
+            headerName: 'Retire',
+            width: 100,
+            editable: true,
+            renderCell: ({ row }) => {
+              const retirementInYears = Math.ceil(row.RetirementAge - row.Age);
+              const extendedRetirementAge = retirementInYears < 5 ? row.RetirementAge + 5 - retirementInYears : row.RetirementAge;
+              return (
+                row.Retired ? (
+                  <div>
+                    <span style={{ color: "#ff7777" }}>retired</span>
+                    <br />
+                    <a style={{ color: "lightblue" }} onClick={() => {
+                      database.exec(`UPDATE ${retirementDataTable} SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${row.StaffID}`);
+                      setUpdated(+new Date());
+                    }}>unretire</a>
+                  </div>
+                ) : (
+                  <div>
                     <span
                       style={{ color: retirementInYears > 0 ? "white" : "orange" }}
                     >{retirementInYears > 0 ? `in ${retirementInYears}y` : `${-retirementInYears}y ago`}</span>
-                      <br />
-                      {
-                        retirementInYears < 5 && (
-                          <span className="small" style={{ color: "lightblue" }} onClick={() => {
-                            database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
-                            setUpdated(+new Date());
-                          }}>postpone</span>
-                        )
-                      }
-                    </div>
-                  )
-                )
-              }
-            },
-            {
-              field: 'Salary',
-              headerName: 'Contract',
-              width: 150,
-              editable: true,
-              renderCell: ({ row }) => {
-                return row.TeamID ? (
-                  <div>
-                    {formatter.format(row.Salary)}
                     <br />
-                    <span>
-
-                    <span className="small" >until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
+                    {
+                      retirementInYears < 5 && (
+                        <span className="small" style={{ color: "lightblue" }} onClick={() => {
+                          database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
+                          setUpdated(+new Date());
+                        }}>postpone</span>
+                      )
+                    }
+                  </div>
+                )
+              )
+            }
+          },
+          {
+            field: 'Contracts.0.Salary',
+            headerName: 'Contract',
+            width: 150,
+            editable: true,
+            renderCell: ({ row }) => {
+              if (!row.Contracts.length) {
+                return "Not contracted";
+              }
+              const Contract = row.Contracts[0];
+              return (
+                <div>
+                  {formatter.format(Contract.Salary)}
+                  <br />
+                  <span>
+                    <span className="small" >until {Contract.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
                       database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
                       setUpdated(+new Date());
                     }}>+1</a> {
-                      row.EndSeason > player.CurrentSeason ? (
+                      Contract.EndSeason > player.CurrentSeason ? (
                         <a style={{color: "lightblue"}} onClick={() => {
                           database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
                           setUpdated(+new Date());
@@ -308,23 +288,16 @@ export default function StaffGeneric({ StaffType = 1 }) {
                       ) : null
                     }</span>
                     </span>
-                  </div>
-                ) : (
-                  "Not contracted"
-                )
-              }
-            },
-          ]),
-
+                </div>
+              )
+            }
+          },
           {
             field: 'TeamID',
             headerName: 'Team',
             width: 175,
             valueGetter: ({row}) => {
-              if (row.TeamID <= 10) {
-                return row.PosInTeam < 3 ? row.TeamID * 2 + row.PosInTeam : 50 + row.TeamID * 2
-              }
-              return row.TeamID ? 100 + row.TeamID * 3 + row.PosInTeam : 99999
+              return row.TeamID ? row.TeamFormula * 100 + row.TeamID * 3 + row.PosInTeam : 99999
             },
             renderCell: ({ row }) => {
               return row.TeamID ? (
@@ -332,9 +305,22 @@ export default function StaffGeneric({ StaffType = 1 }) {
                   type="fanfare"
                   TeamID={row.TeamID}
                   description={
-                    (StaffType === 0 || StaffType === 2) ? (
-                      <span className="small">Driver {row.PosInTeam}</span>
-                    ) : null
+                   <div className="small flex gap-1">
+                     {
+                       row.TeamFormula <= 3 ? (
+                         <span className="small">Driver #{row.PosInTeam}</span>
+                       ) : (
+                         <span className="small">Reserve</span>
+                       )
+                     }
+                     {
+                       row.Contracts.length > 1 && (
+                         <div className="small">
+                           {row.Contracts.slice(1).map(c => <TeamName type="colored" key={c.TeamID} TeamID={c.TeamID} />)}
+                         </div>
+                       )
+                     }
+                   </div>
                   }
                 />
               ) : (

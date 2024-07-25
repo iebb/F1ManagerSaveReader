@@ -112,10 +112,19 @@ export default function ContractSwapper(props) {
 
     }
 
-    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 100`);
-    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 2 WHERE ContractType = 120`);
-    // future contracts are not affected
-    database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 130`);
+    if (version <= 3) {
+
+      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 0 WHERE ContractType = 100`);
+      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 2 WHERE ContractType = 120`);
+      // future contracts are not affected
+      database.exec(`UPDATE Staff_Contracts SET Accepted = 1, ContractType = 3 WHERE ContractType = 130`);
+    } else {
+
+      database.exec(`UPDATE Staff_Contracts SET ContractType = 0 WHERE ContractType = 100`);
+      database.exec(`UPDATE Staff_Contracts SET ContractType = 2 WHERE ContractType = 120`);
+      // future contracts are not affected
+      database.exec(`UPDATE Staff_Contracts SET ContractType = 3 WHERE ContractType = 130`);
+    }
 
 
     if (staffType === 0) {
@@ -319,8 +328,8 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
                 <TeamName
                   TeamID={swapDriverUpdated?.TeamID}
                   type="fanfare"
-                  posInTeam={swapDriverUpdated?.PosInTeam}
-                  description={`Contract until ${swapDriverUpdated.EndSeason}`}
+                  posInTeam={swapDriverUpdated?.Contracts[0].PosInTeam}
+                  description={`Contract until ${swapDriverUpdated.Contracts[0].EndSeason}`}
                 />
               )
             }
