@@ -114,11 +114,9 @@ export default function Rename() {
               metaProperty.Properties[0].Properties.forEach(x => {
                 if (x.Name === 'FirstName') {
                   x.Property = firstName;
-                  x.Encoding = isPrintableASCII(firstName) ? "latin1" : "utf16le";
                 }
                 if (x.Name === 'LastName') {
                   x.Property = lastName;
-                  x.Encoding = isPrintableASCII(lastName) ? "latin1" : "utf16le";
                 }
               });
               basicInfoUpdater({ metadata });

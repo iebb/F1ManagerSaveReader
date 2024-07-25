@@ -1,10 +1,9 @@
-import {enqueueSnackbar} from "notistack";
-import React, {useContext, useEffect} from 'react';
-import {EditorSections, fPainterToJson, gameToJson, jsonToGame} from "@/components/LogoEditor/logo/utils";
-import {BasicInfoContext, DatabaseContext} from "@/js/Contexts";
+import {EditorSections, fPainterToJson, gameToJson, jsonToGame} from "@/components/MyTeam/LogoEditor/logo/utils";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 
 import {Alert, AlertTitle, Box, Button, Modal, TextField} from "@mui/material";
 import {observer} from "mobx-react-lite";
+import {enqueueSnackbar} from "notistack";
 import {PolotnoContainer, SidePanelWrap, WorkspaceWrap} from 'polotno';
 
 import {Workspace} from 'polotno/canvas/workspace';
@@ -12,6 +11,7 @@ import {createStore} from 'polotno/model/store';
 import {SidePanel} from 'polotno/side-panel';
 import {Toolbar} from 'polotno/toolbar/toolbar';
 import {ZoomButtons} from 'polotno/toolbar/zoom-buttons';
+import React, {useContext, useEffect} from 'react';
 
 const modalStyle = {
   position: 'absolute',
@@ -47,31 +47,55 @@ const ColorPicker = observer(({ store, element: e, elements: t }) => {
 });
 
 const ActionControls = ({ store }) => {
-  const database = useContext(DatabaseContext);
   return (
     <>
       <div style={{display: "flex", justifyContent: "space-between", gap: 4}}>
         <ForzaImporter store={store} />
         <FMSBExporter store={store} />
-        <Button
-          variant="contained"
-          onClick={() => {
-            const game = jsonToGame(store.toJSON());
-            database.exec("DELETE FROM Teams_Custom_LogoElements");
-            for (const row of game) {
-              database.exec(`INSERT INTO Teams_Custom_LogoElements VALUES(${
-                row.ElementID
-              }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
-            }
-            enqueueSnackbar(
-              `Team Logo Saved!`,
-              { variant: "success" }
-            );
-          }}
-        >
-          Save
-        </Button>
+        <Saver store={store} />
       </div>
+    </>
+  );
+};
+
+const Saver = ({ store }) => {
+  const database = useContext(DatabaseContext);
+  const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
+  const metadata = useContext(MetadataContext);
+
+  return (
+    <>
+      <Button
+        variant="contained"
+        onClick={async () => {
+          const game = jsonToGame(store.toJSON());
+          database.exec("DELETE FROM Teams_Custom_LogoElements");
+          for (const row of game) {
+            database.exec(`INSERT INTO Teams_Custom_LogoElements VALUES(${
+              row.ElementID
+            }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
+          }
+          const img = (await store.toDataURL()).replace("data:image/png;base64,", "");
+
+          const mp = metadata.gvasMeta.Properties.Properties.filter(p => p.Name === "MetaData")[0].Properties[0];
+          for(const p of mp.Properties) {
+            if (p.Name === "CustomTeamLogoBase64") {
+              p.Property = img;
+            }
+          }
+          database.exec(`UPDATE Player SET CustomTeamLogoBase64 = :CustomTeamLogoBase64`, {
+            ":CustomTeamLogoBase64": img,
+          });
+          basicInfoUpdater({metadata});
+
+          enqueueSnackbar(
+            `Team Logo Saved!`,
+            { variant: "success" }
+          );
+        }}
+      >
+        Save
+      </Button>
     </>
   );
 };
@@ -168,7 +192,7 @@ const ForzaImporter = ({ store }) => {
   );
 };
 
-const FMSBExporter = ({store}) => {
+const FMSBExporter = ({ store }) => {
   const [open, setOpen] = React.useState(false);
   const [content, setContent] = React.useState("");
   const [valid, setValid] = React.useState(false);

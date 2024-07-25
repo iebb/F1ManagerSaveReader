@@ -1,4 +1,4 @@
-import {logoElements} from "@/components/LogoEditor/logo/logos";
+import {logoElements} from "@/components/MyTeam/LogoEditor/logo/logos";
 import {observer} from "mobx-react-lite";
 import {ImagesGrid, SectionTab} from "polotno/side-panel";
 import React from "react";
@@ -69,7 +69,7 @@ export const fPainterToJson = (data) => {
         }),
         "width": defaultSize,
         "height": defaultSize,
-        "background": "grey",
+        "background": "transparent",
         "bleed": 0
       }],
       "unit": "px",
@@ -133,7 +133,7 @@ export const gameToJson = (elements) => {
         }),
         "width": defaultSize,
         "height": defaultSize,
-        "background": "grey",
+        "background": "transparent",
         "bleed": 0
       }],
       "unit": "px",

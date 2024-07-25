@@ -119,7 +119,7 @@ export default function ResultsTable(ctx) {
               >
                 <img
                   src={getCountryFlag(driverMap[row.DriverID].Nationality)}
-                  style={{ width: 24, margin: "-7px 4px -7px 0" }}
+                  style={{ width: 24, margin: "-7px 4px -7px 0", display: "inline-block" }}
                   alt={driverMap[row.DriverID].Nationality}
                 />
                 {

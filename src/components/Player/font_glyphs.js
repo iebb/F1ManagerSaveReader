@@ -2,12 +2,12 @@ import {CyrillicGlyphs, JapaneseGlyphs, LatinGlyphs, SChineseGlyphs} from "@/com
 // use https://fontdrop.info/ to generate unicode mapping
 
 
-export const TestStringCompatibility = (firstName, lastName) => {
+export const TestStringCompatibility = (...args) => {
   let Lat = 1, Rus = 1, Jpn = 1, Chn = 1;
   let LatDisplay = "", RusDisplay = "", JpnDisplay = "", ChnDisplay = "";
 
   let part = 0;
-  for(const str of [firstName, lastName]) {
+  for(const str of args) {
     part += 1;
     if (part === 2) {
       LatDisplay += " ";

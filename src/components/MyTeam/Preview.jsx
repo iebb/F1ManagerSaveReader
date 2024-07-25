@@ -5,7 +5,7 @@ import * as React from "react";
 import {useContext} from "react";
 import Dropzone from "react-dropzone";
 
-export default function MyTeam() {
+export default function Preview() {
 
   const database = useContext(DatabaseContext);
   const metadata = useContext(MetadataContext);
@@ -18,16 +18,13 @@ export default function MyTeam() {
   return (
     <div>
       <Typography variant="h5" component="h5">
-        My Team
+        Team Name
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       <Alert severity="warning" sx={{ my: 2 }}>
         <AlertTitle>Warning</AlertTitle>
-        This feature might be unstable. Use with caution.
+        This feature only changes the preview in main menu and save selection menu. To actually change the logo, use the logo editor feature.
       </Alert>
-      <Typography variant="h5" component="h5">
-        Logo and Livery Preview
-      </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
       {
         basicInfo.player.TeamID >= 32 ? (

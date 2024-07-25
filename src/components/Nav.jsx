@@ -1,4 +1,4 @@
-import LogoEditor from "@/components/LogoEditor/LogoEditor";
+import MyTeam from "@/components/MyTeam";
 import Facilities from "@/pages/facilities";
 import Finance from "@/pages/finance";
 import Modding from "@/pages/modding";
@@ -15,8 +15,7 @@ export default function MainNav(props) {
   return (
     <VTabs options={[
       {name: "Weekend", tab: <Weekend />},
-      {name: "Player", tab: <Player />},
-      {name: "Logo Editor", tab:  <LogoEditor />, minVersion: "4.0"},
+      {name: "Custom Team", tab:  <MyTeam />, minVersion: "4.0"},
       {name: "Results", tab: <Results />},
       {name: "Regulations", tab: <Regulations />},
       {name: "Finance", tab: <Finance />},
@@ -24,6 +23,7 @@ export default function MainNav(props) {
       {name: "Facilities", tab: <Facilities />},
       {name: "Parts", tab: <Parts />},
       {name: "Modding", tab: <Modding />},
+      {name: "Player", tab: <Player />},
     ]} />
   )
 }
