@@ -51,6 +51,7 @@ export const analyzeFileToDatabase = async (file) => {
         }
 
 
+        const unk_zero = serial.readInt32();
         const total_size = serial.readInt32();
         const size_1 = serial.readInt32();
         const size_2 = serial.readInt32();
