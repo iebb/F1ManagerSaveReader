@@ -35,7 +35,7 @@ export default function LogoEditorWrapper() {
   }
 
   return (
-    <div className="h-[700px] w-full">
+    <div className="h-[700px] w-full bp5-dark">
       <LogoEditor
         defaultData={defaultData}
         onSave={async (store) => {
