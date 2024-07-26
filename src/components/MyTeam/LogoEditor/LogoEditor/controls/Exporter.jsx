@@ -39,8 +39,7 @@ export const FMSBExporter = ({ store }) => {
     setOpen(false);
   };
 
-  const shapeCount = store.pages[0].children.length;
-  console.log(shapeCount);
+  const shapeCount = store?.pages?.[0]?.children?.length || 0;
 
   return (
     <>
@@ -68,7 +67,7 @@ export const FMSBExporter = ({ store }) => {
             <br/>
             Compressed Size: {content.length}
             <br/>
-            Deompressed Size: {content.length}
+            Deompressed Size: {JSON.stringify(store.toJSON()).length}
           </p>
           {
             shapeCount >= 50 && (

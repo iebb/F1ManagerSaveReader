@@ -33,6 +33,8 @@ export const ForzaImporter = ({ store }) => {
         <DialogBody>
           <p className={"text-md"}>
             Forza Painter can be used to convert any picture into ovals and ellipses, making it possible to use in F1M.
+            <br />
+            <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3296586482">How to</a>
           </p>
           <p className={"mt-4 text-sm text-yellow-500"}>
             Warning: You will be unable to edit in-game if you have more than 50 shapes.
