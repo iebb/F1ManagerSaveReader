@@ -14,7 +14,7 @@ export const fPainterToJson = (data) => {
   const scale = Math.max(shapes[0].data[2], shapes[0].data[3]);
   const dx = (scale - shapes[0].data[2]) / 2;
   const dy = (scale - shapes[0].data[3]) / 2;
-  const N = 1.4;
+  const N = 12 / 8.5;
   return (
     {
       "width": defaultSize,
