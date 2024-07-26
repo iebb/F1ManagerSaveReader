@@ -1,9 +1,6 @@
-import {FaJedi, FaShapes, FaStroopwafel, FaFont, FaCat, FaDotCircle, FaCarSide, FaCrown} from "@meronex/icons/fa";
-
 export const logoElements =   [
   {
     name: "Abstract",
-    logo: FaStroopwafel,
     icons: [
       { hash: 2073301217, url: '/svg/Abstract/Chevrons_001.svg' },
       { hash: 3778156939, url: '/svg/Abstract/Circles_001.svg' },
@@ -17,7 +14,6 @@ export const logoElements =   [
     ]},
   {
     name: "Animal",
-    logo: FaCat,
     icons: [
       { hash: 2847899373, url: '/svg/Animal/Cobra_001.svg' },
       { hash: 1868771715, url: '/svg/Animal/Cockerel_001.svg' },
@@ -31,7 +27,6 @@ export const logoElements =   [
     ]},
   {
     name: "Font",
-    logo: FaFont,
     icons: [
       { hash: 1806598923, url: '/svg/FontF1Outline/F1B_Outline_0.svg' },
       { hash: 248100941, url: '/svg/FontF1Outline/F1B_Outline_1.svg' },
@@ -180,7 +175,6 @@ export const logoElements =   [
     ]},
   {
     name: "Heraldry",
-    logo: FaCrown,
     icons: [
       { hash: 2952769446, url: '/svg/Heraldry/Crown_001.svg' },
       { hash: 5694060, url: '/svg/Heraldry/Crown_002.svg' },
@@ -191,7 +185,6 @@ export const logoElements =   [
     ]},
   {
     name: "Race",
-    logo: FaCarSide,
     icons: [
       { hash: 148886787, url: '/svg/Race/Arrow_002.svg' },
       { hash: 1840836165, url: '/svg/Race/Arrow_003.svg' },
@@ -212,7 +205,6 @@ export const logoElements =   [
     ]},
   {
     name: "Themed",
-    logo: FaJedi,
     icons: [
       { hash: 1665005948, url: '/svg/Themed/Antlers_001.svg' },
       { hash: 1726183010, url: '/svg/Themed/Arrows_001.svg' },
@@ -226,7 +218,6 @@ export const logoElements =   [
     ]},
   {
     name: "Circle/Triangle",
-    logo: FaDotCircle,
     icons: [
       { hash: 4136501132, url: '/svg/circle/circle.svg' },
       { hash: 1435478539, url: '/svg/circle/circleRing.svg' },
@@ -254,7 +245,6 @@ export const logoElements =   [
     ]},
   {
     name: "Misc Shapes",
-    logo: FaShapes,
     icons: [
       { hash: 2229978498, url: '/svg/decagon.svg' },
       { hash: 3417896018, url: '/svg/decagonRounded.svg' },

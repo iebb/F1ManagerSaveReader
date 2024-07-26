@@ -1,5 +1,3 @@
-import LogoEditor from "@/components/MyTeam/LogoEditor/LogoEditor";
-import Preview from "@/components/MyTeam/Preview";
 import Rename from "@/components/Player/Rename";
 import TeamSwitch from "@/components/Player/TeamSwitch";
 import TimeMachine from "@/components/Player/TimeMachine";

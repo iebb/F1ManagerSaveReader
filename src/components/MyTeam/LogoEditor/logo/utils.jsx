@@ -1,4 +1,4 @@
-import {logoElements} from "./logoPresets.jsx";
+import {logoElements} from "./shapes.js";
 import {observer} from "mobx-react-lite";
 import {ImagesGrid, SectionTab} from "polotno/side-panel";
 import React from "react";
@@ -7,7 +7,7 @@ const imageObjects = Object.fromEntries(
   logoElements.map(x => x.icons.map(i => [i.hash, i])).flat()
 )
 
-export const defaultSize = 512;
+export const defaultSize = 1024;
 
 export const fPainterToJson = (data) => {
   const shapes = data.shapes;
@@ -80,7 +80,6 @@ export const fPainterToJson = (data) => {
   )
 }
 
-
 export const gameToJson = (elements) => {
   return (
     {
@@ -143,7 +142,6 @@ export const gameToJson = (elements) => {
     }
   )
 }
-
 
 export const jsonToGame = (data) => {
   return data.pages[0].children.map((ch, _idx) => {
