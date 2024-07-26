@@ -1,4 +1,4 @@
-import {logoElements} from "@/components/MyTeam/LogoEditor/logo/logos";
+import {logoElements} from "./logoPresets.jsx";
 import {observer} from "mobx-react-lite";
 import {ImagesGrid, SectionTab} from "polotno/side-panel";
 import React from "react";
@@ -7,11 +7,11 @@ const imageObjects = Object.fromEntries(
   logoElements.map(x => x.icons.map(i => [i.hash, i])).flat()
 )
 
-const defaultSize = 1024;
+export const defaultSize = 512;
 
 export const fPainterToJson = (data) => {
   const shapes = data.shapes;
-  const scale = Math.min(shapes[0].data[2], shapes[0].data[3]);
+  const scale = Math.max(shapes[0].data[2], shapes[0].data[3]);
   const dx = (scale - shapes[0].data[2]) / 2;
   const dy = (scale - shapes[0].data[3]) / 2;
   const N = 1.4;
@@ -174,11 +174,10 @@ export const jsonToGame = (data) => {
 
 
 export const EditorSections = logoElements.map(section => {
-  const Logo = section.logo;
   return {
     name: section.name,
     Tab: (props) => <SectionTab name={section.name} {...props}>
-      <Logo className="text-xl block m-auto"/>
+      <img className="w-8 block m-auto" src={section.icons[0].url} alt={section.name} />
     </SectionTab>,
     // we need observer to update component automatically on any store changes
     Panel: observer(({ store }) => {
@@ -209,3 +208,19 @@ export const EditorSections = logoElements.map(section => {
     }),
   }
 });
+
+export const defaultJson = {
+  "width": defaultSize,
+  "height": defaultSize,
+  "fonts": [],
+  "pages": [{
+    "id": "default",
+    "children": [],
+    "width": defaultSize,
+    "height": defaultSize,
+    "background": "transparent",
+    "bleed": 0
+  }],
+  "unit": "px",
+  "dpi": 72
+};

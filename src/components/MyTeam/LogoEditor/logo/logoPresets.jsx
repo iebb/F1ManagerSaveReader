@@ -1,4 +1,4 @@
-import {FaJedi, FaShapes, FaStroopwafel, FaFont, FaCat, FaDotCircle, FaCarSide, FaCrown} from "@meronex/icons/all";
+import {FaJedi, FaShapes, FaStroopwafel, FaFont, FaCat, FaDotCircle, FaCarSide, FaCrown} from "@meronex/icons/fa";
 
 export const logoElements =   [
   {
