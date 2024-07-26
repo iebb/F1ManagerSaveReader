@@ -205,6 +205,10 @@ export const resolveLiteral = (_nameString) => {
   return _nameString;
 }
 export const resolveName = (_nameString) => {
+  const ex = stringLiteral.exec(_nameString);
+  if (ex) {
+    return ex[1];
+  }
   let nameString = _nameString.replace("[", "").replace("]", "")
   if (staffNames[nameString]) return staffNames[nameString];
   const split = nameString.split("_");
@@ -233,7 +237,7 @@ export const unresolveName = (_nameString) => {
   for(const s of Object.keys(staffNames)) {
     if (_nameString === staffNames[s]) return `[${s}]`;
   }
-  return _nameString
+  return `[STRING_LITERAL:Value=|${_nameString}|]`
 }
 
 export const unresolveDriverCode = (_nameString) => {

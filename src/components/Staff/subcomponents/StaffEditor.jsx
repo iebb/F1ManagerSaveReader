@@ -183,7 +183,7 @@ export default function StaffEditor(props) {
               options={namePool}
               value={firstName}
               sx={{ width: 200 }}
-              onChange={ (e, nv) => {
+              onInputChange={ (e, nv) => {
                 if (nv) {
                   setFirstName(nv);
                 }
@@ -197,7 +197,7 @@ export default function StaffEditor(props) {
               options={namePool}
               value={lastName}
               sx={{ width: 200 }}
-              onChange={ (e, nv) => {
+              onInputChange={ (e, nv) => {
                 if (nv) {
                   setLastName(nv);
                   setDriverCode(surnameMapping[nv])
