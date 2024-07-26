@@ -7,6 +7,7 @@ import {SidePanel} from 'polotno/side-panel';
 import {Toolbar} from 'polotno/toolbar/toolbar';
 import {ZoomButtons} from 'polotno/toolbar/zoom-buttons';
 import React, {useEffect, useMemo} from 'react';
+import {Downloader} from "./controls/Download.jsx";
 import {FMSBExporter} from "./controls/Exporter.jsx";
 import {ForzaImporter} from "./controls/ForzaPainter.jsx";
 import {defaultJson, EditorSections} from "./logo/utils.jsx";
@@ -36,6 +37,7 @@ export default function LogoEditor({defaultData, onSave}) {
         <div className="bp5-dark flex gap-2">
           <ForzaImporter store={store} />
           <FMSBExporter store={store} />
+          <Downloader store={store} />
           <Button onClick={() => onSave(store)} text="Save" intent="primary"/>
         </div>
       );

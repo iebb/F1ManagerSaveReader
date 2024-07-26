@@ -8,7 +8,7 @@ import {decodeBase91, encodeBase91} from "./base91.js";
 
 const magic = "B91#ieb:";
 
-function compressData(struct) {
+export function compressData(struct) {
   const structStringify = encode(struct);
   const data = pako.deflate(structStringify);
   const compressed = magic + encodeBase91(data);
@@ -17,7 +17,7 @@ function compressData(struct) {
   return compressed;
 }
 
-function decompressData(data) {
+export function decompressData(data) {
   if (data.substring(0, magic.length) === magic) {
     const buffer = decodeBase91(data.substring(magic.length));
     const inflated = pako.inflate(buffer);
