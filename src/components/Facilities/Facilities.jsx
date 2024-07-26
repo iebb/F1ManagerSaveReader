@@ -26,7 +26,7 @@ export const BuildingsCategorized = [
       {id: 9, name: "Team Hub"}, // [Building_StaffFacility0]
       {id: 14, name: "Scouting Dept"}, // [Building_ScoutingSubDepartment0]
       {id: 4, name: "Race Simulator"}, // [Building_DriverInLoopSimulator0]
-      {id: 16, name: "Health Centre"}, // [Building_MedicalBayUpgrade0]
+      // {id: 16, name: "Health Centre"}, // [Building_MedicalBayUpgrade0]
     ],
   },
   {
@@ -108,6 +108,13 @@ export default function Facilities() {
         })
       )
     );
+    console.log(teamIds.filter(teamIndex => buildings[teamIndex]).map(
+      teamIndex => ({
+        id: teamIndex,
+        TeamID: teamIndex,
+        ...buildings[teamIndex]
+      })
+    ));
   }, [database, updated])
 
   const columns = [];
