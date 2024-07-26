@@ -72,9 +72,9 @@ export default function StaffEditor(props) {
     if (editRow) {
       setFirstName(resolveName(editRow.FirstName));
       setLastName(resolveName(editRow.LastName));
+
       setCountry(editRow.Nationality);
       setGender(editRow.Gender);
-
       setFaceType(editRow.FaceType);
       setFaceIndex(editRow.FaceIndex);
       setAgeType(editRow.AgeType);
@@ -83,6 +83,7 @@ export default function StaffEditor(props) {
         setDriverCode(resolveDriverCode(editRow.DriverCode));
         setDriverNumber(editRow.CurrentNumber ? `${editRow.CurrentNumber}` : "N/A");
       }
+      console.log("set!");
     } else {
       setDriverCode("");
       setDriverNumber("");
@@ -179,12 +180,13 @@ export default function StaffEditor(props) {
         <Grid direction="row" container spacing={2} sx={{ my: 1 }}>
           <Grid item>
             <Autocomplete
+              key={editRow.StaffID}
               disablePortal
               options={namePool}
               value={firstName}
               sx={{ width: 200 }}
-              onInputChange={ (e, nv) => {
-                if (nv) {
+              onInputChange={ (e, nv, r) => {
+                if (nv && r === "input") {
                   setFirstName(nv);
                 }
               }}
@@ -193,12 +195,13 @@ export default function StaffEditor(props) {
           </Grid>
           <Grid item>
             <Autocomplete
+              key={editRow.StaffID}
               disablePortal
               options={namePool}
               value={lastName}
               sx={{ width: 200 }}
-              onInputChange={ (e, nv) => {
-                if (nv) {
+              onInputChange={ (e, nv, r) => {
+                if (nv && r === "input") {
                   setLastName(nv);
                   setDriverCode(surnameMapping[nv])
                 }
@@ -210,12 +213,13 @@ export default function StaffEditor(props) {
             editRow.StaffType === 0 && (
               <Grid item>
                 <Autocomplete
+                  key={editRow.StaffID}
                   disablePortal
                   options={driverCodePool}
                   value={driverCode}
                   sx={{ width: 160 }}
-                  onInputChange={ (e, nv) => {
-                    if (nv) setDriverCode(nv)
+                  onInputChange={ (e, nv, r) => {
+                    if (nv && r === "input") setDriverCode(nv)
                   }}
                   renderInput={(params) => <TextField {...params} label="Code" autoComplete="off" />}
                 />
@@ -230,8 +234,8 @@ export default function StaffEditor(props) {
               options={countries}
               value={country}
               sx={{ width: 200 }}
-              onChange={ (e, nv) => {
-                if (nv) setCountry(nv)
+              onChange={ (e, nv, r) => {
+                if (nv && r === "input") setCountry(nv)
               }}
               renderInput={(params) => <TextField {...params} label="Country" autoComplete="off" />}
             />
@@ -245,8 +249,8 @@ export default function StaffEditor(props) {
                   options={driverNumbers}
                   value={driverNumber}
                   sx={{ width: 160 }}
-                  onInputChange={ (e, nv) => {
-                    if (nv) setDriverNumber(nv)
+                  onInputChange={ (e, nv, r) => {
+                    if (nv && r === "input") setDriverNumber(nv)
                   }}
                   renderInput={(params) => <TextField {...params} label="F1 Number" autoComplete="off" />}
                 />
