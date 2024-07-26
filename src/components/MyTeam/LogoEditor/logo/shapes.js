@@ -217,7 +217,7 @@ export const logoElements =   [
       { hash: 4068500260, url: '/svg/Themed/Wreath_002.svg' },
     ]},
   {
-    name: "Circle/Triangle",
+    name: "Circle",
     icons: [
       { hash: 4136501132, url: '/svg/circle/circle.svg' },
       { hash: 1435478539, url: '/svg/circle/circleRing.svg' },
@@ -228,8 +228,9 @@ export const logoElements =   [
       { hash: 302708093, url: '/svg/circle/quaterCircle.svg' },
       { hash: 2548943004, url: '/svg/circle/quaterCircleRing.svg' },
       { hash: 1036962888, url: '/svg/circle/quaterCircleRounded.svg' },
-      /*  ]},
-      { name: "Triangle", icons: [*/
+    ]},
+  { name: "Triangle",
+    icons: [
       { hash: 2869525609, url: '/svg/triangle/acuteTriangle.svg' },
       { hash: 750436876, url: '/svg/triangle/acuteTriangleRounded.svg' },
       { hash: 3944090861, url: '/svg/triangle/equilateralTriangle.svg' },
