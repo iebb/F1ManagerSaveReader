@@ -81,7 +81,7 @@ export const Geometrize = ({ store }) => {
       // await sleep(state.stepTimeout || 1)
     }
     onStep(toSvg(SvgExporter.exportShapes(shapeData)))
-    setProgress(options.iterations);
+    setProgress(iteration);
     working.current = false;
     return {
       shapes: shapeData,
@@ -144,7 +144,7 @@ export const Geometrize = ({ store }) => {
                     //this.svg = this.state.svgContainer!.innerHTML = s
                   }))
                 }}
-                disabled={!image}
+                disabled={!image || working.current}
               >
                 Run
               </Button>
