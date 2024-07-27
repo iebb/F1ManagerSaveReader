@@ -1,3 +1,4 @@
+import {ShapeTypes} from "geometrizejs";
 import {logoElements} from "./shapes.js";
 import {observer} from "mobx-react-lite";
 import {ImagesGrid, SectionTab} from "polotno/side-panel";
@@ -8,6 +9,89 @@ const imageObjects = Object.fromEntries(
 )
 
 export const defaultSize = 1024;
+
+export const geometrizerToJson = (data) => {
+  const shapes = data.shapes;
+  const scale = Math.max(data.w, data.h);
+  const dx = (scale - data.w) / 2;
+  const dy = (scale - data.h) / 2;
+  const N = 12 / 8.5;
+  return (
+    {
+      "width": defaultSize,
+      "height": defaultSize,
+      "fonts": [],
+      "pages": [{
+        "id": "default",
+        "children": shapes.map( ({shape, color}, _idx) => {
+          const type = shape.getType();
+          const hexColor = ((color < 0 ? color + (2 ** 32) : color) >>> 8).toString(16).padStart(6, "0");
+
+          const e = type === ShapeTypes.ROTATED_RECTANGLE ? {
+            PositionX: 2 * (((shape.x1 + shape.x2) / 2 + dx / 2) / scale - 0.5),
+            PositionY: 2 * (-(((shape.y1 + shape.y2) / 2 + dy / 2) / scale - 0.5)),
+            ScaleX: (shape.x2 - shape.x1) / scale * N,
+            ScaleY: -((shape.y2 - shape.y1) / scale) * N,
+            Rotation: -shape.angle / 180 * Math.PI
+          } : type === ShapeTypes.ROTATED_ELLIPSE ? {
+            PositionX: 2 * ((shape.x + dx / 2) / scale - 0.5),
+            PositionY: 2 * (-((shape.y + dy / 2) / scale - 0.5)),
+            ScaleX: 2 * (shape.rx) / scale * N,
+            ScaleY: -(2 * (shape.ry) / scale) * N,
+            Rotation: -shape.angle / 180 * Math.PI
+          } : {};
+
+          const shapeId = type === ShapeTypes.ROTATED_RECTANGLE ? 1020510907 : type === ShapeTypes.ROTATED_ELLIPSE ? 4136501132 : 0;
+          const shapeFile = type === ShapeTypes.ROTATED_RECTANGLE ? '/svg/square.svg' : type === ShapeTypes.ROTATED_ELLIPSE ? '/svg/circle/circle.svg' : '';
+
+          const absX = Math.abs(e.ScaleX);
+          const absY = Math.abs(e.ScaleY);
+          const translateX = (0.5 + e.PositionX / 2 - absX / 2) * defaultSize;
+          const translateY = (0.5 - e.PositionY / 2 - absY / 2) * defaultSize;
+          const rotation = -e.Rotation; //e.Rotation * 180 / Math.PI;
+          const rotationDeg = rotation * 180 / Math.PI;
+          const sinA = Math.sin(rotation);
+          const cosA = Math.cos(rotation);
+          const xRotated = -(absX * cosA - absY * sinA - absX) * defaultSize / 2;
+          const yRotated = -(absX * sinA + absY * cosA - absY) * defaultSize / 2;
+
+          return {
+            "id": `${_idx}`,
+            "type": "svg",
+            "name": `${shapeId}`,
+            "opacity": 1,
+            "visible": true,
+            "selectable": true,
+            "removable": true,
+            "x": translateX + xRotated + dx,
+            "y": translateY + yRotated + dy,
+            "width": absX * defaultSize,
+            "height": absY * defaultSize,
+            "rotation": rotationDeg,
+            "flipX": e.ScaleX < 0,
+            "flipY": e.ScaleY < 0,
+            "draggable": true,
+            "resizable": true,
+            "keepRatio": false,
+            "src": shapeFile,
+            "borderColor": "black",
+            "borderSize": 0,
+            "cornerRadius": 0,
+            "colorsReplace": {
+              "#fff": `#${hexColor}`
+            }
+          }
+        }),
+        "width": defaultSize,
+        "height": defaultSize,
+        "background": "transparent",
+        "bleed": 0
+      }],
+      "unit": "px",
+      "dpi": 72
+    }
+  )
+}
 
 export const fPainterToJson = (data) => {
   const shapes = data.shapes;

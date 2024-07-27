@@ -1,3 +1,4 @@
+import {Geometrize} from "./controls/Geometrize.jsx";
 import {Button} from "@blueprintjs/core";
 import {PolotnoContainer, SidePanelWrap, WorkspaceWrap} from 'polotno';
 
@@ -35,9 +36,10 @@ export default function LogoEditor({defaultData, onSave}) {
     return ({ store }) => {
       return (
         <div className="bp5-dark flex gap-2">
+          <Geometrize store={store} />
           <ForzaImporter store={store} />
           <FMSBExporter store={store} />
-          <Downloader store={store} />
+          {/*<Downloader store={store} />*/}
           <Button onClick={() => onSave(store)} text="Save" intent="primary"/>
         </div>
       );
