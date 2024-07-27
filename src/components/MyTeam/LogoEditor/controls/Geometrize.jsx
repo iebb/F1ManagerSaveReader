@@ -3,7 +3,7 @@ import {Bitmap, ImageRunner, ShapeTypes, SvgExporter} from 'geometrizejs';
 import {enqueueSnackbar} from "notistack";
 import React, {useRef, useState} from "react";
 import {geometrizerToJson} from "../logo/utils.jsx";
-require("jimp/browser/lib/jimp");
+import "jimp/browser/lib/jimp";
 
 const { Jimp } = window;
 
