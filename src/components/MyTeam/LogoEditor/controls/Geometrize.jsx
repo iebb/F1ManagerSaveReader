@@ -138,6 +138,7 @@ export const Geometrize = ({ store }) => {
               <Button
                 intent='primary'
                 onClick={async () => {
+                  setResult(null);
                   setResult(await geometrize(image, s => {
                     setSvgImageStr("data:image/svg+xml," + s)
                     // svgRef.current.innerHTML = s;
