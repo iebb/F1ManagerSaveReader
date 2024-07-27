@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import vitePluginRequire from "vite-plugin-require";
 import path from "path";
+import {defineConfig} from 'vite'
+import {nodePolyfills} from 'vite-plugin-node-polyfills'
+import vitePluginRequire from "vite-plugin-require";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,10 +15,6 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src/"),
     },
-  },
-  define: {
-    'process.env': {},
-    '__dirname': '""',
   },
 })
 

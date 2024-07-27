@@ -3,8 +3,9 @@ import {Bitmap, ImageRunner, ShapeTypes, SvgExporter} from 'geometrizejs';
 import {enqueueSnackbar} from "notistack";
 import React, {useRef, useState} from "react";
 import {geometrizerToJson} from "../logo/utils.jsx";
+require("jimp/browser/lib/jimp");
 
-const Jimp = require('jimp');
+const { Jimp } = window;
 
 function blobToBase64(blob) {
   return new Promise((resolve, _) => {
