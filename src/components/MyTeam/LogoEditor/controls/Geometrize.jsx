@@ -35,7 +35,7 @@ export const Geometrize = ({ store }) => {
     candidateShapesPerStep: candidate,
     alpha: 255,
     shapeMutationsPerStep: mutation,
-    shapeTypes: [ShapeTypes.ROTATED_ELLIPSE],
+    shapeTypes: [ShapeTypes.ROTATED_ELLIPSE, ShapeTypes.ROTATED_RECTANGLE],
   }
 
 
