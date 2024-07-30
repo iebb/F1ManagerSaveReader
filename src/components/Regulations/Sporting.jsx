@@ -365,9 +365,7 @@ export default function SportingRegulations() {
                 <Grid item>
                   <Button onClick={() => {
                     const SQL = "INSERT INTO Regulations_NonTechnical_PartResources VALUES " +
-                      "($, 1, 72, 72), ($, 2, 72, 72), ($, 3, 72, 72), ($, 4, 72, 72)," +
-                      " ($, 5, 72, 72), ($, 6, 72, 72), ($, 7, 72, 72), ($, 8, 72, 72)," +
-                      " ($, 9, 72, 72), ($, 10, 72, 72);";
+                      Array.from(Array(version <= 3 ? 10 : 11)).map((_, x) => `($, ${ x + 1 }, 72, 72)`).join(",");
                     db.exec(SQL.replaceAll('$', (regulationDetails.maxPartResources + 1).toString(10)));
                     database.exec(`UPDATE Regulations_Enum_Changes SET CurrentValue = ${
                       (regulationDetails.maxPartResources + 1)

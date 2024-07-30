@@ -41,7 +41,9 @@ export const Geometrize = ({ store }) => {
 
   async function geometrize(image, onStep) {
     working.current = true;
-    const im = image.clone();
+    let im = image.clone();
+    // im = await im.background(0xff00ffff);
+
     if (im.bitmap.width > maxResolution || im.bitmap.height > maxResolution) {
       const scale = Math.max(im.bitmap.width, im.bitmap.height) / im.bitmap.width;
       await im.resize(
@@ -49,6 +51,8 @@ export const Geometrize = ({ store }) => {
         Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE
       );
     }
+
+
     const bitmap = Bitmap.createFromByteArray(im.bitmap.width, im.bitmap.height, im.bitmap.data);
     const runner = new ImageRunner(bitmap);
 
@@ -61,6 +65,7 @@ export const Geometrize = ({ store }) => {
     for (let i = 0; i < iteration; i++) {
       const step = runner.step(options);
       await new Promise(r => setTimeout(r, 1));
+      console.log(step[0]);
       shapeData.push(step[0]);
       if (+new Date() - t > 50) {
         setProgress(i);

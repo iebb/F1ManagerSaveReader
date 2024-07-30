@@ -5,7 +5,7 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {dayToDate, teamNames} from "@/js/localization";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {defaultFontFamily} from "../../ui/Fonts";
+import {defaultFontFamily} from "@/ui/Fonts";
 
 
 export default function CostCap() {
@@ -14,7 +14,7 @@ export default function CostCap() {
   const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
-  const { player } = basicInfo;
+  const { player, teamIds } = basicInfo;
 
   const [seriesList, setSeriesList] = useState([]);
   const [yMax, setYMax] = useState(0);
@@ -54,8 +54,14 @@ export default function CostCap() {
       [{ values }] = database.exec(`SELECT CurrentValue FROM 'Regulations_Enum_Changes' WHERE Name = 'SpendingCap'`);
       const [costCap] = values[0];
 
-      let totalCostCapForTeam = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      let costCapHistoryForTeam = [[], [], [], [], [], [], [], [], [], [], [], []];
+      let totalCostCapForTeam = {};
+      let costCapHistoryForTeam = {};
+
+      for(const team of teamIds) {
+        totalCostCapForTeam[team] = 0;
+        costCapHistoryForTeam[team] = [];
+      }
+
       [{ columns, values }] = database.exec(
         `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' 
         WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND AffectsCostCap = 1 GROUP BY TeamID, Day ORDER BY Day ASC`
@@ -140,7 +146,7 @@ export default function CostCap() {
 
 
       let calcYMax = costCap;
-      for(let i = 1; i <= 10; i++) {
+      for(const i of teamIds) {
         costCapHistoryForTeam[i].push([Math.min(player.Day, seasonEnd - 1), totalCostCapForTeam[i]])
         if (totalCostCapForTeam[i] > calcYMax) {
           calcYMax = totalCostCapForTeam[i];

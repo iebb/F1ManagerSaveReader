@@ -1,3 +1,5 @@
+import {resolveLiteral} from "@/js/localization";
+
 export const parseBasicInfo = ({db, metadata}) => {
   let columns, values;
   const { version } = metadata;
@@ -147,7 +149,7 @@ export const parseBasicInfo = ({db, metadata}) => {
   if (basicInfo.player.CustomTeamEnabled) {
     basicInfo.teamIds.push(32);
     basicInfo.teamRankings.push(11);
-
+    window.customTeamName = resolveLiteral(basicInfo.teamMap[32].TeamNameLocKey);
   }
 
   for (const r of db.getAllRows(

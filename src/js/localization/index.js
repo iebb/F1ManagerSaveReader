@@ -24,6 +24,9 @@ export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', 
 
 export const teamNames = (x, version) => {
   if (version <= 3) return teams2023[x];
+  if (x === 32 && window.customTeamName) {
+    return window.customTeamName;
+  }
   return teams2024[x];
 }
 

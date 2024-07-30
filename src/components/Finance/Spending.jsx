@@ -24,7 +24,7 @@ export default function Spending() {
   const {version, gameVersion} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
 
-  const { player } = basicInfo;
+  const { player, teamIds } = basicInfo;
 
   const [series, setSeries] = useState([]);
   const [elements, setElements] = useState([]);
@@ -64,11 +64,9 @@ export default function Spending() {
       [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
       const [seasonStart, seasonEnd] = values[0];
 
-      let teamNameCategories = [];
-      let teamIDtoCategory = {};
-      for(let i = 1; i <= 10; i++) {
-        teamNameCategories.push(teamNames(i, version));
-        teamIDtoCategory[i] = i-1;
+      let teamNameCategories = {};
+      for(const i of teamIds) {
+        teamNameCategories[i] = teamNames(i, version);
       }
 
       setTeamNameCategories(teamNameCategories);
@@ -94,7 +92,9 @@ export default function Spending() {
 
       const rawData = [];
       for(let i = 0; i < maxCategories; i++) {
-        rawData.push(Array.from(Array(teams)).map(x => 0));
+        rawData.push(
+          Object.fromEntries(teamIds.map(t => [t, 0]))
+        );
       }
 
       let categoriesMapping = {
@@ -144,13 +144,16 @@ export default function Spending() {
           rawData[
             categoriesMapping[TransactionType]
           ][
-            teamIDtoCategory[TeamID]
+            TeamID
           ] += Value;
         } else {
-          rawData[9][teamIDtoCategory[TeamID]] += Value;
+          rawData[9][TeamID] += Value;
           console.log("unknown TransactionType", TransactionType)
         }
       }
+
+
+      console.log(rawData);
 
       // const gridWidth = chart.getWidth() - grid.left - grid.right;
       // const gridHeight = chart.getHeight() - grid.top - grid.bottom;
@@ -169,7 +172,7 @@ export default function Spending() {
             show: true,
             formatter: (params) => (params.value / 1e6).toFixed(2) + `m`,
           },
-          data: rawData[sid]
+          data: Object.values(rawData[sid])
         };
       });
 
@@ -245,7 +248,7 @@ export default function Spending() {
             },
             xAxis: {
               type: 'category',
-              data: teamNameCategories,
+              data: Object.values(teamNameCategories),
             },
             series,
             graphic: {
