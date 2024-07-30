@@ -13,7 +13,7 @@ import ContractSwapper from "./subcomponents/ContractSwapper";
 import StaffEditor from "./subcomponents/StaffEditor";
 
 
-export default function StaffDriver2024({ StaffType = 0 }) {
+export default function StaffDriver2023({ StaffType = 0 }) {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
@@ -277,12 +277,12 @@ export default function StaffDriver2024({ StaffType = 0 }) {
                   <br />
                   <span>
                     <span className="small" >until {Contract.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
-                      database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
+                      database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
                       setUpdated(+new Date());
                     }}>+1</a> {
                       Contract.EndSeason > player.CurrentSeason ? (
                         <a style={{color: "lightblue"}} onClick={() => {
-                          database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
+                          database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
                           setUpdated(+new Date());
                         }}>-1</a>
                       ) : null

@@ -3,6 +3,7 @@ import * as React from "react";
 import {VTabs} from "../Tabs";
 import PitcrewView from "./Pitcrew";
 import StaffGeneric from "./StaffGeneric";
+import StaffDriver2023 from "@/components/Staff/StaffDriver_2023";
 
 
 export default function Staff() {

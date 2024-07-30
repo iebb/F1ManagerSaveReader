@@ -297,12 +297,12 @@ export default function StaffGeneric({ StaffType = 1 }) {
                     <span>
 
                     <span className="small" >until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
-                      database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
+                      database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
                       setUpdated(+new Date());
                     }}>+1</a> {
                       row.EndSeason > player.CurrentSeason ? (
                         <a style={{color: "lightblue"}} onClick={() => {
-                          database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 AND Accepted = 1`);
+                          database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
                           setUpdated(+new Date());
                         }}>-1</a>
                       ) : null
