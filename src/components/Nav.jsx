@@ -6,12 +6,12 @@ import Parts from "@/pages/parts";
 import Player from "@/pages/player";
 import Regulations from "@/pages/regulations";
 import Results from "@/pages/results";
-import Staff from "@/pages/staff";
+import Staff from "@/components/Staff/Staff";
 import Weekend from "@/pages/weekend";
-import * as React from "react";
 import {VTabs} from "./Tabs";
+import People from "@/components/People/Staff";
 
-export default function MainNav(props) {
+export default function MainNav() {
   return (
     <VTabs options={[
       {name: "Weekend", tab: <Weekend />},
@@ -19,6 +19,7 @@ export default function MainNav(props) {
       {name: "Results", tab: <Results />},
       {name: "Regulations", tab: <Regulations />},
       {name: "Finance", tab: <Finance />},
+      {name: "People", tab: <People />},
       {name: "Staff", tab: <Staff />},
       {name: "Facilities", tab: <Facilities />},
       {name: "Parts", tab: <Parts />},
