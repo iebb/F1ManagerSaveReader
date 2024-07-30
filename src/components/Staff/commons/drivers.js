@@ -188,12 +188,15 @@ export const assignRandomRaceNumber = (ctx, staff1) => {
 }
 
 export const fireDriverContract = (ctx, staff1) => {
-  const { database, basicInfo } = ctx;
+  const { database, basicInfo, version } = ctx;
   let results;
 
   /* contracts */
   database.exec(`DELETE FROM Staff_Contracts WHERE StaffID = ${staff1}`);
   database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = NULL WHERE StaffID = ${staff1}`);
+  if (version >= 4) {
+    database.exec(`UPDATE Staff_DriverData SET FeederSeriesAssignedCarNumber = NULL WHERE StaffID = ${staff1}`);
+  }
   results = database.exec(`SELECT RaceEngineerID FROM Staff_RaceEngineerDriverAssignments WHERE IsCurrentAssignment = 1 AND DriverID = ${staff1}`);
   if (results.length) {
     let [{values: [[engineerA]]}] = results;

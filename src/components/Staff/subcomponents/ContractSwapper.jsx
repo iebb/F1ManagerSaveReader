@@ -136,8 +136,22 @@ export default function ContractSwapper(props) {
       database.exec(`UPDATE Staff_DriverData SET AssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": AssignedCarNumber2});
 
 
-      const formulaStaff1 = AssignedCarNumber1 ? teamFormulas[staff1Team] : 0;
-      const formulaStaff2 = AssignedCarNumber2 ? teamFormulas[staff2Team] : 0;
+      let formulaStaff1 = AssignedCarNumber1 ? teamFormulas[staff1Team] : 0;
+      let formulaStaff2 = AssignedCarNumber2 ? teamFormulas[staff2Team] : 0;
+
+      if (version >= 4) {
+        let [{values: [[FeederSeriesAssignedCarNumber1]]}] = database.exec(`SELECT FeederSeriesAssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff1ID}`);
+        let [{values: [[FeederSeriesAssignedCarNumber2]]}] = database.exec(`SELECT FeederSeriesAssignedCarNumber FROM Staff_DriverData WHERE StaffID = ${staff2ID}`);
+
+        /* car numbers */
+        database.exec(`UPDATE Staff_DriverData SET FeederSeriesAssignedCarNumber = :acn WHERE StaffID = ${staff2ID}`, {":acn": FeederSeriesAssignedCarNumber1});
+        database.exec(`UPDATE Staff_DriverData SET FeederSeriesAssignedCarNumber = :acn WHERE StaffID = ${staff1ID}`, {":acn": FeederSeriesAssignedCarNumber2});
+
+        if (FeederSeriesAssignedCarNumber1) {
+          formulaStaff1 = teamFormulas[staff1Team];
+          formulaStaff2 = teamFormulas[staff2Team];
+        }
+      }
 
 
 
