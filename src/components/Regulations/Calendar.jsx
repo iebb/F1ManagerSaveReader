@@ -3,18 +3,16 @@ import {
   CopyAll,
   Delete,
   KeyboardDoubleArrowDown,
-  KeyboardDoubleArrowUp, NotStarted,
+  KeyboardDoubleArrowUp,
+  NotStarted,
   PlayCircle
 } from "@mui/icons-material";
-import {Alert, AlertTitle} from "@mui/material";
-import {Divider, Typography} from "@mui/material";
+import {Alert, AlertTitle, Divider, Typography} from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
-import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, formatDate} from "@/js/localization";
+import {circuitNames, countryNames, dayToDate, raceAbbrevs, raceFlags} from "@/js/localization";
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {raceFlags, raceAbbrevs, countryNames, circuitNames} from "@/js/localization";
 
 const rainTypes = ["dry", "wet"];
 
@@ -178,6 +176,12 @@ export default function CustomCalendar() {
           if (newRow.State > 0) {
             return oldRow;
           }
+          if (newRow._DOW !== (oldRow.Day % 7)) {
+            database.exec(`UPDATE Races SET Day = Day + :n WHERE RaceID = ${newRow.RaceID};`, {
+              ":n": newRow._DOW - (oldRow.Day % 7)
+            });
+            refresh();
+          }
           if (newRow.TrackID !== oldRow.TrackID) {
             database.exec(`UPDATE Races SET TrackID = ${newRow.TrackID} WHERE RaceID = ${newRow.RaceID};`);
             refresh();
@@ -288,6 +292,19 @@ export default function CustomCalendar() {
             }
           },
           {
+            field: '_DOW',
+            headerName: 'Race',
+            type: 'singleSelect',
+            valueGetter: ({ row }) => (row.Day % 7),
+            width: 120,
+            editable: true,
+            valueOptions: [
+              {value: 0, label: "Saturday"},
+              {value: 1, label: "Sunday"},
+              {value: 2, label: "Monday"},
+            ],
+          },
+          {
             field: '_actions',
             headerName: 'Actions',
             headerAlign: 'center',
@@ -311,9 +328,10 @@ export default function CustomCalendar() {
                     label="Expedite"
                     onClick={() => {
                       if (weeks[row.week - 1]) {
-                        database.exec(`UPDATE Races SET Day = ${row.Day} WHERE RaceID = ${weeks[row.week - 1]};UPDATE Races SET Day = ${row.Day - 7} WHERE RaceID = ${row.RaceID};`);
+                        database.exec(`UPDATE Races SET Day = Day + 7 WHERE RaceID = ${weeks[row.week - 1]};
+                                       UPDATE Races SET Day = Day - 7 WHERE RaceID = ${row.RaceID};`);
                       } else {
-                        database.exec(`UPDATE Races SET Day = ${row.Day - 7} WHERE RaceID = ${row.RaceID}`);
+                        database.exec(`UPDATE Races SET Day = Day - 7 WHERE RaceID = ${row.RaceID}`);
                       }
                       refresh();
                     }}
@@ -324,9 +342,10 @@ export default function CustomCalendar() {
                     label="Postpone"
                     onClick={() => {
                       if (weeks[row.week + 1]) {
-                        database.exec(`UPDATE Races SET Day = ${row.Day} WHERE RaceID = ${weeks[row.week + 1]};UPDATE Races SET Day = ${row.Day + 7} WHERE RaceID = ${row.RaceID};`);
+                        database.exec(`UPDATE Races SET Day = Day - 7 WHERE RaceID = ${weeks[row.week + 1]};
+                                       UPDATE Races SET Day = Day + 7 WHERE RaceID = ${row.RaceID};`);
                       } else {
-                        database.exec(`UPDATE Races SET Day = ${row.Day + 7} WHERE RaceID = ${row.RaceID}`);
+                        database.exec(`UPDATE Races SET Day = Day + 7 WHERE RaceID = ${row.RaceID}`);
                       }
                       refresh();
                     }}
@@ -379,10 +398,13 @@ export default function CustomCalendar() {
             headerName: 'Weekend',
             type: 'singleSelect',
             editable: true,
-            valueOptions: [
+            valueOptions: version === 3 ? [
               {value: 0, label: "Normal"},
               {value: 1, label: "Sprint"},
               {value: 2, label: "ATA"},
+            ] : [
+              {value: 0, label: "Normal"},
+              {value: 1, label: "Sprint"},
             ],
             width: 100,
           }] : [],

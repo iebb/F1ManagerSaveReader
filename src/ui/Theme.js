@@ -6,16 +6,28 @@ import {defaultFontFamily} from "./Fonts";
 const { palette } = createTheme();
 const { augmentColor } = palette;
 const createColor = (mainColor) => augmentColor({ color: { main: mainColor } });
-const defaultTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    white: {
-      main: '#eee',
-      contrastText: '#222',
+const components = {
+  // Name of the component
+  MuiTabs: {
+    styleOverrides: {
+      // Name of the slot
+      root: ({ theme }) =>
+        theme.unstable_sx({
+          mb: 0,
+        }),
     },
   },
-  typography: { fontFamily: defaultFontFamily },
-});
+  MuiTab: {
+    styleOverrides: {
+      // Name of the slot
+      root: ({ theme }) =>
+        theme.unstable_sx({
+          px: 1,
+          minWidth: 75,
+        }),
+    },
+  }
+};
 
 const defaultPalette = {
   mode: 'dark',
@@ -41,5 +53,6 @@ export const createTeamColorTheme = (version) => {
   return createTheme({
     palette,
     typography: { fontFamily: defaultFontFamily },
+    components,
   })
 }

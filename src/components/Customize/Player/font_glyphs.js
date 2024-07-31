@@ -1,4 +1,4 @@
-import {CyrillicGlyphs, JapaneseGlyphs, LatinGlyphs, SChineseGlyphs} from "@/components/Player/glyphs/consts";
+import {CyrillicGlyphs, JapaneseGlyphs, LatinGlyphs, SChineseGlyphs} from "@/components/Customize/Player/glyphs/consts";
 // use https://fontdrop.info/ to generate unicode mapping
 
 

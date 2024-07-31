@@ -1,4 +1,4 @@
-import {TestStringCompatibility} from "@/components/Player/font_glyphs";
+import {TestStringCompatibility} from "@/components/Customize/Player/font_glyphs";
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {Alert, AlertTitle, Button, Divider, Grid, TextField, Typography} from "@mui/material";
 import {useSnackbar} from "notistack";

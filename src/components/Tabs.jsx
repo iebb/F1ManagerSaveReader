@@ -32,11 +32,20 @@ export const VTabs = ({ options }) => {
 
   return <TabContext value={value}>
     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-      <TabList onChange={handleChange}>
-        {_options.map((t, _idx) => <Tab label={t.name} value={_idx.toString(10)} key={_idx.toString(10)} />)}
+      <TabList
+        onChange={handleChange}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
+        {_options.map((t, _idx) => <Tab
+          label={t.name}
+          value={_idx.toString(10)}
+          key={_idx.toString(10)}
+        />)}
       </TabList>
     </Box>
-    {_options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0 }}>
+    {_options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0, pt: 1 }}>
       {t.tab}
     </TabPanel>)}
   </TabContext>;

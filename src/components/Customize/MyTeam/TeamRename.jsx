@@ -1,5 +1,5 @@
-import {TestStringCompatibility} from "@/components/Player/font_glyphs";
-import {CyrillicGlyphs, LatinGlyphs} from "@/components/Player/glyphs/consts";
+import {TestStringCompatibility} from "@/components/Customize/Player/font_glyphs";
+import {CyrillicGlyphs, LatinGlyphs} from "@/components/Customize/Player/glyphs/consts";
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {resolveLiteral} from "@/js/localization";
 import {Alert, AlertTitle, Button, Divider, Grid, TextField, Typography} from "@mui/material";

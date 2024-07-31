@@ -226,10 +226,16 @@ export default function Facilities() {
 
   return (
     <div>
-      <Tabs value={partPanel} onChange={(event, newValue) => {
-        setPartPanel(newValue);
-      }} aria-label="basic tabs example">
-        {BuildingsCategorized.map(p => <Tab label={p.category} key={p.id} />)}
+      <Tabs
+        value={partPanel}
+        onChange={(event, newValue) => {
+          setPartPanel(newValue);
+        }}
+        sx={{ mb: 1 }}
+      >
+        {BuildingsCategorized.map(p => <Tab
+          label={p.category} key={p.id}
+        />)}
       </Tabs>
       <DataGrid
         rows={buildings}

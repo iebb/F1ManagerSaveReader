@@ -1,5 +1,5 @@
-import LogoEditor from "@/components/MyTeam/LogoEditor";
-import {gameToJson, jsonToGame} from "@/components/MyTeam/LogoEditor/logo/utils";
+import LogoEditor from "@/components/Customize/MyTeam/LogoEditor";
+import {gameToJson, jsonToGame} from "@/components/Customize/MyTeam/LogoEditor/logo/utils";
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {Alert, AlertTitle} from "@mui/material";
 import {enqueueSnackbar} from "notistack";
