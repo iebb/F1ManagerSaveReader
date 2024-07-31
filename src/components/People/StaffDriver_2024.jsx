@@ -143,7 +143,8 @@ export default function StaffDriver2024({ StaffType = 0 }) {
             }
           },
           {
-            field: 'StaffID',
+            field: 'FirstName',
+            valueGetter: ({row}) => resolveName(row.FirstName) + resolveName(row.LastName),
             headerName: 'Name',
             width: 100,
             renderCell: ({ row }) => {

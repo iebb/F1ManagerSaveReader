@@ -153,7 +153,8 @@ export default function StaffGeneric({ StaffType = 1 }) {
             }
           },
           {
-            field: 'StaffID',
+            field: 'FirstName',
+            valueGetter: ({row}) => resolveName(row.FirstName) + resolveName(row.LastName),
             headerName: 'Name',
             width: 100,
             renderCell: ({ row }) => {
@@ -284,23 +285,27 @@ export default function StaffGeneric({ StaffType = 1 }) {
                 )
               }
             },
+
             {
-              field: 'Salary',
+              field: 'Contracts.0.Salary',
               headerName: 'Contract',
               width: 150,
               editable: true,
               renderCell: ({ row }) => {
-                return row.TeamID ? (
+                if (!row.Contracts.length) {
+                  return "Not contracted";
+                }
+                const Contract = row.Contracts[0];
+                return (
                   <div>
-                    {formatter.format(row.Salary)}
+                    {formatter.format(Contract.Salary)}
                     <br />
                     <span>
-
-                    <span className="small" >until {row.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
+                    <span className="small" >until {Contract.EndSeason} <a style={{color: "lightblue"}} onClick={() => {
                       database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
                       setUpdated(+new Date());
                     }}>+1</a> {
-                      row.EndSeason > player.CurrentSeason ? (
+                      Contract.EndSeason > player.CurrentSeason ? (
                         <a style={{color: "lightblue"}} onClick={() => {
                           database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
                           setUpdated(+new Date());
@@ -309,8 +314,6 @@ export default function StaffGeneric({ StaffType = 1 }) {
                     }</span>
                     </span>
                   </div>
-                ) : (
-                  "Not contracted"
                 )
               }
             },
@@ -321,10 +324,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
             headerName: 'Team',
             width: 175,
             valueGetter: ({row}) => {
-              if (row.TeamID <= 10) {
-                return row.PosInTeam < 3 ? row.TeamID * 2 + row.PosInTeam : 50 + row.TeamID * 2
-              }
-              return row.TeamID ? 100 + row.TeamID * 3 + row.PosInTeam : 99999
+              return row.TeamID ? row.TeamFormula * 100 + row.TeamID * 3 + row.PosInTeam : 99999
             },
             renderCell: ({ row }) => {
               return row.TeamID ? (
@@ -332,9 +332,24 @@ export default function StaffGeneric({ StaffType = 1 }) {
                   type="fanfare"
                   TeamID={row.TeamID}
                   description={
-                    (StaffType === 0 || StaffType === 2) ? (
-                      <span className="small">Driver {row.PosInTeam}</span>
-                    ) : null
+                    <div className="small flex gap-1">
+                      {
+                        (StaffType === 2 || StaffType === 0) && (
+                          row.TeamFormula <= 3 ? (
+                            <span className="small">{StaffType === 2 ? "Car" : "Driver"} #{row.PosInTeam}</span>
+                          ) : (
+                            <span className="small">Reserve</span>
+                          )
+                        )
+                      }
+                      {
+                        row.Contracts.length > 1 && (
+                          <div className="small">
+                            {row.Contracts.slice(1).map(c => <TeamName type="colored" key={c.TeamID} TeamID={c.TeamID} />)}
+                          </div>
+                        )
+                      }
+                    </div>
                   }
                 />
               ) : (

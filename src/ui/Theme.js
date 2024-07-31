@@ -22,7 +22,7 @@ const components = {
       // Name of the slot
       root: ({ theme }) =>
         theme.unstable_sx({
-          px: 1,
+          px: 1.5,
           minWidth: 75,
         }),
     },
