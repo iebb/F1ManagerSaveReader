@@ -298,7 +298,6 @@ export default function CustomCalendar() {
             headerName: 'Day',
             type: 'singleSelect',
             valueGetter: ({ row }) => (row.Day % 7),
-            width: 120,
             editable: true,
             valueOptions: [
               {value: 0, label: "Sat"},
