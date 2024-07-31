@@ -176,11 +176,13 @@ export default function CustomCalendar() {
           if (newRow.State > 0) {
             return oldRow;
           }
-          if (newRow._DOW !== (oldRow.Day % 7)) {
-            database.exec(`UPDATE Races SET Day = Day + :n WHERE RaceID = ${newRow.RaceID};`, {
-              ":n": newRow._DOW - (oldRow.Day % 7)
-            });
-            refresh();
+          if (newRow._DOW !== undefined) {
+            if (newRow._DOW !== (oldRow.Day % 7)) {
+              database.exec(`UPDATE Races SET Day = Day + :n WHERE RaceID = ${newRow.RaceID};`, {
+                ":n": newRow._DOW - (oldRow.Day % 7)
+              });
+              refresh();
+            }
           }
           if (newRow.TrackID !== oldRow.TrackID) {
             database.exec(`UPDATE Races SET TrackID = ${newRow.TrackID} WHERE RaceID = ${newRow.RaceID};`);
