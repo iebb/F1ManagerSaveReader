@@ -295,15 +295,14 @@ export default function CustomCalendar() {
           },
           {
             field: '_DOW',
-            headerName: 'Race',
+            headerName: 'Day',
             type: 'singleSelect',
             valueGetter: ({ row }) => (row.Day % 7),
             width: 120,
             editable: true,
             valueOptions: [
-              {value: 0, label: "Saturday"},
-              {value: 1, label: "Sunday"},
-              {value: 2, label: "Monday"},
+              {value: 0, label: "Sat"},
+              {value: 1, label: "Sun"},
             ],
           },
           {
