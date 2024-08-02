@@ -146,6 +146,9 @@ INNER JOIN (SELECT StaffID, MAX(EndDay) MED, MAX(StartDay) MSD FROM Staff_Career
       row["performance_stats_" + stat] = (PerformanceStats?.[row.StaffID]?.[stat] || 0);
     }
     row.Contracts = (contractsByStaff[row.StaffID] || []).sort((c1, c2) => (c1.PosInTeam - c2.PosInTeam) || (c2.Formula - c1.Formula));
+    if (row.Contracts.length > 0) {
+      row.Salary = row.Contracts[0].Salary;
+    }
     row.TeamID = row.Contracts.length ? row.Contracts[0].TeamID : null;
     row.TeamFormula = row.TeamID ? row.Contracts[0].Formula : null;
     row.PosInTeam = row.TeamID ? row.Contracts[0].PosInTeam : null;

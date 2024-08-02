@@ -82,9 +82,12 @@ export default function StaffDriver2024({ StaffType = 0 }) {
         processRowUpdate={(newRow, oldRow) => {
           for (const stat of staffStats) {
             if (newRow['performance_stats_' + stat] !== oldRow['performance_stats_' + stat]) {
-              database.exec(`UPDATE Staff_PerformanceStats SET Val = ${
-                newRow['performance_stats_' + stat]
-              } WHERE StaffID = ${newRow.StaffID} AND StatID = ${stat}`);
+              database.exec(`INSERT INTO Staff_PerformanceStats(StaffID, StatID, Val, Max)
+                VALUES(${newRow.StaffID}, ${stat}, ${newRow['performance_stats_' + stat]}, 100)
+                ON CONFLICT(StaffID, StatID) DO 
+                UPDATE SET Val = ${newRow['performance_stats_' + stat]}
+                WHERE StaffID = ${newRow.StaffID} AND StatID = ${stat};`
+              );
             }
             if (StaffType === 0) {
               if (newRow.Improvability !== oldRow.Improvability) {
@@ -263,7 +266,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
             }
           },
           {
-            field: 'Contracts.0.Salary',
+            field: 'Salary',
             headerName: 'Contract',
             width: 150,
             editable: true,

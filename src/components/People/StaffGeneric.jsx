@@ -82,9 +82,12 @@ export default function StaffGeneric({ StaffType = 1 }) {
         processRowUpdate={(newRow, oldRow) => {
           for (const stat of staffStats) {
             if (newRow['performance_stats_' + stat] !== oldRow['performance_stats_' + stat]) {
-              database.exec(`UPDATE Staff_PerformanceStats SET Val = ${
-                newRow['performance_stats_' + stat]
-              } WHERE StaffID = ${newRow.StaffID} AND StatID = ${stat}`);
+              database.exec(`INSERT INTO Staff_PerformanceStats(StaffID, StatID, Val, Max)
+                VALUES(${newRow.StaffID}, ${stat}, ${newRow['performance_stats_' + stat]}, 100)
+                ON CONFLICT(StaffID, StatID) DO 
+                UPDATE SET Val = ${newRow['performance_stats_' + stat]}
+                WHERE StaffID = ${newRow.StaffID} AND StatID = ${stat};`
+              );
             }
             if (StaffType === 0) {
               if (newRow.Improvability !== oldRow.Improvability) {
@@ -98,7 +101,7 @@ export default function StaffGeneric({ StaffType = 1 }) {
               database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = ${newRow.RetirementAge} WHERE StaffID = ${newRow.StaffID}`);
             }
             if (newRow.Salary !== oldRow.Salary && oldRow.Salary > 0) {
-              database.exec(`UPDATE Staff_Contracts SET Salary = ${newRow.Salary} WHERE StaffID = ${newRow.StaffID} AND ContractType = 0 AND Accepted = 1`);
+              database.exec(`UPDATE Staff_Contracts SET Salary = ${newRow.Salary} WHERE StaffID = ${newRow.StaffID} AND ContractType = 0`);
             }
             if (newRow.DOB !== oldRow.DOB) {
               const _DOB_Date = typeof newRow.DOB === 'object' ? newRow.DOB : dayToDate(newRow.DOB);
@@ -285,9 +288,8 @@ export default function StaffGeneric({ StaffType = 1 }) {
                 )
               }
             },
-
             {
-              field: 'Contracts.0.Salary',
+              field: 'Salary',
               headerName: 'Contract',
               width: 150,
               editable: true,
