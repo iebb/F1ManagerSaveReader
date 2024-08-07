@@ -209,6 +209,7 @@ export default function ContractSwapper(props) {
 
               break;
             case 3:
+            case 4:
               if (formulaA > 0) {
                 results = database.exec(`SELECT RaceFormula FROM Races_DriverStandings WHERE DriverID = ${B} AND SeasonID = ${season} AND RaceFormula = ${formulaA}`);
                 if (!results.length) { // to be added
