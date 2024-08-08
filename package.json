@@ -41,6 +41,7 @@
     "react-helmet": "^6.1.0",
     "semver-compare": "^1.0.0",
     "sql.js": "1.10.3",
+    "string-to-react-component": "^3.1.1",
     "typescript": "5.1.6",
     "vanilla-jsoneditor": "^0.21.1",
     "vite": "^5.3.4",

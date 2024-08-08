@@ -9,6 +9,8 @@ import Weekend from "@/pages/weekend";
 import {VTabs} from "./Tabs";
 import People from "@/components/People/Staff";
 import Customize from "@/components/Customize";
+import PluginDev from "@/components/Plugin/PluginDev";
+import Plugins from "@/components/Plugin/Plugins";
 
 export default function MainNav() {
   return (
@@ -23,6 +25,8 @@ export default function MainNav() {
       {name: "Facilities", tab: <Facilities />},
       {name: "Parts", tab: <Parts />},
       {name: "Modding", tab: <Modding />},
+      {name: "Plugins", tab: <Plugins />},
+      {name: "Plugin Development", tab: <PluginDev />, devOnly: true},
     ]} />
   )
 }
