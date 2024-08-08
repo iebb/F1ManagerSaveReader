@@ -185,7 +185,7 @@ export default function StaffEditor(props) {
               options={namePool}
               value={firstName}
               sx={{ width: 200 }}
-              onChange={ (e, nv, r) => {
+              onInputChange={ (e, nv, r) => {
                 if (nv && (r === "input" || r === "selectOption")) {
                   setFirstName(nv);
                 }
@@ -200,10 +200,14 @@ export default function StaffEditor(props) {
               options={namePool}
               value={lastName}
               sx={{ width: 200 }}
-              onChange={ (e, nv, r) => {
+              onInputChange={ (e, nv, r) => {
                 if (nv && (r === "input" || r === "selectOption")) {
                   setLastName(nv);
-                  setDriverCode(surnameMapping[nv])
+                  if (surnameMapping[nv]) {
+                    setDriverCode(surnameMapping[nv])
+                  } else {
+                    setDriverCode(nv.substring(0, 3).toUpperCase());
+                  }
                 }
               } }
               renderInput={(params) => <TextField {...params} label="Last Name" autoComplete="off" />}
@@ -218,7 +222,7 @@ export default function StaffEditor(props) {
                   options={driverCodePool}
                   value={driverCode}
                   sx={{ width: 160 }}
-                  onChange={ (e, nv, r) => {
+                  onInputChange={ (e, nv, r) => {
                     if (nv && (r === "input" || r === "selectOption")) setDriverCode(nv)
                   }}
                   renderInput={(params) => <TextField {...params} label="Code" autoComplete="off" />}
@@ -234,7 +238,7 @@ export default function StaffEditor(props) {
               options={countries}
               value={country}
               sx={{ width: 200 }}
-              onChange={ (e, nv, r) => {
+              onInputChange={ (e, nv, r) => {
                 if (nv && (r === "input" || r === "selectOption")) setCountry(nv)
               }}
               renderInput={(params) => <TextField {...params} label="Country" autoComplete="off" />}
@@ -373,8 +377,6 @@ export default function StaffEditor(props) {
               const _firstName = unresolveName(firstName);
               const _lastName = unresolveName(lastName);
               const _driverCode = unresolveDriverCode(driverCode);
-
-              console.log("saving", country);
 
               if (version === 2) {
                 database.exec(`UPDATE Staff_CommonData SET FirstName = "${_firstName}", LastName = "${_lastName}", Nationality = "${country}", Gender = ${gender} WHERE StaffID = ${editRow.StaffID}`);

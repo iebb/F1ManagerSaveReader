@@ -161,7 +161,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
             }
           },
           {
-            field: 'Overall' , headerName: "Overall",
+            field: 'Overall' , headerName: "Rating",
             valueGetter: ({value}) => Number(value).toFixed(2),
             type: 'number',
             renderCell: ({value}) => {
@@ -171,48 +171,6 @@ export default function StaffDriver2024({ StaffType = 0 }) {
                   </span>
               )
             }
-          },
-          ...staffStats.map(x => (
-            {
-              field: 'performance_stats_' + x ,
-              headerName: localeStaffStats["STAFF_STAT_" + x],
-              flex: 1,
-              editable: true,
-              type: 'number',
-              renderCell: ({value}) => {
-                return (
-                  <span style={{textAlign: "right", padding: 6}}>
-                    {value}
-                  </span>
-                )
-              },
-            }
-          )),
-          {
-            field: 'Improvability' , headerName: "Impr",
-            flex: 1,
-            editable: true,
-            type: 'number',
-            renderCell: ({value}) => {
-              return (
-                <span style={{textAlign: "right", padding: 6}}>
-                  {value}
-                </span>
-              )
-            },
-          },
-          {
-            field: 'Aggression' , headerName: "Aggr",
-            flex: 1,
-            editable: true,
-            type: 'number',
-            renderCell: ({value}) => {
-              return (
-                <span style={{textAlign: "right", padding: 6}}>
-                  {value}
-                </span>
-              )
-            },
           },
           {
             field: 'DOB' , headerName: "DOB",
@@ -299,7 +257,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
           {
             field: 'TeamID',
             headerName: 'Team',
-            width: 175,
+            width: 140,
             valueGetter: ({row}) => {
               return row.TeamID ? row.TeamFormula * 100 + row.TeamID * 3 + row.PosInTeam : 99999
             },
@@ -345,7 +303,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
           {
             field: '_',
             headerName: 'Edit',
-            width: 200,
+            width: 140,
             renderCell: ({ row }) => {
               return (
                 <div>
@@ -361,6 +319,78 @@ export default function StaffDriver2024({ StaffType = 0 }) {
               )
             }
           },
+          ...staffStats.map(x => (
+            {
+              field: 'performance_stats_' + x ,
+              headerName: localeStaffStats["STAFF_STAT_" + x],
+              flex: 1,
+              editable: true,
+              type: 'number',
+              renderCell: ({value}) => {
+                return (
+                  <span style={{textAlign: "right", padding: 6}}>
+                    {value}
+                  </span>
+                )
+              },
+            }
+          )),
+          {
+            field: 'Improvability' , headerName: "Impr",
+            flex: 1,
+            editable: true,
+            type: 'number',
+            renderCell: ({value}) => {
+              return (
+                <span style={{textAlign: "right", padding: 6}}>
+                  {value}
+                </span>
+              )
+            },
+          },
+          {
+            field: 'Aggression' , headerName: "Aggr",
+            flex: 1,
+            editable: true,
+            type: 'number',
+            renderCell: ({value}) => {
+              return (
+                <span style={{textAlign: "right", padding: 6}}>
+                  {value}
+                </span>
+              )
+            },
+          },
+          ...(
+            version === 4 ? ([
+              {
+                field: 'Marketability' , headerName: "Mkt",
+                flex: 1,
+                editable: true,
+                type: 'number',
+                renderCell: ({value}) => {
+                  return (
+                    <span style={{textAlign: "right", padding: 6}}>
+                  {value}
+                </span>
+                  )
+                },
+              },
+              {
+                field: 'TargetMarketability' , headerName: "Mkt Target",
+                flex: 1.5,
+                editable: true,
+                type: 'number',
+                renderCell: ({value}) => {
+                  return (
+                    <span style={{textAlign: "right", padding: 6}}>
+                  {value}
+                </span>
+                  )
+                },
+              },
+            ]) : []
+          )
 
         ]}
         initialState={{
