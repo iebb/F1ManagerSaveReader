@@ -7,7 +7,7 @@ import {TeamName} from "../Localization/Localization";
 import {PartStatsCategorizedV} from "./consts";
 
 
-export default function ExpertiseView() {
+export default function ExpertiseView({ type = 'current' }) {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
@@ -22,6 +22,7 @@ export default function ExpertiseView() {
   const PartStatsCategorizedPage = PartStatsCategorized[partPanel].stats;
 
 
+  const field = type === 'next' ? 'NextSeasonExpertise' : 'Expertise';
 
   useEffect(() => {
     const partStats = {};
@@ -37,9 +38,9 @@ export default function ExpertiseView() {
         if (!partStats[r[0]]) {
           partStats[r[0]] = {};
         }
-        partStats[r[0] /* TeamID */ ]["stat_" + r[1] + "_" + r[2] /* PartStat */ ] = r[3];
+        partStats[r[0] /* TeamID */ ]["stat_" + r[1] + "_" + r[2] /* PartStat */ ] = (type === 'next' ? r[4] : r[3]);
         // partStats[r[0] /* TeamID */ ]["stat_" + r[1] + "_" + r[2] /* PartStat */ ] = r[4];
-        partStats[r[0] /* TeamID */ ]["season_start_stat_" + r[1] + "_" + r[2] /* PartStat */ ] = r[5];
+        partStats[r[0] /* TeamID */ ]["season_start_stat_" + r[1] + "_" + r[2] /* PartStat */ ] = (type === 'next' ? r[3] : r[5]);
       }
       setPartStats(
         teamIds.map(
@@ -77,11 +78,11 @@ export default function ExpertiseView() {
             const [partType, partStat] = stat.id.split("_");
 
             if (newRow['stat_' + stat.id]) {
-              database.exec(
+                database.exec(
                 version === 2 ? (
-                  `UPDATE Parts_TeamExpertise SET Expertise = :value WHERE TeamID = :teamID AND PartType = :partType AND StatID = :partStat`
+                  `UPDATE Parts_TeamExpertise SET ${field} = :value WHERE TeamID = :teamID AND PartType = :partType AND StatID = :partStat`
                 ) : (
-                  `UPDATE Parts_TeamExpertise SET Expertise = :value WHERE TeamID = :teamID AND PartType = :partType AND PartStat = :partStat`
+                  `UPDATE Parts_TeamExpertise SET ${field} = :value WHERE TeamID = :teamID AND PartType = :partType AND PartStat = :partStat`
                 ), {
                   ":teamID": newRow.TeamID,
                   ":value": newRow['stat_' + stat.id],
