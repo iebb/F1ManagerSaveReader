@@ -34,7 +34,7 @@
     "mobx-react-lite": "^4.0.7",
     "notistack": "^3.0.1",
     "pako": "^2.1.0",
-    "polotno": "^2.10.9",
+    "polotno": "^2.25.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.2.3",
