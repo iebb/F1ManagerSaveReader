@@ -12,7 +12,7 @@ import {
 import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
 import {defaultFontFamily} from "@/ui/Fonts";
 import {createTeamColorTheme} from "@/ui/Theme";
-import {Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
+import {Box, Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
@@ -56,10 +56,18 @@ export function DataView() {
   }
 
   return (
-    <div className={`version_container game_v${version}`} ref={r => window.vc = r}>
+    <Box
+      className={`version_container game_v${version}`}
+      ref={r => window.vc = r}
+      sx={{
+        border: "1px solid rgba(255,255,255,0.08)",
+        p: {xs: 1.5, md: 2},
+        backgroundColor: "rgba(255,255,255,0.015)",
+      }}
+    >
       <BasicInfoHeader />
       <MainNav />
-    </div>
+    </Box>
   )
 }
 
@@ -195,7 +203,7 @@ export default function App() {
                               <Header />
                               <input {...getInputProps()} hidden />
                               <DragBox />
-                              <Container maxWidth={false} component="main">
+                              <Container maxWidth={false} component="main" sx={{px: {xs: 2, md: 3}, pb: 2}}>
                                 <DataView key={updated} />
                               </Container>
                               <Footer />

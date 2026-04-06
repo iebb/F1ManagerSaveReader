@@ -1,4 +1,4 @@
-import {Container, Typography} from "@mui/material";
+import {Alert, Box, Container, Link, Stack, Typography} from "@mui/material";
 import {useContext} from "react";
 import {EnvContext, MetadataContext} from "@/js/Contexts";
 
@@ -11,29 +11,37 @@ export default function DragBox() {
   }
 
   return (
-    <Container maxWidth={false} component="main">
-      <div id="dropzone">
-        <Typography variant="h5" component="h5">
-          Try our <a href="https://github.com/iebb/F1MSaveApp/releases/">Windows App</a>, which is able to read Steam and Xbox saves directly.
+    <Container maxWidth={false} component="main" sx={{px: {xs: 2, md: 3}, py: 2}}>
+      <Box
+        id="dropzone"
+        sx={{
+          display: "grid",
+          gap: 1.5,
+          textAlign: "left",
+          border: "1px dashed rgba(255,255,255,0.18)",
+          p: {xs: 2, md: 2.5},
+          backgroundColor: "rgba(255,255,255,0.015)",
+        }}
+      >
+        <Typography variant="h6" component="h2" sx={{fontWeight: 700}}>
+          Drag a savefile here to get started.
         </Typography>
-        <Typography variant="h5" component="h5">
-          Or... drag your F1 Manager 2022/2023/2024 savefile here to get started.
+        <Typography variant="body2" sx={{color: "text.secondary", maxWidth: 880}}>
+          Steam and Xbox users can also use the{" "}
+          <Link href="https://github.com/iebb/F1MSaveApp/releases/" target="_blank" rel="noreferrer">Windows App</Link>
+          {" "}for direct save access.
         </Typography>
-        <Typography variant="p" component="p" sx={{ mt: 2 }}>
-          F1 Manager 2024: %LOCALAPPDATA%\F1Manager24\Saved\SaveGames
-          <br />
-          F1 Manager 2023: %LOCALAPPDATA%\F1Manager23\Saved\SaveGames
-          <br />
-          F1 Manager 2022: %LOCALAPPDATA%\F1Manager22\Saved\SaveGames
-          <br />
-          If you are playing Xbox Store version, please use <a
-          href="https://github.com/Fr33dan/GPSaveConverter/releases">
-          GPSaveConverter
-        </a> to convert the savefile into original format, or use the Windows App.
-          <br />
-          <span style={{ color: "yellow" }}>Support for F1 Manager 2024 might be limited.</span>
-        </Typography>
-      </div>
+        <Stack spacing={0.5} sx={{fontFamily: "var(--font-mono)", fontSize: 13, color: "text.secondary"}}>
+          <div>2024: `%LOCALAPPDATA%\\F1Manager24\\Saved\\SaveGames`</div>
+          <div>2023: `%LOCALAPPDATA%\\F1Manager23\\Saved\\SaveGames`</div>
+          <div>2022: `%LOCALAPPDATA%\\F1Manager22\\Saved\\SaveGames`</div>
+        </Stack>
+        <Alert severity="info" sx={{mt: 1}}>
+          Xbox Store saves may need{" "}
+          <Link href="https://github.com/Fr33dan/GPSaveConverter/releases" target="_blank" rel="noreferrer">GPSaveConverter</Link>
+          {" "}to convert them into the original format.
+        </Alert>
+      </Box>
     </Container>
   )
 }
