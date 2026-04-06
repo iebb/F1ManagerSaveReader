@@ -5,6 +5,7 @@ import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {TeamName} from "../Localization/Localization";
+import TeamSize from "@/components/Staff/TeamSize";
 
 export const BuildingsCategorized = [
   {
@@ -52,8 +53,9 @@ export default function Facilities() {
 
   const [buildings, setBuildings] = useState([]);
   const [partPanel, setPartPanel] = useState(0);
+  const isStaffingTab = partPanel === BuildingsCategorized.length;
 
-  const BuildingsCategorizedPage = BuildingsCategorized[partPanel].buildings;
+  const BuildingsCategorizedPage = isStaffingTab ? [] : BuildingsCategorized[partPanel].buildings;
 
   const getBuildingState = b => {
 
@@ -225,18 +227,52 @@ export default function Facilities() {
 
 
   return (
-    <div>
-      <Tabs
-        value={partPanel}
-        onChange={(event, newValue) => {
-          setPartPanel(newValue);
-        }}
-        sx={{ mb: 1 }}
-      >
-        {BuildingsCategorized.map(p => <Tab
-          label={p.category} key={p.id}
-        />)}
-      </Tabs>
+    <div className="grid gap-2">
+      <div className="border border-white/10 bg-white/[0.02] p-5">
+        <h2 className="text-lg font-bold text-white">Facilities Workspace</h2>
+        <p className="mt-2 max-w-[880px] text-sm text-slate-400">
+          Switch between development, staff, and operations facilities. Each column lets you review upgrade level,
+          wear, and quick actions for every team in one place.
+        </p>
+        <div className="mt-4">
+          <Tabs
+            value={partPanel}
+            onChange={(event, newValue) => {
+              setPartPanel(newValue);
+            }}
+            sx={{
+              minHeight: 42,
+              "& .MuiTab-root": {
+                minHeight: 42,
+                textTransform: "none",
+                fontWeight: 700,
+              },
+            }}
+          >
+            {BuildingsCategorized.map(p => <Tab
+              label={p.category} key={p.id}
+            />)}
+            <Tab label="Engineering & Scouting" />
+          </Tabs>
+        </div>
+      </div>
+
+      <div className="border border-white/10 bg-white/[0.015] px-5 py-4">
+        <div className="text-base font-bold text-white">
+          {isStaffingTab ? "Engineering & Scouting" : BuildingsCategorized[partPanel].category}
+        </div>
+        <p className="mt-1 text-sm text-slate-400">
+          {partPanel === 0 && "Factory and simulation facilities that drive car performance development."}
+          {partPanel === 1 && "Team support and driver-focused facilities around the HQ."}
+          {partPanel === 2 && "Commercial and operational infrastructure around the HQ."}
+          {isStaffingTab && "Adjust engineering and scouting headcount for each team in one place."}
+        </p>
+      </div>
+
+      <div className="min-w-0">
+      {isStaffingTab ? (
+        <TeamSize />
+      ) : (
       <DataGrid
         rows={buildings}
         getRowId={r => r.TeamID}
@@ -273,11 +309,6 @@ export default function Facilities() {
         }}
         columns={[
           {
-            field: 'id',
-            headerName: "#",
-            width: 50,
-          },
-          {
             field: 'TeamID',
             headerName: "Team",
             width: 120,
@@ -287,6 +318,8 @@ export default function Facilities() {
         ]}
         hideFooter
       />
+      )}
+      </div>
     </div>
   );
 }

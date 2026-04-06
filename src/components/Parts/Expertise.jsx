@@ -1,7 +1,7 @@
 import {Button, Tab, Tabs} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
+import {useCallback, useContext, useEffect, useState} from "react";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../Localization/Localization";
 import {PartStatsCategorizedV} from "./consts";
@@ -12,9 +12,6 @@ export default function ExpertiseView({ type = 'current' }) {
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
   const {teamIds} = useContext(BasicInfoContext);
-  const [updated, setUpdated] = useState(0);
-  const refresh = () => setUpdated(+new Date());
-
   const [partStats, setPartStats] = useState([]);
   const [partPanel, setPartPanel] = useState(1);
 
@@ -24,7 +21,7 @@ export default function ExpertiseView({ type = 'current' }) {
 
   const field = type === 'next' ? 'NextSeasonExpertise' : 'Expertise';
 
-  useEffect(() => {
+  const loadPartStats = useCallback(() => {
     const partStats = {};
     try {
       let [{ columns, values }] = database.exec(
@@ -55,8 +52,11 @@ export default function ExpertiseView({ type = 'current' }) {
     } catch {
 
     }
+  }, [database, teamIds, type, version]);
 
-  }, [database, updated])
+  useEffect(() => {
+    loadPartStats();
+  }, [loadPartStats])
 
   return (
     <div>
@@ -92,7 +92,7 @@ export default function ExpertiseView({ type = 'current' }) {
             }
 
           }
-          refresh();
+          loadPartStats();
           return newRow;
         }}
         columns={[
@@ -152,13 +152,20 @@ export default function ExpertiseView({ type = 'current' }) {
                     () => {
                       for (const stat of PartStatsCategorizedPage) {
                         const [partType, partStat] = stat.id.split("_");
-                        database.exec(`UPDATE Parts_TeamExpertise SET Expertise = :value WHERE PartType = :partType AND PartStat = :partStat`, {
+                        database.exec(
+                          version === 2 ? (
+                            `UPDATE Parts_TeamExpertise SET ${field} = :value WHERE PartType = :partType AND StatID = :partStat`
+                          ) : (
+                            `UPDATE Parts_TeamExpertise SET ${field} = :value WHERE PartType = :partType AND PartStat = :partStat`
+                          ),
+                          {
                           ":value": row['stat_' + stat.id],
                           ":partType": partType,
                           ":partStat": partStat,
-                        })
+                          }
+                        )
                       }
-                      refresh();
+                      loadPartStats();
                     }
                   }>equalize</Button>
                 </div>
