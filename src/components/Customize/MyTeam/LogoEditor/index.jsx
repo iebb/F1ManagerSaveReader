@@ -79,7 +79,7 @@ export default function LogoEditor({defaultData, onSave}) {
   const [selectedId, setSelectedId] = useState(null);
   const [activeSection, setActiveSection] = useState(logoElements[0]?.name || "");
   const [inspectorTab, setInspectorTab] = useState("layers");
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.5);
   const [isCanvasDragOver, setIsCanvasDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [historyState, setHistoryState] = useState({undo: 0, redo: 0});
@@ -576,23 +576,17 @@ export default function LogoEditor({defaultData, onSave}) {
               <Button minimal icon="arrow-down" title="Send back" onClick={() => reorderSelected(-1)}/>
               <Button minimal icon="arrows-horizontal" title="Flip X" onClick={() => flipSelected("flipX")}/>
               <Button minimal icon="arrows-vertical" title="Flip Y" onClick={() => flipSelected("flipY")}/>
-              <div className="ml-1 flex items-center gap-2 border border-[#394b59] bg-[#182026] px-2 py-1">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Fill</span>
-                <input
-                  type="color"
-                  value={getLayerColor(selectedLayer)}
-                  onChange={(event) => updateSelectedLayer((layer) => withLayerColor(layer, event.target.value))}
-                  className="h-7 w-9 border border-[#5c7080] bg-transparent"
-                  title="Layer fill"
-                />
-              </div>
+              <input
+                type="color"
+                value={getLayerColor(selectedLayer)}
+                onChange={(event) => updateSelectedLayer((layer) => withLayerColor(layer, event.target.value))}
+                className="ml-1 h-7 w-9 border border-[#5c7080] bg-transparent"
+                title="Layer fill"
+              />
             </>
           )}
-          <Button icon="zoom-out" minimal title="Zoom out" onClick={() => setZoom((current) => clamp(current - 0.1, 0.5, 2))}/>
-          <Button text={`${Math.round(zoom * 100)}%`} disabled/>
-          <Button icon="zoom-in" minimal title="Zoom in" onClick={() => setZoom((current) => clamp(current + 0.1, 0.5, 2))}/>
           <div className="ml-auto"/>
-          <Button intent="primary" text="Save" onClick={() => onSave(editor)}/>
+          <Button intent="primary" minimal icon="floppy-disk" title="Save" onClick={() => onSave(editor)}/>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto bg-[#182026] p-4">
@@ -754,6 +748,12 @@ export default function LogoEditor({defaultData, onSave}) {
             )}
           </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-1 border-t border-[#30404d] bg-[#182026] px-3 py-1.5">
+          <Button icon="zoom-out" minimal title="Zoom out" onClick={() => setZoom((current) => clamp(current - 0.1, 0.5, 2))}/>
+          <Button text={`${Math.round(zoom * 100)}%`} minimal disabled/>
+          <Button icon="zoom-in" minimal title="Zoom in" onClick={() => setZoom((current) => clamp(current + 0.1, 0.5, 2))}/>
         </div>
       </section>
 

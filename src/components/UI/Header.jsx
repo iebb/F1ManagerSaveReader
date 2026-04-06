@@ -1,15 +1,13 @@
-import {Box, Container, Divider, Link, Typography} from "@mui/material";
+import ViewAgendaOutlinedIcon from "@mui/icons-material/ViewAgendaOutlined";
+import ViewStreamOutlinedIcon from "@mui/icons-material/ViewStreamOutlined";
+import {Divider, IconButton, Link, Tooltip, Typography} from "@mui/material";
 import KofiButton from "./Kofi/Kofi";
 
-export default function Header() {
+export default function Header({fullWidth = false, onToggleFullWidth = () => {}}) {
+  const shellClassName = fullWidth ? "w-full px-4 pt-2 md:px-6" : "mx-auto w-full max-w-screen-2xl px-4 pt-2 md:px-6";
   return (
-    <Container maxWidth={false} component="header" sx={{px: {xs: 2, md: 3}, pt: 2}}>
-      <Box sx={{
-        border: "1px solid rgba(255,255,255,0.08)",
-        px: {xs: 2, md: 2.5},
-        py: 2,
-        backgroundColor: "rgba(255,255,255,0.02)",
-      }}>
+    <header className={shellClassName}>
+      <div className="px-0.5 py-1">
         <div className="headerContainer">
           <div className="headerTitle">
             <Typography variant="h4" component="h1" sx={{fontWeight: 700, lineHeight: 1.1}}>
@@ -20,6 +18,17 @@ export default function Header() {
             </Typography>
           </div>
           <div className="headerUser">
+            <Tooltip title={fullWidth ? "Use constrained width" : "Use full width"}>
+              <IconButton
+                size="small"
+                sx={{mr: 1}}
+                onClick={onToggleFullWidth}
+                color="inherit"
+                aria-label={fullWidth ? "Use constrained width" : "Use full width"}
+              >
+                {fullWidth ? <ViewStreamOutlinedIcon fontSize="small" /> : <ViewAgendaOutlinedIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
             <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
           </div>
         </div>
@@ -32,8 +41,8 @@ export default function Header() {
           {" · "}
           Local processing only
         </Typography>
-      </Box>
-      <Divider variant="fullWidth" sx={{mt: 1.5}} />
-    </Container>
+      </div>
+      <Divider variant="fullWidth" sx={{mt: 1}} />
+    </header>
   )
 }

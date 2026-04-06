@@ -1,8 +1,8 @@
-import {Alert, Box, Container, Link, Stack, Typography} from "@mui/material";
+import {Alert, Box, Link, Stack, Typography} from "@mui/material";
 import {useContext} from "react";
 import {EnvContext, MetadataContext} from "@/js/Contexts";
 
-export default function DragBox() {
+export default function DragBox({fullWidth = false}) {
   const {version, gameVersion} = useContext(MetadataContext)
   const env = useContext(EnvContext);
 
@@ -10,8 +10,9 @@ export default function DragBox() {
     return null;
   }
 
+  const shellClassName = fullWidth ? "w-full px-4 py-2 md:px-6" : "mx-auto w-full max-w-screen-2xl px-4 py-2 md:px-6";
   return (
-    <Container maxWidth={false} component="main" sx={{px: {xs: 2, md: 3}, py: 2}}>
+    <section className={shellClassName}>
       <Box
         id="dropzone"
         sx={{
@@ -42,6 +43,6 @@ export default function DragBox() {
           {" "}to convert them into the original format.
         </Alert>
       </Box>
-    </Container>
+    </section>
   )
 }

@@ -65,11 +65,6 @@ export default function TeamSize() {
         }}
         columns={[
           {
-            field: 'id',
-            headerName: "#",
-            width: 50,
-          },
-          {
             field: 'TeamID',
             headerName: "Team",
             width: 120,

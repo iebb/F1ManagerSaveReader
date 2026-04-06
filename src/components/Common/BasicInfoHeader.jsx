@@ -1,7 +1,7 @@
 import {TeamName} from "@/components/Localization/Localization";
 import {circuitNames, countryNames, dayToDate, formatDate, raceAbbrevs, raceFlags, weekendStagesAbbrev} from "@/js/localization";
 
-import {Button, Divider, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import {Box, Button, Stack, Tooltip, Typography} from "@mui/material";
 import * as React from "react";
 import {useContext} from "react";
 import {dump, repack} from "@/js/Parser";
@@ -16,14 +16,15 @@ export const BasicInfoHeader = () => {
 
   const { teamMap, weekend, races, currentSeasonRaces } = basicInfo;
 
-  const currentRaceIdx = currentSeasonRaces.map(x => x.RaceID).indexOf(weekend.RaceID);
-
   let { ScenarioID, CurrentRace, RacesInSeason, Day, FirstName, LastName, TeamID, TrackID, CurrentLap, LapCount,
     RaceWeekendInProgress, SessionInProgress, WeekendStage, TimeRemaining } = careerSaveMetadata;
   if (!WeekendStage && weekend.WeekendStage) {
     WeekendStage = weekend.WeekendStage;
   }
   const team = teamMap[TeamID];
+  const isCustomTeam = basicInfo?.player?.TeamID >= 32;
+  const teamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64;
+  const carPreviewBase64 = basicInfo?.player?.CustomTeamCarLiveryBase64;
 
   const statusMark = RaceWeekendInProgress ?
     `and racing in ${circuitNames[TrackID]}, ${countryNames[TrackID]} (Race ${CurrentRace} of ${RacesInSeason}): ` + (
@@ -41,29 +42,116 @@ export const BasicInfoHeader = () => {
 
   const seasonPercentage = CurrentRace ? (100 * (CurrentRace - (RaceWeekendInProgress ? 0.5 : 1)) / RacesInSeason) : 100;
 
+  const getRaceStatus = (race) => {
+    if (race.RaceID === weekend.RaceID) {
+      return {
+        key: "current",
+        label: weekendStagesAbbrev[weekend.WeekendStage] || "Live",
+        bg: `linear-gradient(135deg, rgba(var(--team${team.TeamID}-fanfare1-triplet), 0.95), rgba(var(--team${team.TeamID}-fanfare2-triplet), 0.9))`,
+        color: "#101010",
+        border: "rgba(255,255,255,0.08)",
+        shadow: "0 0 0 1px rgba(255,255,255,0.04) inset",
+      };
+    }
+
+    if (race.Day < Day) {
+      return {
+        key: "done",
+        label: raceAbbrevs[race.TrackID],
+        bg: "rgba(46, 125, 50, 0.82)",
+        color: "#f8fff8",
+        border: "rgba(129, 199, 132, 0.32)",
+        shadow: "none",
+      };
+    }
+
+    if (race.Day - Day <= 7) {
+      return {
+        key: "next",
+        label: `${race.Day - Day}d`,
+        bg: "rgba(25, 118, 210, 0.82)",
+        color: "#f7fbff",
+        border: "rgba(144, 202, 249, 0.32)",
+        shadow: "none",
+      };
+    }
+
+    return {
+      key: "upcoming",
+      label: `${race.Day - Day}d`,
+      bg: "rgba(255,255,255,0.07)",
+      color: "rgba(255,255,255,0.82)",
+      border: "rgba(255,255,255,0.08)",
+      shadow: "none",
+    };
+  };
+
   return (
-    <div>
-      <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 24, gap: 24 }}>
-        <Typography variant="p" component="p" style={{ color: "#ccc", marginBottom: 12, flex: 1, flexBasis: 720 }}>
-          Playing {ScenarioID ? "Scenario Mode" : `as ${FirstName} ${LastName}`} for <span style={{
-          color: `var(--team${team.TeamID}-fanfare1)`,
-          borderBottom: `3px solid var(--team${team.TeamID}-fanfare2)`
-        }}><TeamName TeamID={team.TeamID} /></span> in {version + 2020} Game (v{metadata.gameVersion}), savefile {metadata.filename}
-          <br />
-          It's {formatDate(dayToDate(Day))}, {statusMark}.
-        </Typography>
-        <div style={{ textAlign: "right" }}>
-          <div>
+    <>
+      <Box sx={{
+        display: "grid",
+        gridTemplateColumns: {xs: "1fr", xl: "minmax(0,1fr) auto"},
+        gap: 2,
+        mb: 2,
+        border: "1px solid rgba(255,255,255,0.08)",
+        backgroundColor: "rgba(255,255,255,0.02)",
+        p: 2,
+      }}>
+        <Box>
+          <Typography variant="overline" sx={{color: "text.secondary", fontWeight: 700, letterSpacing: 1}}>
+            Save Overview
+          </Typography>
+          <Typography variant="h5" sx={{fontWeight: 700, mt: 0.25}}>
+            <Box component="span" sx={{display: "inline-flex", alignItems: "center", gap: 1.25}}>
+              {!ScenarioID && isCustomTeam && teamLogoBase64 ? (
+                <Box
+                  component="img"
+                  src={`data:image/png;base64,${teamLogoBase64}`}
+                  alt="Custom team logo"
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    objectFit: "contain",
+                    borderRadius: "4px",
+                    backgroundColor: "rgba(255,255,255,0.04)",
+                    p: 0.25,
+                    verticalAlign: "middle",
+                  }}
+                />
+              ) : null}
+              <span>{ScenarioID ? "Scenario Mode" : `${FirstName} ${LastName}`}</span>
+            </Box>
+          </Typography>
+          <Typography variant="body1" sx={{mt: 0.75, color: "text.secondary"}}>
+            Team:{" "}
+            <Box component="span" sx={{
+              color: `var(--team${team.TeamID}-fanfare1)`,
+              borderBottom: `2px solid var(--team${team.TeamID}-fanfare2)`,
+              fontWeight: 700,
+            }}>
+              <TeamName TeamID={team.TeamID} />
+            </Box>
+            {" · "}
+            F1 Manager {version + 2020} (v{metadata.gameVersion})
+            {" · "}
+            {metadata.filename}
+          </Typography>
+          <Typography variant="body2" sx={{mt: 1, color: "text.secondary"}}>
+            {formatDate(dayToDate(Day))} · {statusMark}
+          </Typography>
+        </Box>
+        <Stack direction={{xs: "column", sm: "row", xl: "column"}} spacing={0.5} alignItems={{xs: "stretch", xl: "flex-end"}}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap justifyContent={{xl: "flex-end"}}>
             {
               env.inApp && (
-                <Button color="error" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, true)}>
+                <Button color="error" variant="contained" onClick={() => repack(database, metadata, true)}>
                   Overwrite Save
                 </Button>
               )
             }
             {
               env.haveBackup && (
-                <Button color="secondary" variant="contained" sx={{ mr: 2 }} onClick={() => {
+                <Button color="secondary" variant="contained" onClick={() => {
                   window.parent.document.dispatchEvent( new CustomEvent('load-backup-file', {
                     detail: {
                       filepath: window.file_path,
@@ -74,50 +162,119 @@ export const BasicInfoHeader = () => {
                 </Button>
               )
             }
-            <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => repack(database, metadata, false)}>
+            <Button color="warning" variant="contained" onClick={() => repack(database, metadata, false)}>
               Export Savefile
             </Button>
-            <Button variant="contained" sx={{ mr: 2 }} onClick={() => dump(database, metadata)}>
+            <Button variant="contained" onClick={() => dump(database, metadata)}>
               Dump DB
             </Button>
-          </div>
-        </div>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <Stepper
-          activeStep={currentRaceIdx}
-          alternativeLabel
-          key={Day}
-        >
-          {currentSeasonRaces.map((race) => (
-            <Step key={race.RaceID}>
-              <StepLabel
-                StepIconComponent={() => <img
-                  src={`/flags/${raceFlags[race.TrackID]}.svg`}
-                  width={24} height={18}
-                  alt={race.Name}
-                  style={{ opacity: race.Day >= Day ? 1 : 0.3 }}
-                />}
+          </Stack>
+          <Typography variant="caption" sx={{color: "text.secondary"}}>
+            Season progress: {seasonPercentage.toFixed(0)}%
+          </Typography>
+          {isCustomTeam && carPreviewBase64 ? (
+            <Box
+              sx={{
+                mt: 0.25,
+                display: "flex",
+                justifyContent: {xs: "flex-start", xl: "flex-end"},
+              }}
+            >
+              <Box
+                sx={{
+                  maxWidth: {xs: 220, xl: 260},
+                  width: "100%",
+                  height: 48,
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                {raceAbbrevs[race.TrackID]}
-                <br />
-                {
-                  race.RaceID === weekend.RaceID ? weekendStagesAbbrev[weekend.WeekendStage] :
-                    race.Day < Day ? "✅" : `${(race.Day - Day)}d`
-                }
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </div>
-      <Divider variant="fullWidth" sx={{
-        mt: 2, mb: 2, py: 0.25,
-        background: `repeating-linear-gradient(135deg, 
-                            rgba(var(--team${team.TeamID}-fanfare1-triplet), 1), rgba(var(--team${team.TeamID}-fanfare1-triplet), 1) ${seasonPercentage}%, 
-                            rgba(var(--team${team.TeamID}-fanfare2-triplet), 1) 8px, rgba(var(--team${team.TeamID}-fanfare2-triplet), 1) 100%)`,
-        border: "transparent",
-        borderRadius: 4,
-      }} />
-    </div>
+                <Box
+                  component="img"
+                  src={`data:image/png;base64,${carPreviewBase64}`}
+                  alt="Custom team car preview"
+                  sx={{
+                    width: "100%",
+                    height: 96,
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    filter: "drop-shadow(0 10px 22px rgba(0,0,0,0.35))",
+                  }}
+                />
+              </Box>
+            </Box>
+          ) : null}
+        </Stack>
+        <Box sx={{gridColumn: "1 / -1", pt: 0.5, overflow: "hidden"}}>
+        <Box sx={{display: "flex", alignItems: "stretch", width: "100%", py: 0.25, pr: 1}}>
+          {currentSeasonRaces.map((race, index) => {
+            const status = getRaceStatus(race);
+            return (
+              <Tooltip
+                key={race.RaceID}
+                title={`${race.Name} · ${formatDate(dayToDate(race.Day))}`}
+                arrow
+              >
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "flex",
+                    flex: "1 1 0",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 0.35,
+                    minWidth: 0,
+                    height: 40,
+                    pl: index === 0 ? 1.25 : 2,
+                    pr: 2.25,
+                    ml: index === 0 ? 0 : -1.25,
+                    clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%)",
+                    background: status.bg,
+                    color: status.color,
+                    border: `1px solid ${status.border}`,
+                    boxShadow: status.shadow,
+                    zIndex: race.RaceID === weekend.RaceID ? 3 : currentSeasonRaces.length - index,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={`/flags/${raceFlags[race.TrackID]}.svg`}
+                    alt={race.Name}
+                    sx={{
+                      width: 18,
+                      height: 13.5,
+                      borderRadius: "1px",
+                      opacity: status.key === "upcoming" ? 0.72 : 1,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "inherit",
+                      opacity: status.key === "upcoming" ? 0.72 : 0.92,
+                      fontWeight: status.key === "current" ? 700 : 500,
+                      fontSize: "0.65rem",
+                      lineHeight: 1,
+                      textAlign: "center",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "100%",
+                    }}
+                  >
+                    {status.label || "\u00A0"}
+                  </Typography>
+                </Box>
+              </Tooltip>
+            );
+          })}
+        </Box>
+      </Box>
+      </Box>
+    </>
   )
 }

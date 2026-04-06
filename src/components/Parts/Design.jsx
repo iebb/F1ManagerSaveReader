@@ -195,11 +195,6 @@ LEFT JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID WHERE Part
         }}
         columns={[
           {
-            field: 'id',
-            headerName: "#",
-            width: 70,
-          },
-          {
             field: 'TeamID',
             headerName: "Team",
             width: 140,

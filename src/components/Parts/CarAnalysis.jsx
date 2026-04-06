@@ -132,11 +132,6 @@ LEFT JOIN ${DSVTable} ON Parts_Designs.DesignID = ${DSVTable}.DesignID WHERE Par
         getRowId={r => r.id}
         columns={[
           {
-            field: 'id',
-            headerName: "#",
-            width: 70,
-          },
-          {
             field: 'TeamID',
             headerName: "Team",
             width: 120,

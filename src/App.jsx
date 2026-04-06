@@ -12,7 +12,7 @@ import {
 import {analyzeFileToDatabase, parseGvasProps} from "@/js/Parser";
 import {defaultFontFamily} from "@/ui/Fonts";
 import {createTeamColorTheme} from "@/ui/Theme";
-import {Box, Container, createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
+import {createTheme, CssBaseline, ThemeProvider, Typography} from "@mui/material";
 import {SnackbarProvider} from "notistack";
 import {useContext, useEffect, useState} from "react";
 import Dropzone from "react-dropzone";
@@ -31,6 +31,24 @@ const defaultTheme = createTheme({
     },
   },
   typography: { fontFamily: defaultFontFamily },
+  components: {
+    MuiContainer: {
+      defaultProps: {
+        maxWidth: false,
+        disableGutters: true,
+      },
+      styleOverrides: {
+        root: {
+          width: "100%",
+          maxWidth: "none !important",
+          paddingLeft: "0 !important",
+          paddingRight: "0 !important",
+          marginLeft: 0,
+          marginRight: 0,
+        },
+      },
+    },
+  },
 });
 
 
@@ -56,18 +74,13 @@ export function DataView() {
   }
 
   return (
-    <Box
+    <div
       className={`version_container game_v${version}`}
       ref={r => window.vc = r}
-      sx={{
-        border: "1px solid rgba(255,255,255,0.08)",
-        p: {xs: 1.5, md: 2},
-        backgroundColor: "rgba(255,255,255,0.015)",
-      }}
     >
       <BasicInfoHeader />
       <MainNav />
-    </Box>
+    </div>
   )
 }
 
@@ -75,6 +88,7 @@ export function DataView() {
 export default function App() {
 
   const [theme, setTheme] = useState(defaultTheme);
+  const [fullWidth, setFullWidth] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [db, setDb] = useState(null);
   const [metadata, setMetadata] = useState({});
@@ -200,24 +214,27 @@ export default function App() {
                         >
                           {({ getRootProps, getInputProps }) => (
                             <div id="fullpage_dropzone" {...getRootProps()}>
-                              <Header />
+                              <Header
+                                fullWidth={fullWidth}
+                                onToggleFullWidth={() => setFullWidth((current) => !current)}
+                              />
                               <input {...getInputProps()} hidden />
-                              <DragBox />
-                              <Container maxWidth={false} component="main" sx={{px: {xs: 2, md: 3}, pb: 2}}>
+                              <DragBox fullWidth={fullWidth} />
+                              <main className={`${fullWidth ? "w-full px-4 md:px-6" : "mx-auto w-full max-w-screen-2xl px-4 md:px-6"} pb-2`}>
                                 <DataView key={updated} />
-                              </Container>
-                              <Footer />
+                              </main>
+                              <Footer fullWidth={fullWidth} />
                             </div>
                           )}
                         </Dropzone>
                       </EnvContext.Provider>
                     </BasicInfoUpdaterContext.Provider>
                   ) : (
-                    <Container maxWidth={false} component="main">
+                    <main className="w-full px-4 md:px-6">
                       <Typography variant="h5" component="h5">
                         Loading Database parser. Please wait.
                       </Typography>
-                    </Container>
+                    </main>
                   )
                 }
               </SnackbarProvider>
