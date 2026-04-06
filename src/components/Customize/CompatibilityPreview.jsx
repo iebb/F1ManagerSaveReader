@@ -1,4 +1,3 @@
-import {Box, Chip, Stack, Tooltip, Typography} from "@mui/material";
 import * as React from "react";
 
 const LANGUAGES = [
@@ -11,73 +10,65 @@ const LANGUAGES = [
 function getCharacterTone(info) {
   const supported = LANGUAGES.filter((language) => info[language.key]).length;
   if (supported === LANGUAGES.length) {
-    return {
-      backgroundColor: "success.dark",
-      borderColor: "success.light",
-      color: "success.contrastText",
-    };
+    return "border-emerald-400/25 bg-emerald-500/12 text-emerald-100";
   }
   if (supported === 0) {
-    return {
-      backgroundColor: "error.dark",
-      borderColor: "error.light",
-      color: "error.contrastText",
-    };
+    return "border-rose-400/25 bg-rose-500/12 text-rose-100";
   }
-  return {
-    backgroundColor: "warning.dark",
-    borderColor: "warning.light",
-    color: "warning.contrastText",
-  };
+  return "border-amber-400/25 bg-amber-500/12 text-amber-100";
 }
+
+const legendItems = [
+  {
+    label: "All languages",
+    tone: "border-emerald-400/25 bg-emerald-500/10 text-emerald-200",
+  },
+  {
+    label: "Some languages",
+    tone: "border-amber-400/25 bg-amber-500/10 text-amber-200",
+  },
+  {
+    label: "Unsupported",
+    tone: "border-rose-400/25 bg-rose-500/10 text-rose-200",
+  },
+];
 
 export default function CompatibilityPreview({compatibility}) {
   return (
-    <Box sx={{mt: 2}}>
-      <Typography variant="body2" sx={{mb: 1.5}}>
-        Characters that may fail in some languages are highlighted directly below.
-      </Typography>
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{mb: 2}}>
+    <div className="grid gap-3">
+      <div className="flex flex-wrap gap-2">
         {compatibility.Characters.map((info, index) => {
           if (info.separator) {
-            return <Box key={`separator-${index}`} sx={{width: 12}} />;
+            return <div key={`separator-${index}`} className="w-3" />;
           }
 
-          const supportedLabels = LANGUAGES.filter((language) => info[language.key]).map((language) => language.label);
           const missingLabels = LANGUAGES.filter((language) => !info[language.key]).map((language) => language.label);
-          const tone = getCharacterTone(info);
+          const title = missingLabels.length
+            ? `Missing: ${missingLabels.join(", ")}`
+            : "Supported in all languages";
 
           return (
-            <Tooltip
+            <div
               key={`${info.char}-${index}`}
-              title={missingLabels.length ? `Missing: ${missingLabels.join(", ")}` : "Supported in all languages"}
+              title={title}
+              className={`flex h-9 min-w-9 items-center justify-center border px-2 text-base leading-none ${getCharacterTone(info)}`}
             >
-              <Box
-                sx={{
-                  minWidth: 36,
-                  height: 36,
-                  px: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: 1,
-                  borderRadius: 1,
-                  fontSize: 18,
-                  lineHeight: 1,
-                  ...tone,
-                }}
-              >
-                {info.char}
-              </Box>
-            </Tooltip>
+              {info.char}
+            </div>
           );
         })}
-      </Stack>
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-        <Chip size="small" label="All languages" color="success" variant="outlined" />
-        <Chip size="small" label="Some languages" color="warning" variant="outlined" />
-        <Chip size="small" label="Unsupported everywhere" color="error" variant="outlined" />
-      </Stack>
-    </Box>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {legendItems.map((item) => (
+          <span
+            key={item.label}
+            className={`border px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] ${item.tone}`}
+          >
+            {item.label}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 import Rename from "@/components/Customize/Rename";
 import TeamSwitch from "@/components/Customize/Player/TeamSwitch";
-import TimeMachine from "@/components/Customize/Player/TimeMachine";
 import {useState} from "react";
 
 export default function Page() {
@@ -18,13 +17,6 @@ export default function Page() {
       eyebrow: "Career tools",
       description: "Move the player career to a different team.",
       tab: <TeamSwitch />,
-    },
-    {
-      id: "time-machine",
-      name: "Time Machine",
-      eyebrow: "Save tools",
-      description: "Shift the save timeline forward or backward for broader career editing.",
-      tab: <TimeMachine />,
     },
   ];
 
@@ -58,11 +50,6 @@ export default function Page() {
             );
           })}
         </div>
-      </div>
-
-      <div className="border border-white/10 bg-white/[0.015] px-5 py-4">
-        <div className="text-base font-bold text-white">{activeMode.name}</div>
-        <p className="mt-1 text-sm text-slate-400">{activeMode.description}</p>
       </div>
 
       <div className="min-w-0">

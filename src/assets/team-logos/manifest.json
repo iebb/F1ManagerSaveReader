@@ -1,0 +1,63 @@
+{
+  "2022": [
+    "alfa-romeo.png",
+    "alphatauri.png",
+    "alpine.png",
+    "aston-martin.png",
+    "ferrari.png",
+    "haas-f1-team.png",
+    "mclaren.png",
+    "mercedes.png",
+    "red-bull-racing.png",
+    "williams.png"
+  ],
+  "2023": [
+    "alfa-romeo.png",
+    "alphatauri.png",
+    "alpine.png",
+    "aston-martin.png",
+    "ferrari.png",
+    "haas-f1-team.png",
+    "mclaren.png",
+    "mercedes.png",
+    "red-bull-racing.png",
+    "williams.png"
+  ],
+  "2024": [
+    "alpine.webp",
+    "astonmartin.webp",
+    "ferrari.webp",
+    "haas.webp",
+    "kicksauber.webp",
+    "mclaren.webp",
+    "mercedes.webp",
+    "rb.webp",
+    "redbullracing.webp",
+    "williams.webp"
+  ],
+  "2025": [
+    "alpine.webp",
+    "astonmartin.webp",
+    "ferrari.webp",
+    "haasf1team.webp",
+    "kicksauber.webp",
+    "mclaren.webp",
+    "mercedes.webp",
+    "racingbulls.webp",
+    "redbullracing.webp",
+    "williams.webp"
+  ],
+  "2026": [
+    "alpine.webp",
+    "astonmartin.webp",
+    "audi.webp",
+    "cadillac.webp",
+    "ferrari.webp",
+    "haasf1team.webp",
+    "mclaren.webp",
+    "mercedes.webp",
+    "racingbulls.webp",
+    "redbullracing.webp",
+    "williams.webp"
+  ]
+}

@@ -13,6 +13,7 @@ import Regulations from "@/pages/regulations";
 import Results from "@/pages/results";
 import Weekend from "@/pages/weekend";
 import TeamTools from "@/pages/team-tools";
+import Team from "@/pages/team";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import BuildIcon from "@mui/icons-material/Build";
 import ConstructionIcon from "@mui/icons-material/Construction";
@@ -20,6 +21,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import EventIcon from "@mui/icons-material/Event";
 import GroupIcon from "@mui/icons-material/Group";
 import InsightsIcon from "@mui/icons-material/Insights";
+import Groups2Icon from "@mui/icons-material/Groups2";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
@@ -47,14 +49,20 @@ const sections = [
   {
     label: "Team",
     items: [
+      {name: "Team", icon: <Groups2Icon fontSize="small" />, tab: <Team />},
       {name: "Logo", icon: <EditNoteIcon fontSize="small" />, tab: <Customize />, minVersion: "4.0"},
       {name: "Finance", icon: <PaymentsIcon fontSize="small" />, tab: <Finance />},
       {name: "Pit Crew", icon: <GroupIcon fontSize="small" />, tab: <Staff />},
-      {name: "People", icon: <PeopleAltIcon fontSize="small" />, tab: <People />},
       {name: "Facilities", icon: <ConstructionIcon fontSize="small" />, tab: <Facilities />},
       {name: "Parts", icon: <PrecisionManufacturingIcon fontSize="small" />, tab: <Parts />},
       {name: "Expertise", icon: <InsightsIcon fontSize="small" />, tab: <Expertise />},
       {name: "Team Tools", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      {name: "People", icon: <PeopleAltIcon fontSize="small" />, tab: <People />},
     ],
   },
   {

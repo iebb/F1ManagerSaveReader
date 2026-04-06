@@ -1,157 +1,352 @@
-import {DataGrid} from "@mui/x-data-grid";
+import { BasicInfoContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
+import { resolveLiteral, teamNames } from "@/js/localization";
+import { Edit, Remove, Add } from "@mui/icons-material";
+import { DataGrid } from "@mui/x-data-grid";
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
-import {teamNames} from "@/js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {TeamName} from "../Localization/Localization";
+import { useContext, useEffect, useState } from "react";
+
+const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
+  eager: true,
+  import: "default",
+});
+
+const teamLogoSlugsByYear = {
+  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
+  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
+  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
+  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
+  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
+};
 
 const PitCrewStatsList = {
   2: [
-    {id: 32, digits: 6, displayDigits: 3, name: "Jacks"},
-    {id: 33, digits: 6, displayDigits: 3, name: "Tyres"},
-    {id: 34, digits: 6, displayDigits: 3, name: "Wings"},
-    {id: 35, digits: 6, displayDigits: 3, name: "Car Release"},
+    { id: 32, digits: 6, displayDigits: 3, name: "Jacks" },
+    { id: 33, digits: 6, displayDigits: 3, name: "Tyres" },
+    { id: 34, digits: 6, displayDigits: 3, name: "Wings" },
+    { id: 35, digits: 6, displayDigits: 3, name: "Car Release" },
   ],
   3: [
-    {id: 32, digits: 6, displayDigits: 3, name: "Jacks"},
-    {id: 41, digits: 6, displayDigits: 3, name: "Tyres Off"},
-    {id: 42, digits: 6, displayDigits: 3, name: "Tyres On"},
-    {id: 40, digits: 6, displayDigits: 3, name: "Wheel Gun"},
-    {id: 35, digits: 6, displayDigits: 3, name: "Car Release"},
-    {id: 39, digits: 6, displayDigits: 3, name: "Car Building"},
-    // {id: 33,	name: "Tyres"},
-    {id: 34, digits: 0, displayDigits: 0, name: "Wings"},
-    //  {id: 37,	name: "Consistency"},
-
-    {id: 36, digits: 6, displayDigits: 3, name: "Speed"},
-    {id: 38, digits: 6, displayDigits: 3, negative: true, name: "Fatigue"},
+    { id: 32, digits: 6, displayDigits: 3, name: "Jacks" },
+    { id: 41, digits: 6, displayDigits: 3, name: "Tyres Off" },
+    { id: 42, digits: 6, displayDigits: 3, name: "Tyres On" },
+    { id: 40, digits: 6, displayDigits: 3, name: "Wheel Gun" },
+    { id: 35, digits: 6, displayDigits: 3, name: "Car Release" },
+    { id: 39, digits: 6, displayDigits: 3, name: "Car Building" },
+    { id: 34, digits: 0, displayDigits: 3, name: "Wings" },
+    { id: 36, digits: 6, displayDigits: 3, name: "Speed" },
+    { id: 38, digits: 6, displayDigits: 3, negative: true, name: "Fatigue" },
   ],
   4: [
-    {id: 32, digits: 6, displayDigits: 3, name: "Jacks"},
-    {id: 41, digits: 6, displayDigits: 3, name: "Tyres Off"},
-    {id: 42, digits: 6, displayDigits: 3, name: "Tyres On"},
-    {id: 40, digits: 6, displayDigits: 3, name: "Wheel Gun"},
-    {id: 35, digits: 6, displayDigits: 3, name: "Car Release"},
-    {id: 39, digits: 6, displayDigits: 3, name: "Car Building"},
-    // {id: 33,	name: "Tyres"},
-    {id: 34, digits: 0, displayDigits: 0, name: "Wings"},
-    //  {id: 37,	name: "Consistency"},
+    { id: 32, digits: 6, displayDigits: 3, name: "Jacks" },
+    { id: 41, digits: 6, displayDigits: 3, name: "Tyres Off" },
+    { id: 42, digits: 6, displayDigits: 3, name: "Tyres On" },
+    { id: 40, digits: 6, displayDigits: 3, name: "Wheel Gun" },
+    { id: 35, digits: 6, displayDigits: 3, name: "Car Release" },
+    { id: 39, digits: 6, displayDigits: 3, name: "Car Building" },
+    { id: 34, digits: 0, displayDigits: 3, name: "Wings" },
+    { id: 36, digits: 6, displayDigits: 3, name: "Speed" },
+    { id: 38, digits: 6, displayDigits: 3, negative: true, name: "Fatigue" },
+  ],
+};
 
-    {id: 36, digits: 6, displayDigits: 3, name: "Speed"},
-    {id: 38, digits: 6, displayDigits: 3, negative: true, name: "Fatigue"},
-  ]
+function getOfficialTeamLogo(version, teamId) {
+  const year = Math.min(2026, Math.max(2022, version + 2020));
+  const slug = teamLogoSlugsByYear[year]?.[teamId];
+  if (!slug) return null;
+  const extension = year <= 2023 ? "png" : "webp";
+  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
+}
+
+function ActionButton({ title, onClick, children }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className="flex h-5 w-5 items-center justify-center border border-white/10 bg-black/20 text-[10px] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+    >
+      {children}
+    </button>
+  );
+}
+
+function getDeltaTone(delta, negative) {
+  if (!delta) return "text-slate-500";
+  return (negative ? delta < 0 : delta > 0) ? "text-emerald-300" : "text-rose-300";
+}
+
+function getValueTone(value, negative = false, min = 0, max = 100) {
+  if (Math.abs(max - min) < 1e-9) {
+    return {
+      color: "rgb(226 232 240)",
+    };
+  }
+
+  const range = max - min;
+  const normalized = Math.max(0, Math.min(1, (value - min) / range));
+  const hue = negative ? 120 - normalized * 120 : normalized * 120;
+  return {
+    color: `hsl(${hue}, 80%, 68%)`,
+  };
+}
+
+function getTeamTextStyle(teamId) {
+  return {color: `rgb(var(--team${teamId}-triplet))`};
 }
 
 export default function PitcrewView() {
-
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext);
-  const {teamIds} = useContext(BasicInfoContext);
+  const { version, careerSaveMetadata } = useContext(MetadataContext);
+  const { teamIds, teamMap, player } = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
-  const refresh = () => setUpdated(+new Date());
-
   const [pitCrewStats, setPitCrewStats] = useState([]);
-
+  const [displayDigits, setDisplayDigits] = useState(1);
+  const refresh = () => setUpdated(Date.now());
+  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
+  const stats = PitCrewStatsList[version] || PitCrewStatsList[4];
+  const statRanges = stats.reduce((acc, stat) => {
+    const values = pitCrewStats
+      .map((row) => Number(row[`stat_${stat.id}`]))
+      .filter((value) => !Number.isNaN(value));
+    acc[stat.id] = {
+      min: values.length ? Math.min(...values) : 0,
+      max: values.length ? Math.max(...values) : 100,
+    };
+    return acc;
+  }, {});
 
   useEffect(() => {
-    const pitCrewStats = {};
-    let [{ columns, values }] = database.exec(
-      `select * from Staff_PitCrew_PerformanceStats`
-    );
-    for(const r of values) {
-      if (!pitCrewStats[r[0] /* TeamID */ ]) {
-        pitCrewStats[r[0] /* TeamID */ ] = {};
+    const nextStats = {};
+    const [{ values }] = database.exec(`SELECT * FROM Staff_PitCrew_PerformanceStats`);
+    for (const row of values) {
+      if (!nextStats[row[0]]) {
+        nextStats[row[0]] = {};
       }
-      pitCrewStats[r[0] /* TeamID */ ]["stat_" + r[1] /* StatID */ ] = r[2];
-      pitCrewStats[r[0] /* TeamID */ ]["month_start_stat_" + r[1] /* StatID */ ] = r[3];
+      nextStats[row[0]][`stat_${row[1]}`] = row[2];
+      nextStats[row[0]][`month_start_stat_${row[1]}`] = row[3];
     }
+
     setPitCrewStats(
-      teamIds.map(
-        teamIndex => ({
-          id: teamIndex,
-          TeamID: teamIndex,
-          ...pitCrewStats[teamIndex]
-        })
-      )
+      teamIds.map((teamIndex) => ({
+        id: teamIndex,
+        TeamID: teamIndex,
+        ...nextStats[teamIndex],
+      }))
     );
-  }, [database, updated])
+  }, [database, teamIds, updated]);
+
+  const updatePitStat = (row, stat, nextValue) => {
+    const currentValue = Number(row[`stat_${stat.id}`] || 0);
+    const clampedValue = Math.max(0, nextValue);
+    if (Number.isNaN(nextValue) || clampedValue === currentValue) {
+      return;
+    }
+
+    if (version === 2) {
+      database.exec(`UPDATE Staff_PitCrew_PerformanceStats SET Val = :value WHERE TeamID = :teamID AND StatID = :statID`, {
+        ":teamID": row.TeamID,
+        ":value": clampedValue,
+        ":statID": stat.id,
+      });
+    } else {
+      const delta = clampedValue - currentValue;
+      if (stat.id === 38) {
+        database.exec(`UPDATE Staff_PitCrew_RaceWeekendFatigue SET Val = Val + :value WHERE TeamID = :teamID`, {
+          ":teamID": row.TeamID,
+          ":value": delta,
+        });
+      }
+
+      database.exec(`UPDATE Staff_PitCrew_PerformanceStats SET Val = :value, MonthStartVal = :monthStart WHERE TeamID = :teamID AND StatID = :statID`, {
+        ":teamID": row.TeamID,
+        ":value": clampedValue,
+        ":monthStart": Number(row[`month_start_stat_${stat.id}`] || 0) + delta,
+        ":statID": stat.id,
+      });
+    }
+
+    refresh();
+  };
+
+  const getShownDigits = (stat) => Math.min(displayDigits, stat.displayDigits);
+  const getValueFontSize = () => {
+    if (displayDigits === 0) return "17px";
+    if (displayDigits === 1) return "15px";
+    return "13px";
+  };
 
   return (
-    <div>
-      <DataGrid
-        rows={pitCrewStats}
-        getRowId={r => r.TeamID}
-        onProcessRowUpdateError={e => console.error(e)}
-        processRowUpdate={(newRow, oldRow) => {
-          for (const stat of PitCrewStatsList[version]) {
+    <div className="grid gap-3">
+      <div className="border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white">Pit Crew Workspace</h2>
+            <p className="mt-2 max-w-[920px] text-sm text-slate-400">
+              Tune each team&apos;s stop performance with direct controls for quick balancing and testing.
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Display Digits</div>
+            <div className="flex gap-1">
+              {[0, 1, 3].map((digits) => {
+                const selected = displayDigits === digits;
+                return (
+                  <button
+                    key={digits}
+                    type="button"
+                    onClick={() => setDisplayDigits(digits)}
+                    className={`min-w-10 border px-3 py-1.5 text-xs font-semibold transition ${selected
+                      ? "border-sky-300/60 bg-sky-600/15 text-sky-100"
+                      : "border-white/10 bg-black/10 text-slate-300 hover:border-white/20 hover:bg-white/[0.04]"
+                      }`}
+                  >
+                    {digits}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
 
-            if (version === 2) {
-              database.exec(`UPDATE Staff_PitCrew_PerformanceStats SET Val = :value WHERE TeamID = :teamID AND StatID = :statID`, {
-                ":teamID": newRow.TeamID,
-                ":value": newRow['stat_' + stat.id],
-                ":statID": stat.id,
-              })
-            } else if (version >= 3) {
-              if (newRow['stat_' + stat.id] !== oldRow['stat_' + stat.id]) {
-                let delta = (newRow['stat_' + stat.id] - oldRow['stat_' + stat.id]);
-                if (stat.id === 38) {
-                  database.exec(`UPDATE Staff_PitCrew_RaceWeekendFatigue SET Val = Val + :value WHERE TeamID = :teamID`, {
-                    ":teamID": newRow.TeamID,
-                    ":value": delta,
-                  })
-                }
-
-                database.exec(`UPDATE Staff_PitCrew_PerformanceStats SET Val = :value, MonthStartVal = :ms_value WHERE TeamID = :teamID AND StatID = :statID`, {
-                  ":teamID": newRow.TeamID,
-                  ":value": newRow['stat_' + stat.id],
-                  ":ms_value": newRow['month_start_stat_' + stat.id] + delta,
-                  ":statID": stat.id,
-                })
-              }
-            }
-          }
-          refresh();
-          return newRow;
-        }}
-        columns={[
-          {
-            field: 'TeamID',
-            headerName: "Team",
-            width: 120,
-            renderCell: ({ value }) => <TeamName TeamID={value} type="fanfare" />,
-          },
-          ...PitCrewStatsList[version].map(stat => ({
-            field: `stat_` + stat.id,
-            headerName: stat.name,
-            type: 'number',
-            flex: 1,
-            valueGetter: ({value}) => Number(value).toFixed(stat.digits),
-            renderCell: ({row, value}) => {
-              const delta = value - row["month_start_stat_" + stat.id];
-              return (
-                <div style={{textAlign: "right", padding: 6}}>
-                  <span>{Number(value).toFixed(stat.displayDigits)}</span>
-                  <br />
-                  {
-                    (version !== 2 && delta) ? (
-                      <span style={{
-                        fontSize: "90%",
-                        color: (stat.negative ? delta < 0 : delta >= 0) ? "lightgreen" : "pink"
-                      }}>{
-                        delta > 0 ? "▲" : "▼"
-                      } {Number(Math.abs(delta)).toFixed(3)}</span>
-                    ) : (
-                      "-"
-                    )
-                  }
-                </div>
-              )
+      <div className="min-w-0 border border-white/10 bg-black/10 p-2">
+        <DataGrid
+          rows={pitCrewStats}
+          getRowId={(row) => row.TeamID}
+          disableColumnFilter
+          disableColumnMenu
+          disableColumnSelector
+          disableDensitySelector
+          rowHeight={62}
+          columnHeaderHeight={44}
+          sx={{
+            border: 0,
+            color: "#e5e7eb",
+            backgroundColor: "transparent",
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "rgba(255,255,255,0.03)",
+              borderBottom: "1px solid rgba(255,255,255,0.08)",
             },
-            editable: true,
-          }))
-        ]}
-        hideFooter
-      />
+            "& .MuiDataGrid-columnHeader": {
+              paddingInline: "10px",
+            },
+            "& .MuiDataGrid-columnHeaderTitleContainer": {
+              padding: 0,
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              paddingInline: "10px",
+              alignItems: "stretch",
+            },
+            "& .MuiDataGrid-row:nth-of-type(odd)": {
+              backgroundColor: "rgba(255,255,255,0.015)",
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "rgba(255,255,255,0.035)",
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              minHeight: 320,
+            },
+          }}
+          columns={[
+            {
+              field: "TeamID",
+              headerName: "Team",
+              width: 190,
+              sortable: false,
+              renderHeader: () => (
+                <div className="flex h-full items-center py-1">
+                  <span className="text-xs font-semibold text-slate-200">Team</span>
+                </div>
+              ),
+              renderCell: ({ value }) => {
+                const logoSrc = value >= 32 && customTeamLogoBase64
+                  ? `data:image/png;base64,${customTeamLogoBase64}`
+                  : getOfficialTeamLogo(version, value);
+                const teamLabel = value >= 32 && teamMap?.[value]?.TeamNameLocKey
+                  ? resolveLiteral(teamMap[value].TeamNameLocKey)
+                  : teamNames(value, version);
+                return (
+                  <div className="flex h-full items-center gap-2 py-1.5">
+                    {logoSrc ? <img src={logoSrc} alt="" className="h-6 w-6 shrink-0 object-contain opacity-95" /> : null}
+                    <div
+                      className="min-w-0 truncate text-[13px] font-medium leading-5"
+                      style={getTeamTextStyle(value)}
+                    >
+                      {teamLabel}
+                    </div>
+                  </div>
+                );
+              },
+            },
+            ...stats.map((stat) => ({
+              field: `stat_${stat.id}`,
+              headerName: stat.name,
+              minWidth: 100,
+              flex: 1,
+              sortable: false,
+              renderHeader: () => (
+                <div className="flex h-full items-center py-1">
+                  <span className="text-xs font-semibold text-slate-200">{stat.name}</span>
+                </div>
+              ),
+              renderCell: ({ row }) => {
+                const value = Number(row[`stat_${stat.id}`] || 0);
+                const monthStart = Number(row[`month_start_stat_${stat.id}`] || 0);
+                const delta = value - monthStart;
+                const shownDigits = getShownDigits(stat);
+                const range = statRanges[stat.id] || {min: 0, max: 100};
+                return (
+                  <div className="flex h-full w-full items-center py-1.5">
+                    <div className="flex w-full items-start justify-between">
+                      <div className="grid min-h-[34px] min-w-0 content-between gap-0.5 self-stretch">
+                        <div
+                          className="font-semibold leading-none"
+                          style={{
+                            ...getValueTone(value, stat.negative, range.min, range.max),
+                            fontSize: getValueFontSize(),
+                          }}
+                        >
+                          {value.toFixed(shownDigits)}
+                        </div>
+                        <div className={`self-end text-[9px] leading-none ${getDeltaTone(delta, stat.negative)}`}>
+                          {delta ? `${delta > 0 ? "+" : ""}${delta.toFixed(Math.min(3, Math.max(0, shownDigits)))}` : ""}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1">
+                        <div className="h-5 w-5" />
+                        <ActionButton
+                          title="Edit"
+                          onClick={() => {
+                            const nextValue = window.prompt(`Set ${stat.name}`, value.toString());
+                            if (nextValue === null) {
+                              return;
+                            }
+                            const parsed = Number(nextValue);
+                            if (Number.isNaN(parsed)) {
+                              return;
+                            }
+                            updatePitStat(row, stat, parsed);
+                          }}
+                        >
+                          <Edit fontSize="inherit" />
+                        </ActionButton>
+                        <ActionButton title="-10" onClick={() => updatePitStat(row, stat, value - 10)}>
+                          <Remove fontSize="inherit" />
+                        </ActionButton>
+                        <ActionButton title="+10" onClick={() => updatePitStat(row, stat, value + 10)}>
+                          <Add fontSize="inherit" />
+                        </ActionButton>
+                      </div>
+                    </div>
+                  </div>
+                );
+              },
+            })),
+          ]}
+          hideFooter
+        />
+      </div>
     </div>
   );
 }
