@@ -185,7 +185,7 @@ export default function App() {
             <ThemeProvider theme={theme}>
               <Helmet>
                 <meta name="viewport" content="initial-scale=1, width=device-width"/>
-                <title>F1 Manager Save Browser - F1Setup.CFD</title>
+                <title>F1 Manager Save Browser</title>
                 <meta name="description" content="F1 Manager Save Browser by ieb"/>
                 <link rel="icon" href="/favicon.ico"/>
               </Helmet>

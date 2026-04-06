@@ -8,8 +8,6 @@ export default function Footer({fullWidth = false}) {
       <Box sx={{display: "grid", gap: 0.75, color: "text.secondary"}}>
         <Typography variant="body2">
           Tutorial: <Link href="https://steamcommunity.com/sharedfiles/filedetails/?id=3011785417" underline="hover">Steam Guide</Link>
-          {" "}·{" "}
-          <Link href="https://f1setup.it/" underline="hover">F1Setup.it</Link>
         </Typography>
         <Typography variant="body2">
           Another ieb Project · Bug & Feedback: <Link href="https://discord.gg/u46QWWaNfV" underline="hover">Discord</Link>
