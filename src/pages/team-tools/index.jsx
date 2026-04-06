@@ -26,9 +26,9 @@ export default function Page() {
   return (
     <div className="grid gap-2">
       <div className="border border-white/10 bg-white/[0.02] p-5">
-        <h2 className="text-lg font-bold text-white">Team Tools</h2>
+        <h2 className="text-lg font-bold text-white">Career</h2>
         <p className="mt-2 max-w-[880px] text-sm text-slate-400">
-          Use these tools for one-off team and career operations that sit outside day-to-day editing.
+          Use these tools for one-off career operations that sit outside day-to-day team editing.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-1 md:grid-cols-3">
           {modes.map((mode) => {

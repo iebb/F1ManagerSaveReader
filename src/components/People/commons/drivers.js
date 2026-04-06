@@ -78,7 +78,7 @@ export const getStaff = (ctx, StaffType = 0) => {
     if (version === 2) {
       [{ columns, values }] = database.exec(
         "SELECT Staff_CommonData.StaffID as StaffID, * FROM Staff_CommonData \n" +
-        `WHERE Staff_GameData.StaffType = ${StaffType}`
+        `WHERE Staff_CommonData.StaffType = ${StaffType}`
       );
     } else if (version === 3) {
       [{ columns, values }] = database.exec(

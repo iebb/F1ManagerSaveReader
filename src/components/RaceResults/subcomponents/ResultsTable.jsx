@@ -1,18 +1,39 @@
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {getDriverCode, getDriverName, raceAbbrevs, raceFlags} from "@/js/localization";
+import {getDriverCode, getDriverName, raceAbbrevs, raceFlags, resolveLiteral, teamNames} from "@/js/localization";
 import {getCountryFlag} from "@/js/localization/ISOCountries";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {TeamName} from "../../Localization/Localization";
+
+const teamLogoAssets = import.meta.glob("../../../assets/team-logos/**/*.{png,webp}", {
+  eager: true,
+  import: "default",
+});
+
+const teamLogoSlugsByYear = {
+  2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
+  2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
+  2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
+  2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
+  2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
+};
+
+function getOfficialTeamLogo(version, teamId) {
+  const year = Math.min(2026, Math.max(2022, version + 2020));
+  const slug = teamLogoSlugsByYear[year]?.[teamId];
+  if (!slug) return null;
+  const extension = year <= 2023 ? "png" : "webp";
+  return teamLogoAssets[`../../../assets/team-logos/${year}/${slug}.${extension}`] || null;
+}
 
 export default function ResultsTable(ctx) {
-  const {version, gameVersion} = useContext(MetadataContext)
+  const {version, gameVersion, careerSaveMetadata} = useContext(MetadataContext)
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
   const [raceSchedule, setRaceSchedule] = useState([]);
 
   const { driverMap } = basicInfo;
+  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || basicInfo.player?.CustomTeamLogoBase64;
   const { formulae, driverTeams, championDriverID, raceSchedule: _raceSchedule, driverStandings, driverResults, fastestLapOfRace } = ctx;
 
   useEffect(() => {
@@ -33,6 +54,22 @@ export default function ResultsTable(ctx) {
       return r;
     }));
   }, [database, _raceSchedule]);
+
+  const resolveTeamLabel = (teamId) => {
+    if (!teamId) return "Unknown Team";
+    if (teamId > 31 && basicInfo.teamMap?.[teamId]?.TeamNameLocKey) {
+      return resolveLiteral(basicInfo.teamMap[teamId].TeamNameLocKey);
+    }
+    return teamNames(teamId, version);
+  };
+
+  const resolveTeamLogo = (teamId) => {
+    if (!teamId) return null;
+    if (teamId >= 32 && customTeamLogoBase64) {
+      return `data:image/png;base64,${customTeamLogoBase64}`;
+    }
+    return getOfficialTeamLogo(version, teamId);
+  };
 
 
     return (
@@ -105,38 +142,64 @@ export default function ResultsTable(ctx) {
             >
               <TableCell
                 scope="row"
-                sx={{ py: 0.2 }}
+                sx={{ py: 0.1 }}
                 style={{ maxWidth: 50 }}
               >
-                {row.Position}
+                <div className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/[0.03] text-sm font-semibold text-white">
+                  {row.Position}
+                </div>
               </TableCell>
               <TableCell
                 component="th"
                 scope="row"
-                sx={{ py: 0.2 }}
+                sx={{ py: 0.1 }}
                 className={`race_cell_driver`}
               >
-                <img
-                  src={getCountryFlag(driverMap[row.DriverID].Nationality)}
-                  style={{ width: 24, margin: "-7px 4px -7px 0", display: "inline-block" }}
-                  alt={driverMap[row.DriverID].Nationality}
-                />
-                {
-                  formulae === 1 ? (` ${
-                    (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber || 'N/A'
-                  }`) : (
-                    `${row.DriverAssignedNumber}`
-                  )
-                }. {getDriverCode(driverMap[row.DriverID])}
-                <br />
-                <span style={{ fontSize: "80%" }}>{getDriverName(driverMap[row.DriverID])}</span>
+                <div className="flex min-w-[150px] max-w-[160px] items-center gap-2">
+                  <img
+                    src={getCountryFlag(driverMap[row.DriverID].Nationality)}
+                    style={{ width: 22, height: 16, display: "block" }}
+                    alt={driverMap[row.DriverID].Nationality}
+                    className="rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+                  />
+                  <div className="min-w-0 max-w-[130px]">
+                    <div className="flex items-baseline gap-1.5 leading-none">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {formulae === 1 ? (
+                          (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber || "N/A"
+                        ) : (
+                          row.DriverAssignedNumber
+                        )}
+                      </span>
+                      <span className="text-[14px] font-semibold text-white">{getDriverCode(driverMap[row.DriverID])}</span>
+                    </div>
+                    <div className="mt-0.5 truncate text-[12px] leading-tight text-slate-300">{getDriverName(driverMap[row.DriverID])}</div>
+                  </div>
+                </div>
               </TableCell>
               <TableCell
-                sx={{ py: 0.5 }}
+                sx={{ py: 0.1 }}
                 className={`race_cell_team overflow-hidden`}
               >
-                <div className="w-[500px]">
-                  <TeamName TeamID={driverTeams[row.DriverID]} type="fanfare" />
+                <div className="flex min-w-[150px] max-w-[190px] items-center gap-2">
+                  {resolveTeamLogo(driverTeams[row.DriverID]) ? (
+                    <img
+                      src={resolveTeamLogo(driverTeams[row.DriverID])}
+                      alt={resolveTeamLabel(driverTeams[row.DriverID])}
+                      className="h-5 w-5 shrink-0 object-contain opacity-95"
+                    />
+                  ) : (
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{background: `rgb(var(--team${driverTeams[row.DriverID]}-triplet))`}}
+                    />
+                  )}
+                  <div
+                    className="truncate text-[13px] font-semibold leading-none"
+                    style={{color: `rgb(var(--team${driverTeams[row.DriverID]}-triplet))`}}
+                  >
+                    {resolveTeamLabel(driverTeams[row.DriverID])}
+                  </div>
                 </div>
               </TableCell>
               {

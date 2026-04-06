@@ -105,6 +105,7 @@ export function layerToGeometry(layer, idx) {
 }
 
 export function gameElementToLayer(e, idx = 0) {
+  const alpha = ((e.Colour >>> 24) & 0xff) / 255;
   const hexColor = (e.Colour & 0xffffff).toString(16).padStart(6, "0");
   const obj = getLogoElementByHash(e.PartHash);
 
@@ -123,7 +124,7 @@ export function gameElementToLayer(e, idx = 0) {
     type: "svg",
     name: `${obj.hash}`,
     object: obj.hash,
-    opacity: 1,
+    opacity: alpha,
     visible: true,
     selectable: true,
     removable: true,
@@ -149,6 +150,8 @@ export function gameElementToLayer(e, idx = 0) {
 
 export function jsonLayerToGameElement(ch, idx = 0) {
   const rotation = ch.rotation / 180 * Math.PI;
+  const alpha = Math.round(clamp01(ch.opacity ?? 1) * 255).toString(16).padStart(2, "0");
+  const rgb = (getLayerColor(ch) || "#ffffff").replace("#", "");
 
   const absX = Math.abs(ch.width / defaultSize);
   const absY = Math.abs(ch.height / defaultSize);
@@ -162,7 +165,7 @@ export function jsonLayerToGameElement(ch, idx = 0) {
   return {
     ElementID: idx,
     PartHash: parseInt(ch.name, 10),
-    Colour: parseInt((getLayerColor(ch) || "#ffffff").replace("#", "ff"), 16),
+    Colour: parseInt(`${alpha}${rgb}`, 16),
     PositionX: untranslateX,
     PositionY: untranslateY,
     Rotation: -rotation,
@@ -204,6 +207,10 @@ export async function loadSvgAsset(url) {
 
 export function recolorSvgMarkup(markup, color) {
   return markup
+    .replace(/<svg\b([^>]*)>/i, (match, attrs) => {
+      const cleanedAttrs = attrs.replace(/\s*preserveAspectRatio="[^"]*"/i, "");
+      return `<svg${cleanedAttrs} preserveAspectRatio="none">`;
+    })
     .replace(/#ffffff/gi, color)
     .replace(/#fff\b/gi, color);
 }
@@ -238,6 +245,7 @@ export async function exportLogoToDataUrl(data) {
     const image = await loadImage(await getLayerSvgDataUrl(layer));
 
     ctx.save();
+    ctx.globalAlpha = clamp01(layer.opacity ?? 1);
     ctx.translate(centerX, centerY);
     ctx.rotate(rotationDeg * Math.PI / 180);
     ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
@@ -248,8 +256,12 @@ export async function exportLogoToDataUrl(data) {
   return canvas.toDataURL("image/png");
 }
 
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
 export const geometrizerToJson = (data) => {
-  const shapes = data.shapes;
+  const shapes = data.shapes.slice(1);
   const scale = Math.max(data.w, data.h);
   const dx = (scale - data.w) / 2;
   const dy = (scale - data.h) / 2;
@@ -263,7 +275,9 @@ export const geometrizerToJson = (data) => {
       id: "default",
       children: shapes.map(({shape, color}, idx) => {
         const type = shape.getType();
-        const hexColor = ((color < 0 ? color + (2 ** 32) : color) >>> 8).toString(16).padStart(6, "0");
+        const normalizedColor = (color < 0 ? color + (2 ** 32) : color);
+        const alpha = normalizedColor & 0xff;
+        const hexColor = (normalizedColor >>> 8).toString(16).padStart(6, "0");
 
         const e = type === ShapeTypes.ROTATED_RECTANGLE ? {
           PositionX: 2 * (((shape.x1 + shape.x2) / 2 + dx / 2) / scale - 0.5),
@@ -284,7 +298,7 @@ export const geometrizerToJson = (data) => {
         return gameElementToLayer({
           ElementID: idx,
           PartHash: shapeId,
-          Colour: parseInt(`ff${hexColor}`, 16),
+          Colour: parseInt(`${alpha.toString(16).padStart(2, "0")}${hexColor}`, 16),
           PositionX: e.PositionX,
           PositionY: e.PositionY,
           Rotation: e.Rotation,

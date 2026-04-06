@@ -236,7 +236,7 @@ export const BasicInfoHeader = () => {
                     color: status.color,
                     border: `1px solid ${status.border}`,
                     boxShadow: status.shadow,
-                    zIndex: race.RaceID === weekend.RaceID ? 3 : currentSeasonRaces.length - index,
+                    zIndex: race.RaceID === weekend.RaceID ? 1 : 0,
                     whiteSpace: "nowrap",
                   }}
                 >

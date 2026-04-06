@@ -1,6 +1,6 @@
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {resolveLiteral, teamNames} from "@/js/localization";
-import {Add, Edit, Remove} from "@mui/icons-material";
+import {Add, Remove} from "@mui/icons-material";
 import {DataGrid} from "@mui/x-data-grid";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
@@ -77,7 +77,7 @@ export default function TeamSize() {
   }, [database, teamIds, updated]);
 
   const updateSubTeam = (row, subTeam, nextValue) => {
-    const clampedValue = Math.max(0, Math.round(nextValue));
+    const clampedValue = Math.max(1, Math.round(nextValue));
     if (clampedValue === Number(row[`team_${subTeam.id}`] || 0)) {
       return;
     }
@@ -99,7 +99,7 @@ export default function TeamSize() {
         disableColumnMenu
         disableColumnSelector
         disableDensitySelector
-        rowHeight={62}
+        rowHeight={56}
         columnHeaderHeight={44}
         sx={{
           border: 0,
@@ -138,7 +138,7 @@ export default function TeamSize() {
             sortable: false,
             renderHeader: () => (
               <div className="flex h-full items-center py-1">
-                <span className="text-xs font-semibold text-slate-200">Team</span>
+                <span className="text-[13px] font-semibold text-slate-100">Team</span>
               </div>
             ),
             renderCell: ({value}) => {
@@ -151,7 +151,7 @@ export default function TeamSize() {
               return (
                 <div className="flex h-full items-center gap-2 py-1.5">
                   {logoSrc ? <img src={logoSrc} alt="" className="h-6 w-6 shrink-0 object-contain opacity-95" /> : null}
-                  <div className="min-w-0 truncate text-[13px] font-medium leading-5" style={getTeamTextStyle(value)}>
+                  <div className="min-w-0 truncate text-[15px] font-semibold leading-5" style={getTeamTextStyle(value)}>
                     {teamLabel}
                   </div>
                 </div>
@@ -161,47 +161,41 @@ export default function TeamSize() {
           ...subTeams.map((subTeam) => ({
             field: `team_${subTeam.id}`,
             headerName: subTeam.name,
-            minWidth: 150,
+            minWidth: 124,
             flex: 1,
             sortable: false,
             renderHeader: () => (
               <div className="flex h-full items-center py-1">
-                <span className="text-xs font-semibold text-slate-200">{subTeam.name}</span>
+                <span className="text-[13px] font-semibold text-slate-100">{subTeam.name}</span>
               </div>
             ),
             renderCell: ({row}) => {
               const value = Number(row[`team_${subTeam.id}`] || 0);
               const monthlyCost = Number(row[`cost_${subTeam.id}`] || 0);
               return (
-                <div className="flex h-full w-full items-center py-1.5">
-                  <div className="flex w-full items-start justify-between gap-2">
-                    <div className="grid min-h-[34px] min-w-0 content-between gap-0.5 self-stretch">
-                      <div className="text-[15px] font-semibold leading-none text-slate-100">{value}</div>
-                      <div className="self-end text-[9px] leading-none text-slate-500">
+                <div className="flex h-full w-full items-center py-1">
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-[17px] font-semibold leading-none text-slate-50">{value}</div>
+                        <ActionButton
+                          title="-1"
+                          onClick={() => updateSubTeam(row, subTeam, value - 1)}
+                        >
+                          <Remove fontSize="inherit" />
+                        </ActionButton>
+                        <ActionButton
+                          title="+1"
+                          onClick={() => updateSubTeam(row, subTeam, value + 1)}
+                        >
+                          <Add fontSize="inherit" />
+                        </ActionButton>
+                      </div>
+                      <div className="mt-1 text-[11px] leading-none text-slate-400">
                         ${(monthlyCost / 1000).toFixed(1)}k/m
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <div className="h-5 w-5" />
-                      <ActionButton
-                        title="Edit"
-                        onClick={() => {
-                          const nextValue = window.prompt(`Set ${subTeam.name}`, value.toString());
-                          if (nextValue === null) return;
-                          const parsed = Number(nextValue);
-                          if (Number.isNaN(parsed)) return;
-                          updateSubTeam(row, subTeam, parsed);
-                        }}
-                      >
-                        <Edit fontSize="inherit" />
-                      </ActionButton>
-                      <ActionButton title="-10" onClick={() => updateSubTeam(row, subTeam, value - 10)}>
-                        <Remove fontSize="inherit" />
-                      </ActionButton>
-                      <ActionButton title="+10" onClick={() => updateSubTeam(row, subTeam, value + 10)}>
-                        <Add fontSize="inherit" />
-                      </ActionButton>
-                    </div>
+                    <div />
                   </div>
                 </div>
               );

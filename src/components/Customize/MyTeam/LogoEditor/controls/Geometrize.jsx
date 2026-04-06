@@ -278,7 +278,7 @@ export const Geometrize = ({ editor, buttonProps = {}, iconOnly = false }) => {
               disabled={!result}
               onClick={() => {
                 try {
-                  store.loadJSON(geometrizerToJson(result));
+                  editor.loadJSON(geometrizerToJson(result));
                   enqueueSnackbar(
                     `Import succeeded`,
                     {variant: "success"}

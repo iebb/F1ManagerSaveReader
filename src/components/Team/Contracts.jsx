@@ -1,9 +1,9 @@
-import {getStaff} from "@/components/People/commons/drivers";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {resolveLiteral, resolveName, resolveNameV4, teamNames} from "@/js/localization";
-import {getCountryFlag} from "@/js/localization/ISOCountries";
+import { getStaff } from "@/components/People/commons/drivers";
+import { BasicInfoContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
+import { resolveLiteral, resolveName, resolveNameV4, teamNames } from "@/js/localization";
+import { getCountryFlag } from "@/js/localization/ISOCountries";
 import * as React from "react";
-import {useContext, useEffect, useMemo, useState} from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import TeamContractSwapper from "./TeamContractSwapper";
 
 const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
@@ -12,28 +12,28 @@ const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}
 });
 
 const teamLogoSlugsByYear = {
-  2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-  2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-  2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
-  2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
-  2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
+  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
+  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
+  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
+  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
+  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
 };
 
 const roleRows = [
   [
-    {key: "Driver1ID", title: "Lead Driver", subtitle: "Seat 1", staffType: 0},
-    {key: "RaceEngineer1ID", title: "Race Engineer 1", subtitle: "Driver 1 side", staffType: 2},
-    {key: "TeamPrincipalID", title: "Team Principal", subtitle: "Organisation lead", staffType: 5, minVersion: 3},
+    { key: "Driver1ID", title: "Lead Driver", subtitle: "Seat 1", staffType: 0 },
+    { key: "RaceEngineer1ID", title: "Race Engineer 1", subtitle: "Driver 1 side", staffType: 2 },
+    { key: "TeamPrincipalID", title: "Team Principal", subtitle: "Organisation lead", staffType: 5, minVersion: 3 },
   ],
   [
-    {key: "Driver2ID", title: "Second Driver", subtitle: "Seat 2", staffType: 0},
-    {key: "RaceEngineer2ID", title: "Race Engineer 2", subtitle: "Driver 2 side", staffType: 2},
-    {key: "ChiefDesignerID", title: "Chief Designer", subtitle: "Car concept", staffType: 1},
+    { key: "Driver2ID", title: "Second Driver", subtitle: "Seat 2", staffType: 0 },
+    { key: "RaceEngineer2ID", title: "Race Engineer 2", subtitle: "Driver 2 side", staffType: 2 },
+    { key: "ChiefDesignerID", title: "Chief Designer", subtitle: "Car concept", staffType: 1 },
   ],
   [
-    {key: "ReserveDriverID", title: "Reserve Driver", subtitle: "Backup", staffType: 0},
-    {key: "SportingDirectorID", title: "Sporting Director", subtitle: "Track operations", staffType: 4, minVersion: 3},
-    {key: "HeadOfAerodynamicsID", title: "Head of Aerodynamics", subtitle: "Aero programme", staffType: 3},
+    { key: "ReserveDriverID", title: "Reserve Driver", subtitle: "Backup", staffType: 0 },
+    { key: "SportingDirectorID", title: "Sporting Director", subtitle: "Track operations", staffType: 4, minVersion: 3 },
+    { key: "HeadOfAerodynamicsID", title: "Head of Aerodynamics", subtitle: "Aero programme", staffType: 3 },
   ],
 ];
 
@@ -46,7 +46,7 @@ function getOfficialTeamLogo(version, teamId) {
 }
 
 function getTeamTextStyle(teamId) {
-  return {color: `rgb(var(--team${teamId}-triplet))`};
+  return { color: `rgb(var(--team${teamId}-triplet))` };
 }
 
 function resolveStaffName(version, staff) {
@@ -55,7 +55,7 @@ function resolveStaffName(version, staff) {
   return `${resolver(staff.FirstName)} ${resolver(staff.LastName)}`;
 }
 
-function RoleCard({teamId, title, subtitle, person, onReplace, replaceDisabled = false, className = ""}) {
+function RoleCard({ teamId, title, subtitle, person, onReplace, replaceDisabled = false, className = "" }) {
   const personName = person ? person.name : "Unassigned";
   return (
     <div className={`border border-white/10 bg-white/[0.015] p-4 ${className}`}>
@@ -75,20 +75,19 @@ function RoleCard({teamId, title, subtitle, person, onReplace, replaceDisabled =
       </div>
       <div className="mt-3 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-        {person?.flag ? (
-          <img src={person.flag} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover" />
-        ) : (
-          <div className="h-5 w-5 shrink-0 rounded-full border border-white/10 bg-white/5" />
-        )}
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-white">{personName}</div>
-          <div className="mt-0.5 text-xs text-slate-500">
-            {person?.meta || "No contracted staff member in this slot"}
+          {person?.flag ? (
+            <img src={person.flag} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover" />
+          ) : (
+            <div className="h-5 w-5 shrink-0 rounded-full border border-white/10 bg-white/5" />
+          )}
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium text-white">{personName}</div>
+            <div className="mt-0.5 text-xs text-slate-500">
+              {person?.carNumber ? (
+                <span className="text-slate-300">#{person.carNumber} </span>
+              ) : null}{person?.meta || "No contracted staff member in this slot"}
+            </div>
           </div>
-          {person?.carNumber ? (
-            <div className="mt-1 text-[11px] font-semibold text-slate-300">#{person.carNumber}</div>
-          ) : null}
-        </div>
         </div>
         {person?.rating !== null && person?.rating !== undefined ? (
           <div className="shrink-0 self-end text-right">
@@ -104,9 +103,9 @@ function RoleCard({teamId, title, subtitle, person, onReplace, replaceDisabled =
 export default function Contracts() {
   const database = useContext(DatabaseContext);
   const metadata = useContext(MetadataContext);
-  const {version, careerSaveMetadata} = metadata;
+  const { version, careerSaveMetadata } = metadata;
   const basicInfo = useContext(BasicInfoContext);
-  const {player, teamMap, teamIds} = basicInfo;
+  const { player, teamMap, teamIds } = basicInfo;
   const [staffMap, setStaffMap] = useState({});
   const [swapRow, setSwapRow] = useState(null);
   const [updated, setUpdated] = useState(0);
@@ -134,7 +133,7 @@ export default function Contracts() {
     : getOfficialTeamLogo(version, selectedTeamId);
 
   useEffect(() => {
-    const ctx = {basicInfo, database, version};
+    const ctx = { basicInfo, database, version };
     const typesNeeded = [...new Set(visibleRoleRows.flatMap((row) => row.map((role) => role.staffType)))];
     const nextMap = {};
 
@@ -151,6 +150,9 @@ export default function Contracts() {
 
     setStaffMap(nextMap);
   }, [basicInfo, database, version, visibleRoleRows, updated]);
+
+  useEffect(() => {
+  }, [swapRow]);
 
   return (
     <div className="grid gap-3">
@@ -185,11 +187,10 @@ export default function Contracts() {
                     type="button"
                     onClick={() => setSelectedTeamId(teamId)}
                     title={label}
-                    className={`group border p-2 text-left transition xl:min-w-0 xl:flex-1 ${
-                      selected
-                        ? "border-sky-300/60 bg-sky-600/15 shadow-[0_0_0_1px_rgba(125,211,252,0.2)]"
-                        : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]"
-                    }`}
+                    className={`group border p-2 text-left transition xl:min-w-0 xl:flex-1 ${selected
+                      ? "border-sky-300/60 bg-sky-600/15 shadow-[0_0_0_1px_rgba(125,211,252,0.2)]"
+                      : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]"
+                      }`}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <div className={`flex h-10 w-full items-center justify-center ${selected ? "opacity-100" : "opacity-90 group-hover:opacity-100"}`}>
@@ -233,29 +234,29 @@ export default function Contracts() {
             {visibleRoleRows.map((row, rowIndex) => (
               <div key={`${selectedTeamId}-row-${rowIndex}`} className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {row.map((role) => {
-                const person = staffMap[selectedTeam?.[role.key]];
-                return (
-                  <RoleCard
-                    key={`${selectedTeamId}-${rowIndex}-${role.key}`}
-                    teamId={selectedTeamId}
-                    title={role.title}
-                    subtitle={role.subtitle}
-                    replaceDisabled={role.staffType === 5}
-                          person={person ? {
-                            name: person.name,
-                            flag: person.flag,
-                            meta: person.Nationality || "Contracted role",
-                            carNumber: person.CurrentNumber || person.PernamentNumber || null,
-                            rating: Number.isFinite(person.Overall) ? person.Overall : null,
-                            row: person,
-                          } : null}
-                    onReplace={() => {
-                      if (person?.row) {
-                        setSwapRow({...person.row});
-                      }
-                    }}
-                  />
-                );
+                  const person = staffMap[selectedTeam?.[role.key]];
+                  return (
+                    <RoleCard
+                      key={`${selectedTeamId}-${rowIndex}-${role.key}`}
+                      teamId={selectedTeamId}
+                      title={role.title}
+                      subtitle={role.subtitle}
+                      replaceDisabled={role.staffType === 5}
+                      person={person ? {
+                        name: person.name,
+                        flag: person.flag,
+                        meta: person.Nationality || "Contracted role",
+                        carNumber: person.CurrentNumber || person.PernamentNumber || null,
+                        rating: Number.isFinite(person.Overall) ? person.Overall : null,
+                        row: person,
+                      } : null}
+                      onReplace={() => {
+                        if (person) {
+                          setSwapRow({ ...person });
+                        }
+                      }}
+                    />
+                  );
                 })}
               </div>
             ))}

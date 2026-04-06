@@ -1,8 +1,8 @@
-import {Button, NumericInput} from "@blueprintjs/core";
-import React, {useEffect, useMemo, useRef, useState} from "react";
-import {Geometrize} from "./controls/Geometrize.jsx";
-import {FMSBExporter} from "./controls/Exporter.jsx";
-import {ForzaImporter} from "./controls/ForzaPainter.jsx";
+import { Button, NumericInput } from "@blueprintjs/core";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Geometrize } from "./controls/Geometrize.jsx";
+import { FMSBExporter } from "./controls/Exporter.jsx";
+import { ForzaImporter } from "./controls/ForzaPainter.jsx";
 import {
   defaultJson,
   defaultSize,
@@ -15,7 +15,7 @@ import {
   normalizeLogoJson,
   withLayerColor,
 } from "./logo/utils.jsx";
-import {logoElements} from "./logo/shapes.js";
+import { logoElements } from "./logo/shapes.js";
 
 const MIN_SCALE = 0.04;
 const HISTORY_LIMIT = 100;
@@ -32,7 +32,7 @@ function getPointerPosition(event, element) {
   };
 }
 
-function LayerArtwork({layer}) {
+function LayerArtwork({ layer }) {
   const [src, setSrc] = useState(null);
 
   useEffect(() => {
@@ -51,10 +51,10 @@ function LayerArtwork({layer}) {
     return null;
   }
 
-  return <img src={src} alt="" className="pointer-events-none h-full w-full select-none" draggable={false}/>;
+  return <img src={src} alt="" className="pointer-events-none h-full w-full select-none" draggable={false} style={{ opacity: layer.opacity ?? 1 }} />;
 }
 
-function AssetButton({asset, onSelect}) {
+function AssetButton({ asset, onSelect }) {
   return (
     <button
       type="button"
@@ -64,17 +64,17 @@ function AssetButton({asset, onSelect}) {
         event.dataTransfer.effectAllowed = "copy";
       }}
       onClick={() => onSelect(asset)}
-      className="group border border-[#30404d] bg-[#202b33] p-1.5 transition hover:border-[#5c7080] hover:bg-[#293742]"
+      className="group border border-white/10 bg-white/[0.025] p-1.5 transition hover:border-white/20 hover:bg-white/[0.05]"
       title={asset.hash.toString()}
     >
-      <div className="flex aspect-square items-center justify-center border border-[#394b59] bg-[#182026] p-1.5">
-        <img src={asset.url} alt="" className="h-full w-full object-contain"/>
+      <div className="flex aspect-square items-center justify-center border border-white/10 bg-black/10 p-1.5">
+        <img src={asset.url} alt="" className="h-full w-full object-contain" />
       </div>
     </button>
   );
 }
 
-export default function LogoEditor({defaultData, onSave}) {
+export default function LogoEditor({ defaultData, onSave }) {
   const [documentData, setDocumentData] = useState(defaultJson);
   const [selectedId, setSelectedId] = useState(null);
   const [activeSection, setActiveSection] = useState(logoElements[0]?.name || "");
@@ -82,10 +82,10 @@ export default function LogoEditor({defaultData, onSave}) {
   const [zoom, setZoom] = useState(0.5);
   const [isCanvasDragOver, setIsCanvasDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
-  const [historyState, setHistoryState] = useState({undo: 0, redo: 0});
+  const [historyState, setHistoryState] = useState({ undo: 0, redo: 0 });
   const canvasRef = useRef(null);
   const interactionRef = useRef(null);
-  const historyRef = useRef({undoStack: [], redoStack: []});
+  const historyRef = useRef({ undoStack: [], redoStack: [] });
 
   function cloneDocument(data) {
     return JSON.parse(JSON.stringify(data));
@@ -108,10 +108,10 @@ export default function LogoEditor({defaultData, onSave}) {
   }
 
   function commitDocument(nextData, options = {}) {
-    const {recordHistory = true, resetHistory = false, nextSelectedId} = options;
+    const { recordHistory = true, resetHistory = false, nextSelectedId } = options;
 
     if (resetHistory) {
-      historyRef.current = {undoStack: [], redoStack: []};
+      historyRef.current = { undoStack: [], redoStack: [] };
       syncHistoryState();
     } else if (recordHistory) {
       pushCurrentToUndo();
@@ -170,8 +170,8 @@ export default function LogoEditor({defaultData, onSave}) {
           return current;
         }
 
-        const nextLayer = {...currentLayer};
-        const nextElement = {...interaction.startElement};
+        const nextLayer = { ...currentLayer };
+        const nextElement = { ...interaction.startElement };
 
         if (interaction.mode === "move") {
           nextElement.PositionX = interaction.startElement.PositionX + dx * 2 / defaultSize;
@@ -335,7 +335,7 @@ export default function LogoEditor({defaultData, onSave}) {
     }
 
     const nextLayers = [...layers];
-    nextLayers[selectedIndex] = mutator({...nextLayers[selectedIndex]});
+    nextLayers[selectedIndex] = mutator({ ...nextLayers[selectedIndex] });
     replaceLayers(nextLayers);
   }
 
@@ -390,7 +390,7 @@ export default function LogoEditor({defaultData, onSave}) {
         getPointerPosition(event, canvasRef.current).y - geometry.centerY,
         getPointerPosition(event, canvasRef.current).x - geometry.centerX
       ),
-      center: {x: geometry.centerX, y: geometry.centerY},
+      center: { x: geometry.centerX, y: geometry.centerY },
       rotationRad: selectedLayer.rotation * Math.PI / 180,
       rebuild: (element) => rebuildFromElement(selectedIndex, element, selectedLayer),
       ...extra,
@@ -522,7 +522,7 @@ export default function LogoEditor({defaultData, onSave}) {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = clamp(event.clientX - rect.left, 8, rect.width - 168);
     const y = clamp(event.clientY - rect.top, 8, rect.height - 196);
-    setContextMenu({x, y});
+    setContextMenu({ x, y });
   }
 
   function runContextAction(action) {
@@ -532,23 +532,22 @@ export default function LogoEditor({defaultData, onSave}) {
 
   return (
     <div className="flex h-full min-h-0 gap-3 bg-transparent text-slate-100">
-      <aside className="flex w-[252px] min-h-0 flex-col border border-[#394b59] bg-[#202b33]">
-        <div className="border-b border-[#30404d] px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Assets</div>
-          <div className="mt-1 text-sm text-slate-200">Vector Library</div>
+      <aside className="flex w-[252px] min-h-0 flex-col border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))]">
+        <div className="border-b border-white/10 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Assets</div>
+          <div className="mt-1 text-sm font-semibold text-white">Vector Library</div>
         </div>
-        <div className="border-b border-[#30404d] bg-[#182026] px-2 pt-2">
+        <div className="border-b border-white/10 bg-black/10 px-2 pt-2">
           <div className="grid grid-cols-3 gap-1">
             {logoElements.map((section) => (
               <button
                 key={section.name}
                 type="button"
                 onClick={() => setActiveSection(section.name)}
-                className={`border px-2 py-1.5 text-center text-xs transition ${
-                  activeSection === section.name
-                    ? "border-[#5c7080] bg-[#202b33] text-white"
-                    : "border-transparent bg-[#293742] text-slate-300 hover:border-[#394b59] hover:bg-[#30404d]"
-                }`}
+                className={`border px-2 py-1.5 text-center text-xs transition ${activeSection === section.name
+                  ? "border-sky-300/40 bg-sky-500/10 text-white"
+                  : "border-transparent bg-white/[0.04] text-slate-300 hover:border-white/10 hover:bg-white/[0.06]"
+                  }`}
               >
                 {section.name}
               </button>
@@ -556,40 +555,40 @@ export default function LogoEditor({defaultData, onSave}) {
           </div>
         </div>
         <div className="grid auto-rows-min content-start min-h-0 flex-1 grid-cols-3 gap-1.5 overflow-y-auto p-2">
-          {activeAssets.map((asset) => <AssetButton key={asset.hash} asset={asset} onSelect={addLayer}/>)}
+          {activeAssets.map((asset) => <AssetButton key={asset.hash} asset={asset} onSelect={addLayer} />)}
         </div>
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col border border-[#394b59] bg-[#202b33]">
-        <div className="flex flex-wrap items-center gap-2 border-b border-[#30404d] px-3 py-2">
+      <section className="flex min-w-0 flex-1 flex-col border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))]">
+        <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-3 py-2">
           <Geometrize editor={editor} iconOnly />
           <ForzaImporter editor={editor} iconOnly />
           <FMSBExporter editor={editor} iconOnly />
-          <Button icon="undo" minimal title="Undo" disabled={!historyState.undo} onClick={undo}/>
-          <Button icon="redo" minimal title="Redo" disabled={!historyState.redo} onClick={redo}/>
+          <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" icon="undo" minimal title="Undo" disabled={!historyState.undo} onClick={undo} />
+          <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" icon="redo" minimal title="Redo" disabled={!historyState.redo} onClick={redo} />
           {selectedLayer && (
             <>
-              <div className="mx-1 h-6 w-px bg-[#394b59]"/>
-              <Button minimal icon="duplicate" title="Duplicate layer" onClick={duplicateSelected}/>
-              <Button minimal icon="trash" title="Delete layer" intent="danger" onClick={deleteSelected}/>
-              <Button minimal icon="arrow-up" title="Bring forward" onClick={() => reorderSelected(1)}/>
-              <Button minimal icon="arrow-down" title="Send back" onClick={() => reorderSelected(-1)}/>
-              <Button minimal icon="arrows-horizontal" title="Flip X" onClick={() => flipSelected("flipX")}/>
-              <Button minimal icon="arrows-vertical" title="Flip Y" onClick={() => flipSelected("flipY")}/>
+              <div className="mx-1 h-6 w-px bg-white/10" />
+              <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" minimal icon="duplicate" title="Duplicate layer" onClick={duplicateSelected} />
+              <Button className="!rounded-none !border !border-red-400/20 !bg-red-500/[0.05] hover:!bg-red-500/[0.1]" minimal icon="trash" title="Delete layer" intent="danger" onClick={deleteSelected} />
+              <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" minimal icon="arrow-up" title="Bring forward" onClick={() => reorderSelected(1)} />
+              <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" minimal icon="arrow-down" title="Send back" onClick={() => reorderSelected(-1)} />
+              <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" minimal icon="arrows-horizontal" title="Flip X" onClick={() => flipSelected("flipX")} />
+              <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" minimal icon="arrows-vertical" title="Flip Y" onClick={() => flipSelected("flipY")} />
               <input
                 type="color"
                 value={getLayerColor(selectedLayer)}
                 onChange={(event) => updateSelectedLayer((layer) => withLayerColor(layer, event.target.value))}
-                className="ml-1 h-7 w-9 border border-[#5c7080] bg-transparent"
+                className="ml-1 h-8 w-10 border border-white/10 bg-transparent"
                 title="Layer fill"
               />
             </>
           )}
-          <div className="ml-auto"/>
-          <Button intent="primary" minimal icon="floppy-disk" title="Save" onClick={() => onSave(editor)}/>
+          <div className="ml-auto" />
+          <Button className="!rounded-none !border !border-sky-300/30 !bg-sky-500/[0.08] hover:!bg-sky-500/[0.14]" intent="primary" minimal icon="floppy-disk" title="Save" onClick={() => onSave(editor)} />
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto bg-[#182026] p-4">
+        <div className="min-h-0 flex-1 overflow-auto bg-black/10 p-4">
           <div
             className="relative mx-auto"
             style={{
@@ -597,323 +596,308 @@ export default function LogoEditor({defaultData, onSave}) {
               height: defaultSize * zoom,
             }}
           >
-          <div
-            ref={canvasRef}
-            className="relative overflow-hidden border border-[#5c7080] bg-[#10161a] shadow-[0_16px_40px_rgba(0,0,0,0.35)] origin-top-left"
-            style={{
-              width: defaultSize,
-              height: defaultSize,
-              transform: `scale(${zoom})`,
-              backgroundImage: "linear-gradient(45deg, rgba(41,55,66,0.88) 25%, transparent 25%), linear-gradient(-45deg, rgba(41,55,66,0.88) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(41,55,66,0.88) 75%), linear-gradient(-45deg, transparent 75%, rgba(41,55,66,0.88) 75%)",
-              backgroundSize: "64px 64px",
-              backgroundPosition: "0 0, 0 32px, 32px -32px, -32px 0px",
-            }}
-            onPointerDown={() => setSelectedId(null)}
-            onDragOver={(event) => {
-              if (event.dataTransfer.types.includes("application/x-f1m-logo-asset")) {
+            <div
+              ref={canvasRef}
+              className="relative origin-top-left overflow-hidden border border-white/10 bg-[#0f1318] shadow-[0_18px_40px_rgba(0,0,0,0.28)]"
+              style={{
+                width: defaultSize,
+                height: defaultSize,
+                transform: `scale(${zoom})`,
+                backgroundImage: "linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%)",
+                backgroundSize: "64px 64px",
+                backgroundPosition: "0 0, 0 32px, 32px -32px, -32px 0px",
+              }}
+              onPointerDown={() => setSelectedId(null)}
+              onDragOver={(event) => {
+                if (event.dataTransfer.types.includes("application/x-f1m-logo-asset")) {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "copy";
+                  setIsCanvasDragOver(true);
+                }
+              }}
+              onDragLeave={() => setIsCanvasDragOver(false)}
+              onDrop={(event) => {
+                const raw = event.dataTransfer.getData("application/x-f1m-logo-asset");
+                if (!raw) {
+                  return;
+                }
                 event.preventDefault();
-                event.dataTransfer.dropEffect = "copy";
-                setIsCanvasDragOver(true);
-              }
-            }}
-            onDragLeave={() => setIsCanvasDragOver(false)}
-            onDrop={(event) => {
-              const raw = event.dataTransfer.getData("application/x-f1m-logo-asset");
-              if (!raw) {
-                return;
-              }
-              event.preventDefault();
-              setIsCanvasDragOver(false);
-              addLayer(JSON.parse(raw), getPointerPosition(event, canvasRef.current));
-            }}
-          >
-            <div className={`absolute inset-0 transition ${isCanvasDragOver ? "bg-[#48aff0]/5 ring-2 ring-inset ring-[#48aff0]" : ""}`}/>
+                setIsCanvasDragOver(false);
+                addLayer(JSON.parse(raw), getPointerPosition(event, canvasRef.current));
+              }}
+            >
+              <div className={`absolute inset-0 transition ${isCanvasDragOver ? "bg-sky-400/5 ring-2 ring-inset ring-sky-300/70" : ""}`} />
 
-            {layers.map((layer, index) => {
-              const geometry = layerToGeometry(layer, index);
+              {layers.map((layer, index) => {
+                const geometry = layerToGeometry(layer, index);
 
-              return (
-                <button
-                  key={layer.id}
-                  type="button"
-                  className={`absolute block border-0 bg-transparent p-0 ${selectedId === layer.id ? "z-20" : "z-10"}`}
-                  style={{
-                    left: geometry.centerX,
-                    top: geometry.centerY,
-                    width: geometry.width,
-                    height: geometry.height,
-                    transform: `translate(-50%, -50%) rotate(${geometry.rotationDeg}deg) scale(${geometry.flipX ? -1 : 1}, ${geometry.flipY ? -1 : 1})`,
-                    transformOrigin: "center",
-                  }}
-                  onPointerDown={(event) => {
-                    setSelectedId(layer.id);
-                    pushCurrentToUndo();
-                    interactionRef.current = {
-                      mode: "move",
-                      index,
-                      startPointer: getPointerPosition(event, canvasRef.current),
-                      startElement: geometry.element,
-                      rotationRad: layer.rotation * Math.PI / 180,
-                      rebuild: (element) => rebuildFromElement(index, element, layer),
-                    };
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                  onContextMenu={(event) => openContextMenu(event, layer.id)}
-                >
-                  <LayerArtwork layer={layer}/>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={layer.id}
+                    type="button"
+                    className={`absolute block border-0 bg-transparent p-0 ${selectedId === layer.id ? "z-20" : "z-10"}`}
+                    style={{
+                      left: geometry.centerX,
+                      top: geometry.centerY,
+                      width: geometry.width,
+                      height: geometry.height,
+                      transform: `translate(-50%, -50%) rotate(${geometry.rotationDeg}deg) scale(${geometry.flipX ? -1 : 1}, ${geometry.flipY ? -1 : 1})`,
+                      transformOrigin: "center",
+                    }}
+                    onPointerDown={(event) => {
+                      setSelectedId(layer.id);
+                      pushCurrentToUndo();
+                      interactionRef.current = {
+                        mode: "move",
+                        index,
+                        startPointer: getPointerPosition(event, canvasRef.current),
+                        startElement: geometry.element,
+                        rotationRad: layer.rotation * Math.PI / 180,
+                        rebuild: (element) => rebuildFromElement(index, element, layer),
+                      };
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                    onContextMenu={(event) => openContextMenu(event, layer.id)}
+                  >
+                    <LayerArtwork layer={layer} />
+                  </button>
+                );
+              })}
 
-            {selectedGeometry && (
-              <svg viewBox={`0 0 ${defaultSize} ${defaultSize}`} className="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
-                <g transform={`translate(${selectedGeometry.centerX} ${selectedGeometry.centerY}) rotate(${selectedGeometry.rotationDeg})`}>
-                  <rect
-                    x={-selectedGeometry.width / 2}
-                    y={-selectedGeometry.height / 2}
-                    width={selectedGeometry.width}
-                    height={selectedGeometry.height}
-                    fill="none"
-                    stroke="#48aff0"
-                    strokeWidth="3"
-                    strokeDasharray="14 10"
-                  />
-                  {[
-                    {x: -selectedGeometry.width / 2, y: -selectedGeometry.height / 2, handleX: -1, handleY: -1},
-                    {x: selectedGeometry.width / 2, y: -selectedGeometry.height / 2, handleX: 1, handleY: -1},
-                    {x: selectedGeometry.width / 2, y: selectedGeometry.height / 2, handleX: 1, handleY: 1},
-                    {x: -selectedGeometry.width / 2, y: selectedGeometry.height / 2, handleX: -1, handleY: 1},
-                  ].map((handle, idx) => (
+              {selectedGeometry && (
+                <svg viewBox={`0 0 ${defaultSize} ${defaultSize}`} className="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
+                  <g transform={`translate(${selectedGeometry.centerX} ${selectedGeometry.centerY}) rotate(${selectedGeometry.rotationDeg})`}>
+                    <rect
+                      x={-selectedGeometry.width / 2}
+                      y={-selectedGeometry.height / 2}
+                      width={selectedGeometry.width}
+                      height={selectedGeometry.height}
+                      fill="none"
+                      stroke="#48aff0"
+                      strokeWidth="3"
+                      strokeDasharray="14 10"
+                    />
+                    {[
+                      { x: -selectedGeometry.width / 2, y: -selectedGeometry.height / 2, handleX: -1, handleY: -1 },
+                      { x: selectedGeometry.width / 2, y: -selectedGeometry.height / 2, handleX: 1, handleY: -1 },
+                      { x: selectedGeometry.width / 2, y: selectedGeometry.height / 2, handleX: 1, handleY: 1 },
+                      { x: -selectedGeometry.width / 2, y: selectedGeometry.height / 2, handleX: -1, handleY: 1 },
+                    ].map((handle, idx) => (
+                      <circle
+                        key={idx}
+                        cx={handle.x}
+                        cy={handle.y}
+                        r="14"
+                        fill="#f5f8fa"
+                        stroke="#30404d"
+                        strokeWidth="4"
+                        className="pointer-events-auto cursor-nwse-resize"
+                        onPointerDown={(event) => {
+                          setSelectedId(selectedLayer.id);
+                          beginInteraction("scale", event, handle);
+                        }}
+                      />
+                    ))}
+                    <line x1="0" y1={-selectedGeometry.height / 2} x2="0" y2={-selectedGeometry.height / 2 - 46} stroke="#48aff0" strokeWidth="3" />
                     <circle
-                      key={idx}
-                      cx={handle.x}
-                      cy={handle.y}
+                      cx="0"
+                      cy={-selectedGeometry.height / 2 - 56}
                       r="14"
-                      fill="#f5f8fa"
-                      stroke="#30404d"
+                      fill="#48aff0"
+                      stroke="#106ba3"
                       strokeWidth="4"
-                      className="pointer-events-auto cursor-nwse-resize"
+                      className="pointer-events-auto cursor-alias"
                       onPointerDown={(event) => {
                         setSelectedId(selectedLayer.id);
-                        beginInteraction("scale", event, handle);
+                        beginInteraction("rotate", event);
                       }}
                     />
+                  </g>
+                </svg>
+              )}
+              {contextMenu && selectedLayer && (
+                <div
+                  className="absolute z-30 min-w-[160px] border border-white/10 bg-[#131a22] p-1 shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
+                  style={{ left: contextMenu.x, top: contextMenu.y }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                >
+                  {[
+                    { label: "Duplicate", onClick: duplicateSelected },
+                    { label: "Delete", onClick: deleteSelected, danger: true },
+                    { label: "Bring Forward", onClick: () => reorderSelected(1) },
+                    { label: "Send Back", onClick: () => reorderSelected(-1) },
+                    { label: "Flip X", onClick: () => flipSelected("flipX") },
+                    { label: "Flip Y", onClick: () => flipSelected("flipY") },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className={`block w-full px-3 py-2 text-left text-sm transition ${item.danger
+                        ? "text-[#ff8d8d] hover:bg-red-500/10"
+                        : "text-slate-100 hover:bg-white/[0.06]"
+                        }`}
+                      onClick={() => runContextAction(item.onClick)}
+                    >
+                      {item.label}
+                    </button>
                   ))}
-                  <line x1="0" y1={-selectedGeometry.height / 2} x2="0" y2={-selectedGeometry.height / 2 - 46} stroke="#48aff0" strokeWidth="3"/>
-                  <circle
-                    cx="0"
-                    cy={-selectedGeometry.height / 2 - 56}
-                    r="14"
-                    fill="#48aff0"
-                    stroke="#106ba3"
-                    strokeWidth="4"
-                    className="pointer-events-auto cursor-alias"
-                    onPointerDown={(event) => {
-                      setSelectedId(selectedLayer.id);
-                      beginInteraction("rotate", event);
-                    }}
-                  />
-                </g>
-              </svg>
-            )}
-            {contextMenu && selectedLayer && (
-              <div
-                className="absolute z-30 min-w-[160px] border border-[#5c7080] bg-[#202b33] p-1 shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
-                style={{left: contextMenu.x, top: contextMenu.y}}
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                {[
-                  {label: "Duplicate", onClick: duplicateSelected},
-                  {label: "Delete", onClick: deleteSelected, danger: true},
-                  {label: "Bring Forward", onClick: () => reorderSelected(1)},
-                  {label: "Send Back", onClick: () => reorderSelected(-1)},
-                  {label: "Flip X", onClick: () => flipSelected("flipX")},
-                  {label: "Flip Y", onClick: () => flipSelected("flipY")},
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className={`block w-full px-3 py-2 text-left text-sm transition ${
-                      item.danger
-                        ? "text-[#ff7373] hover:bg-[#5c1f1f]"
-                        : "text-slate-100 hover:bg-[#30404d]"
-                    }`}
-                    onClick={() => runContextAction(item.onClick)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 border-t border-[#30404d] bg-[#182026] px-3 py-1.5">
-          <Button icon="zoom-out" minimal title="Zoom out" onClick={() => setZoom((current) => clamp(current - 0.1, 0.5, 2))}/>
-          <Button text={`${Math.round(zoom * 100)}%`} minimal disabled/>
-          <Button icon="zoom-in" minimal title="Zoom in" onClick={() => setZoom((current) => clamp(current + 0.1, 0.5, 2))}/>
+        <div className="flex items-center gap-1 border-t border-white/10 bg-black/10 px-3 py-1.5">
+          <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" icon="zoom-out" minimal title="Zoom out" onClick={() => setZoom((current) => clamp(current - 0.1, 0.5, 2))} />
+          <Button className="!rounded-none !border !border-transparent !bg-transparent !text-slate-300" text={`${Math.round(zoom * 100)}%`} minimal disabled />
+          <Button className="!rounded-none !border !border-white/10 !bg-white/[0.02] hover:!bg-white/[0.05]" icon="zoom-in" minimal title="Zoom in" onClick={() => setZoom((current) => clamp(current + 0.1, 0.5, 2))} />
         </div>
       </section>
 
-      <aside className="flex w-[280px] min-h-0 flex-col border border-[#394b59] bg-[#202b33]">
-        <div className="border-b border-[#30404d] px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Inspector</div>
-          <div className="mt-1 text-sm text-slate-200">Selection</div>
+      <aside className="flex w-[280px] min-h-0 flex-col border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))]">
+        <div className="border-b border-white/10 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Inspector</div>
+          <div className="mt-1 text-sm font-semibold text-white">Selection</div>
         </div>
-        <div className="grid grid-cols-2 gap-px border-b border-[#30404d] bg-[#30404d]">
+        <div className="grid grid-cols-2 gap-px border-b border-white/10 bg-white/10">
           <button
             type="button"
             onClick={() => setInspectorTab("layers")}
-            className={`px-3 py-2 text-sm transition ${inspectorTab === "layers" ? "bg-[#202b33] text-white" : "bg-[#182026] text-slate-400 hover:bg-[#202b33]"}`}
+            className={`px-3 py-2 text-sm transition ${inspectorTab === "layers" ? "bg-white/[0.03] text-white" : "bg-black/10 text-slate-400 hover:bg-white/[0.03]"}`}
           >
             Layers
           </button>
           <button
             type="button"
             onClick={() => setInspectorTab("controls")}
-            className={`px-3 py-2 text-sm transition ${inspectorTab === "controls" ? "bg-[#202b33] text-white" : "bg-[#182026] text-slate-400 hover:bg-[#202b33]"}`}
+            className={`px-3 py-2 text-sm transition ${inspectorTab === "controls" ? "bg-white/[0.03] text-white" : "bg-black/10 text-slate-400 hover:bg-white/[0.03]"}`}
           >
             Layer Controls
           </button>
         </div>
         {inspectorTab === "controls" ? (
           selectedLayer ? (
-          <>
-            <div className="mx-3 border border-[#30404d] bg-[#182026] p-3">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Fill</label>
-              <div className="mt-2 flex items-center gap-3">
-                <input
-                  type="color"
-                  value={getLayerColor(selectedLayer)}
-                  onChange={(event) => updateSelectedLayer((layer) => withLayerColor(layer, event.target.value))}
-                  className="h-10 w-14 border border-[#5c7080] bg-transparent"
-                />
-                <div className="bg-[#293742] px-3 py-2 text-sm">{getLayerColor(selectedLayer)}</div>
+            <>
+              <div className="grid grid-cols-2 gap-3 px-3 py-3">
+                <label className="text-sm">
+                  <div className="mb-1 text-xs text-slate-400">X</div>
+                  <NumericInput
+                    fill
+                    value={selectedGeometry.element.PositionX.toFixed(3)}
+                    onValueChange={(valueAsNumber) => {
+                      const next = rebuildFromElement(selectedIndex, {
+                        ...selectedGeometry.element,
+                        PositionX: valueAsNumber,
+                      }, selectedLayer);
+                      const nextLayers = [...layers];
+                      nextLayers[selectedIndex] = next;
+                      replaceLayers(nextLayers);
+                    }}
+                  />
+                </label>
+                <label className="text-sm">
+                  <div className="mb-1 text-xs text-slate-400">Y</div>
+                  <NumericInput
+                    fill
+                    value={selectedGeometry.element.PositionY.toFixed(3)}
+                    onValueChange={(valueAsNumber) => {
+                      const next = rebuildFromElement(selectedIndex, {
+                        ...selectedGeometry.element,
+                        PositionY: valueAsNumber,
+                      }, selectedLayer);
+                      const nextLayers = [...layers];
+                      nextLayers[selectedIndex] = next;
+                      replaceLayers(nextLayers);
+                    }}
+                  />
+                </label>
+                <label className="text-sm">
+                  <div className="mb-1 text-xs text-slate-400">Width</div>
+                  <NumericInput
+                    fill
+                    min={MIN_SCALE}
+                    value={Math.abs(selectedGeometry.element.ScaleX).toFixed(3)}
+                    onValueChange={(valueAsNumber) => {
+                      const next = rebuildFromElement(selectedIndex, {
+                        ...selectedGeometry.element,
+                        ScaleX: Math.max(MIN_SCALE, valueAsNumber) * Math.sign(selectedGeometry.element.ScaleX || 1),
+                      }, selectedLayer);
+                      const nextLayers = [...layers];
+                      nextLayers[selectedIndex] = next;
+                      replaceLayers(nextLayers);
+                    }}
+                  />
+                </label>
+                <label className="text-sm">
+                  <div className="mb-1 text-xs text-slate-400">Height</div>
+                  <NumericInput
+                    fill
+                    min={MIN_SCALE}
+                    value={Math.abs(selectedGeometry.element.ScaleY).toFixed(3)}
+                    onValueChange={(valueAsNumber) => {
+                      const next = rebuildFromElement(selectedIndex, {
+                        ...selectedGeometry.element,
+                        ScaleY: Math.max(MIN_SCALE, valueAsNumber) * Math.sign(selectedGeometry.element.ScaleY || 1),
+                      }, selectedLayer);
+                      const nextLayers = [...layers];
+                      nextLayers[selectedIndex] = next;
+                      replaceLayers(nextLayers);
+                    }}
+                  />
+                </label>
+                <label className="text-sm">
+                  <div className="mb-1 text-xs text-slate-400">Rotation</div>
+                  <NumericInput
+                    fill
+                    value={selectedLayer.rotation.toFixed(2)}
+                    onValueChange={(valueAsNumber) => updateSelectedLayer((layer) => ({ ...layer, rotation: valueAsNumber }))}
+                  />
+                </label>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3 px-3 py-3">
-              <label className="text-sm">
-                <div className="mb-1 text-xs text-slate-400">X</div>
-                <NumericInput
-                  fill
-                  value={selectedGeometry.element.PositionX.toFixed(3)}
-                  onValueChange={(valueAsNumber) => {
-                    const next = rebuildFromElement(selectedIndex, {
-                      ...selectedGeometry.element,
-                      PositionX: valueAsNumber,
-                    }, selectedLayer);
-                    const nextLayers = [...layers];
-                    nextLayers[selectedIndex] = next;
-                    replaceLayers(nextLayers);
-                  }}
-                />
-              </label>
-              <label className="text-sm">
-                <div className="mb-1 text-xs text-slate-400">Y</div>
-                <NumericInput
-                  fill
-                  value={selectedGeometry.element.PositionY.toFixed(3)}
-                  onValueChange={(valueAsNumber) => {
-                    const next = rebuildFromElement(selectedIndex, {
-                      ...selectedGeometry.element,
-                      PositionY: valueAsNumber,
-                    }, selectedLayer);
-                    const nextLayers = [...layers];
-                    nextLayers[selectedIndex] = next;
-                    replaceLayers(nextLayers);
-                  }}
-                />
-              </label>
-              <label className="text-sm">
-                <div className="mb-1 text-xs text-slate-400">Width</div>
-                <NumericInput
-                  fill
-                  min={MIN_SCALE}
-                  value={Math.abs(selectedGeometry.element.ScaleX).toFixed(3)}
-                  onValueChange={(valueAsNumber) => {
-                    const next = rebuildFromElement(selectedIndex, {
-                      ...selectedGeometry.element,
-                      ScaleX: Math.max(MIN_SCALE, valueAsNumber) * Math.sign(selectedGeometry.element.ScaleX || 1),
-                    }, selectedLayer);
-                    const nextLayers = [...layers];
-                    nextLayers[selectedIndex] = next;
-                    replaceLayers(nextLayers);
-                  }}
-                />
-              </label>
-              <label className="text-sm">
-                <div className="mb-1 text-xs text-slate-400">Height</div>
-                <NumericInput
-                  fill
-                  min={MIN_SCALE}
-                  value={Math.abs(selectedGeometry.element.ScaleY).toFixed(3)}
-                  onValueChange={(valueAsNumber) => {
-                    const next = rebuildFromElement(selectedIndex, {
-                      ...selectedGeometry.element,
-                      ScaleY: Math.max(MIN_SCALE, valueAsNumber) * Math.sign(selectedGeometry.element.ScaleY || 1),
-                    }, selectedLayer);
-                    const nextLayers = [...layers];
-                    nextLayers[selectedIndex] = next;
-                    replaceLayers(nextLayers);
-                  }}
-                />
-              </label>
-              <label className="text-sm">
-                <div className="mb-1 text-xs text-slate-400">Rotation</div>
-                <NumericInput
-                  fill
-                  value={selectedLayer.rotation.toFixed(2)}
-                  onValueChange={(valueAsNumber) => updateSelectedLayer((layer) => ({...layer, rotation: valueAsNumber}))}
-                />
-              </label>
-            </div>
-
-            <div className="mx-3 mt-3 border border-[#30404d] bg-[#182026] p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Quick Nudge</div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <div/>
-                <button type="button" onClick={() => nudgeSelected(0, -8)} className="rounded bg-[#293742] px-3 py-2 text-sm hover:bg-[#30404d]">Up</button>
-                <div/>
-                <button type="button" onClick={() => nudgeSelected(-8, 0)} className="rounded bg-[#293742] px-3 py-2 text-sm hover:bg-[#30404d]">Left</button>
-                <button type="button" onClick={() => nudgeSelected(0, 8)} className="rounded bg-[#293742] px-3 py-2 text-sm hover:bg-[#30404d]">Down</button>
-                <button type="button" onClick={() => nudgeSelected(8, 0)} className="rounded bg-[#293742] px-3 py-2 text-sm hover:bg-[#30404d]">Right</button>
+              <div className="mx-3 mt-3 border border-white/10 bg-black/10 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Quick Nudge</div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div />
+                  <button type="button" onClick={() => nudgeSelected(0, -8)} className="border border-white/10 bg-white/[0.03] px-3 py-2 text-sm hover:bg-white/[0.06]">Up</button>
+                  <div />
+                  <button type="button" onClick={() => nudgeSelected(-8, 0)} className="border border-white/10 bg-white/[0.03] px-3 py-2 text-sm hover:bg-white/[0.06]">Left</button>
+                  <button type="button" onClick={() => nudgeSelected(0, 8)} className="border border-white/10 bg-white/[0.03] px-3 py-2 text-sm hover:bg-white/[0.06]">Down</button>
+                  <button type="button" onClick={() => nudgeSelected(8, 0)} className="border border-white/10 bg-white/[0.03] px-3 py-2 text-sm hover:bg-white/[0.06]">Right</button>
+                </div>
               </div>
-            </div>
-          </>
+            </>
           ) : (
-          <div className="m-3 border border-dashed border-[#5c7080] bg-[#182026] p-4 text-sm text-slate-400">
-            Select a layer or add a new part from the asset library to start editing.
-          </div>
+            <div className="m-3 border border-dashed border-white/15 bg-black/10 p-4 text-sm text-slate-400">
+              Select a layer or add a new part from the asset library to start editing.
+            </div>
           )
         ) : (
-        <div className="m-3 min-h-0 flex-1 overflow-y-auto border border-[#30404d] bg-[#182026] p-3">
-          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Layers</div>
-          <div className="space-y-2">
-            {[...layers].reverse().map((layer) => (
-              <button
-                key={layer.id}
-                type="button"
-                onClick={() => setSelectedId(layer.id)}
-                className={`flex w-full items-center gap-3 border px-3 py-2 text-left transition ${
-                  selectedId === layer.id
-                    ? "border-[#48aff0] bg-[#137cbd]/15"
-                    : "border-[#30404d] bg-[#202b33] hover:border-[#5c7080]"
-                }`}
-              >
-                <div className="h-10 w-10 border border-[#5c7080] bg-[#10161a] p-1">
-                  <img src={layer.src} alt="" className="h-full w-full object-contain"/>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{layer.name}</div>
-                  <div className="truncate text-xs text-slate-400">{getLayerColor(layer)}</div>
-                </div>
-              </button>
-            ))}
+          <div className="min-h-0 flex-1 overflow-y-auto border border-white/10 bg-black/10 p-3">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Layers</div>
+            <div className="space-y-2">
+              {[...layers].reverse().map((layer) => (
+                <button
+                  key={layer.id}
+                  type="button"
+                  onClick={() => setSelectedId(layer.id)}
+                  className={`flex w-full items-center gap-3 border px-3 py-2 text-left transition ${selectedId === layer.id
+                    ? "border-sky-300/50 bg-sky-500/10"
+                    : "border-white/10 bg-white/[0.025] hover:border-white/20"
+                    }`}
+                >
+                  <div className="h-10 w-10 border border-white/10 bg-[#10161a] p-1">
+                    <img src={layer.src} alt="" className="h-full w-full object-contain" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{layer.name}</div>
+                    <div className="truncate text-xs text-slate-400">{getLayerColor(layer)}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
         )}
       </aside>
     </div>

@@ -9,6 +9,7 @@ import Calendar from "@/pages/calendar";
 import Expertise from "@/pages/expertise";
 import Finance from "@/pages/finance";
 import Modding from "@/pages/modding";
+import RaceResults from "@/pages/race-results";
 import Regulations from "@/pages/regulations";
 import Results from "@/pages/results";
 import Weekend from "@/pages/weekend";
@@ -42,7 +43,8 @@ const sections = [
     label: "Season",
     items: [
       {name: "Calendar", icon: <TodayIcon fontSize="small" />, tab: <Calendar />},
-      {name: "Results", icon: <SportsScoreIcon fontSize="small" />, tab: <Results />},
+      {name: "Race Results", icon: <SportsScoreIcon fontSize="small" />, tab: <RaceResults />},
+      {name: "Season Results", icon: <SportsScoreIcon fontSize="small" />, tab: <Results />},
       {name: "Regulations", icon: <RuleIcon fontSize="small" />, tab: <Regulations />},
     ],
   },
@@ -56,7 +58,6 @@ const sections = [
       {name: "Facilities", icon: <ConstructionIcon fontSize="small" />, tab: <Facilities />},
       {name: "Parts", icon: <PrecisionManufacturingIcon fontSize="small" />, tab: <Parts />},
       {name: "Expertise", icon: <InsightsIcon fontSize="small" />, tab: <Expertise />},
-      {name: "Team Tools", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
     ],
   },
   {
@@ -68,6 +69,7 @@ const sections = [
   {
     label: "Tools",
     items: [
+      {name: "Career", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
       {name: "Modding", icon: <BuildIcon fontSize="small" />, tab: <Modding />},
       {name: "Plugins", icon: <AccountTreeIcon fontSize="small" />, tab: <Plugins />},
     ],

@@ -1,8 +1,3 @@
-import {Divider, Typography} from "@mui/material";
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {yearToDateRange} from "@/js/localization";
@@ -279,23 +274,33 @@ AND StartDay <= ${player.Day} AND EndSeason >= ${season} AND ContractType = 0 AN
   }, [database, season, formulae])
 
   return (
-    <div>
-      <Typography variant="h5" component="h5">
-        FIA F{formulae} Drivers Championship Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-        <InputLabel id="season-label">Season</InputLabel>
-        <Select
-          labelId="season-label"
-          id="season"
-          value={season}
-          onChange={(event) => setSeason(event.target.value)}
-          label="Season"
-        >
-          {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
-        </Select>
-      </FormControl>
-      </Typography>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <div style={{ overflowX: "auto" }}>
+    <div className="grid gap-3">
+      <section className="border border-white/10 bg-white/[0.015] p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Formula {formulae}</div>
+            <h3 className="mt-2 text-base font-bold text-white">Drivers Championship Overview</h3>
+            <p className="mt-2 max-w-[780px] text-sm text-slate-400">
+              Standings table with feature-race and sprint-race scoring across the feeder series calendar.
+            </p>
+          </div>
+          <label className="flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-300">Season</span>
+            <select
+              value={season}
+              onChange={(event) => setSeason(Number(event.target.value))}
+              className="border border-white/10 bg-black/10 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-300/50"
+            >
+              {seasons.map((value) => (
+                <option key={value} value={value} className="bg-[#182026] text-white">
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+      <div className="overflow-x-auto border border-white/10 bg-white/[0.015]">
         <ResultsTable
           key={season}
           version={version}
