@@ -15,7 +15,7 @@ function blobToBase64(blob) {
   });
 }
 
-export const Geometrize = ({ store }) => {
+export const Geometrize = ({ editor, buttonProps = {}, iconOnly = false }) => {
   const [open, setOpen] = useState(false);
   const [image, setImage] = useState(null);
   const [imageStr, setImageStr] = useState('');
@@ -103,6 +103,9 @@ export const Geometrize = ({ store }) => {
   return (
     <div className="bp5-dark">
       <Button
+        icon={iconOnly ? "media" : undefined}
+        minimal={iconOnly}
+        title={iconOnly ? "Import image" : undefined}
         intent="warning"
         onClick={() => {
           setOpen(true);
@@ -112,8 +115,9 @@ export const Geometrize = ({ store }) => {
           setImageStr(null);
           working.current = false;
         }}
+        {...buttonProps}
       >
-        Import Image
+        {iconOnly ? null : "Import Image"}
       </Button>
       <Dialog
         isOpen={open}
@@ -167,7 +171,7 @@ export const Geometrize = ({ store }) => {
                 disabled={!result}
                 onClick={() => {
                   try {
-                    store.loadJSON(geometrizerToJson(result));
+                    editor.loadJSON(geometrizerToJson(result));
                     enqueueSnackbar(
                       `Import succeeded`,
                       {variant: "success"}

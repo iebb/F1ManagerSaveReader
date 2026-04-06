@@ -1,3 +1,4 @@
+import CompatibilityPreview from "@/components/Customize/CompatibilityPreview";
 import {TestStringCompatibility} from "@/components/Customize/Player/font_glyphs";
 import {CyrillicGlyphs, LatinGlyphs} from "@/components/Customize/Player/glyphs/consts";
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
@@ -59,31 +60,8 @@ export default function TeamRename() {
       </Typography>
       <Divider variant="fullWidth" sx={{my: 2}} />
       <div className="my-2">
-      {
-        compatibility.All ? (
-          <Alert severity="success" sx={{my: 2}}>
-            <AlertTitle>Info</AlertTitle>
-            This name can be displayed correctly in all supported languages.
-            {grid}
-          </Alert>
-        ) : compatibility.None ? (
-          <Alert severity="error" sx={{my: 2}}>
-            <AlertTitle>Warning</AlertTitle>
-            This name cannot be displayed correctly in any languages. (Consider replacing font?)
-            {grid}
-          </Alert>
-        ) : (
-          <Alert severity="info" sx={{my: 2}}>
-            <AlertTitle>Warning</AlertTitle>
-            This name can only be displayed correctly in these languages: {supportedLanguages.join(", ")}
-            {grid}
-          </Alert>
-        )
-      }
-      </div>
-      <div className="my-2">
         <Grid container spacing={2} alignItems="center">
-          <Grid item >
+          <Grid item xs={12} sm="auto">
             <TextField
               label="Team Name"
               className="w-[400px]"
@@ -124,6 +102,29 @@ export default function TeamRename() {
             >Save</Button>
           </Grid>
         </Grid>
+        <div className="mt-4">
+          {
+            compatibility.All ? (
+              <Alert severity="success" sx={{my: 2}}>
+                <AlertTitle>Info</AlertTitle>
+                This name can be displayed correctly in all supported languages.
+                <CompatibilityPreview compatibility={compatibility} />
+              </Alert>
+            ) : compatibility.None ? (
+              <Alert severity="error" sx={{my: 2}}>
+                <AlertTitle>Warning</AlertTitle>
+                This name cannot be displayed correctly in any languages. (Consider replacing font?)
+                <CompatibilityPreview compatibility={compatibility} />
+              </Alert>
+            ) : (
+              <Alert severity="info" sx={{my: 2}}>
+                <AlertTitle>Warning</AlertTitle>
+                This name can only be displayed correctly in these languages: {supportedLanguages.join(", ")}
+                <CompatibilityPreview compatibility={compatibility} />
+              </Alert>
+            )
+          }
+        </div>
         <Divider variant="fullWidth" sx={{my: 2}} />
         <Alert severity="info" sx={{my: 2}} className="break-all">
           <AlertTitle>Available Latin Characters</AlertTitle>

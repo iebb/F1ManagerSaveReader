@@ -5,6 +5,7 @@ import {CyrillicGlyphs, JapaneseGlyphs, LatinGlyphs, SChineseGlyphs} from "@/com
 export const TestStringCompatibility = (...args) => {
   let Lat = 1, Rus = 1, Jpn = 1, Chn = 1;
   let LatDisplay = "", RusDisplay = "", JpnDisplay = "", ChnDisplay = "";
+  const Characters = [];
 
   let part = 0;
   for(const str of args) {
@@ -14,33 +15,52 @@ export const TestStringCompatibility = (...args) => {
       RusDisplay += " ";
       JpnDisplay += "·";
       ChnDisplay += "·";
+      Characters.push({
+        char: " ",
+        separator: true,
+        Lat: true,
+        Rus: true,
+        Jpn: true,
+        Chn: true,
+      });
     }
 
     for (const codePoint of str) {
-      if (!LatinGlyphs[codePoint.codePointAt(0)]) {
+      const code = codePoint.codePointAt(0);
+      const charInfo = {
+        char: codePoint,
+        separator: false,
+        Lat: !!LatinGlyphs[code],
+        Rus: !!CyrillicGlyphs[code],
+        Jpn: !!JapaneseGlyphs[code],
+        Chn: !!SChineseGlyphs[code],
+      };
+
+      if (!charInfo.Lat) {
         Lat = 0;
         LatDisplay += "☐";
       } else {
         LatDisplay += codePoint;
       }
-      if (!CyrillicGlyphs[codePoint.codePointAt(0)]) {
+      if (!charInfo.Rus) {
         Rus = 0;
         RusDisplay += "☐";
       } else {
         RusDisplay += codePoint;
       }
-      if (!JapaneseGlyphs[codePoint.codePointAt(0)]) {
+      if (!charInfo.Jpn) {
         Jpn = 0;
         JpnDisplay += "☐";
       } else {
         JpnDisplay += codePoint;
       }
-      if (!SChineseGlyphs[codePoint.codePointAt(0)]) {
+      if (!charInfo.Chn) {
         Chn = 0;
         ChnDisplay += "☐";
       } else {
         ChnDisplay += codePoint;
       }
+      Characters.push(charInfo);
     }
   }
 
@@ -49,6 +69,7 @@ export const TestStringCompatibility = (...args) => {
     All: Lat && Rus && Jpn && Chn,
     None: !(Lat || Rus || Jpn || Chn),
     Lat, Rus, Jpn, Chn,
-    LatDisplay, RusDisplay, JpnDisplay, ChnDisplay
+    LatDisplay, RusDisplay, JpnDisplay, ChnDisplay,
+    Characters,
   };
 }

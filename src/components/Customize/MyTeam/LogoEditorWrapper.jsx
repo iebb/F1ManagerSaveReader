@@ -39,15 +39,15 @@ export default function LogoEditorWrapper() {
       <p className="mb-4">Happy with your results? Share your creation on <a href="https://discord.gg/tBA8r5XH4J">Discord</a> here!</p>
       <LogoEditor
         defaultData={defaultData}
-        onSave={async (store) => {
-          const game = jsonToGame(store.toJSON());
+        onSave={async (editor) => {
+          const game = jsonToGame(editor.toJSON());
           database.exec("DELETE FROM Teams_Custom_LogoElements");
           for (const row of game) {
             database.exec(`INSERT INTO Teams_Custom_LogoElements VALUES(${
               row.ElementID
             }, ${row.PartHash}, ${row.Colour}, ${row.PositionX}, ${row.PositionY}, ${row.Rotation}, ${row.ScaleX}, ${row.ScaleY})`);
           }
-          const img = (await store.toDataURL()).replace("data:image/png;base64,", "");
+          const img = (await editor.toDataURL()).replace("data:image/png;base64,", "");
           const mp = metadata.gvasMeta.Properties.Properties.filter(p => p.Name === "MetaData")[0].Properties[0];
           for(const p of mp.Properties) {
             if (p.Name === "CustomTeamLogoBase64") {

@@ -3,7 +3,7 @@ import {Button, Dialog, DialogBody, DialogFooter, TextArea} from "@blueprintjs/c
 import {enqueueSnackbar} from "notistack";
 import React from "react";
 
-export const ForzaImporter = ({ store }) => {
+export const ForzaImporter = ({ editor, buttonProps = {}, iconOnly = false }) => {
   const [open, setOpen] = React.useState(false);
   const [content, setContent] = React.useState("");
   const [valid, setValid] = React.useState(false);
@@ -15,14 +15,21 @@ export const ForzaImporter = ({ store }) => {
   return (
     <>
       <Button
+        minimal={iconOnly}
+        title={iconOnly ? "Import Forza Painter" : undefined}
         variant="contained"
         color="warning"
         onClick={() => {
           setContent("");
           setOpen(true);
         }}
+        {...buttonProps}
       >
-        Import FP
+        {iconOnly ? (
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-[#5c7080] bg-[#293742] text-[11px] font-bold leading-none text-slate-100">
+            F
+          </span>
+        ) : "Import FP"}
       </Button>
       <Dialog
         isOpen={open}
@@ -70,7 +77,7 @@ export const ForzaImporter = ({ store }) => {
               onClick={() => {
                 try {
                   const data = JSON.parse(content);
-                  store.loadJSON(fPainterToJson(data));
+                  editor.loadJSON(fPainterToJson(data));
                   enqueueSnackbar(
                     `Import succeeded`,
                     {variant: "success"}

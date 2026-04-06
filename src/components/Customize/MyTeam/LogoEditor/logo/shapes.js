@@ -245,7 +245,7 @@ export const logoElements =   [
       { hash: 1691078171, url: '/svg/triangle/rightAngleScaleneTriangleRounded.svg' },
     ]},
   {
-    name: "Misc Shapes",
+    name: "Misc",
     icons: [
       { hash: 2229978498, url: '/svg/decagon.svg' },
       { hash: 3417896018, url: '/svg/decagonRounded.svg' },

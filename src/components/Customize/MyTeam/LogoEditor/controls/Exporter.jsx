@@ -30,7 +30,7 @@ export function decompressData(data) {
 }
 
 
-export const FMSBExporter = ({ store }) => {
+export const FMSBExporter = ({ editor, buttonProps = {}, iconOnly = false }) => {
   const [open, setOpen] = React.useState(false);
   const [content, setContent] = React.useState("");
   const [valid, setValid] = React.useState(false);
@@ -39,21 +39,25 @@ export const FMSBExporter = ({ store }) => {
     setOpen(false);
   };
 
-  const shapeCount = store?.pages?.[0]?.children?.length || 0;
+  const shapeCount = editor?.pages?.[0]?.children?.length || 0;
 
   return (
     <>
       <Button
+        icon={iconOnly ? "import" : undefined}
+        minimal={iconOnly}
+        title={iconOnly ? "Import / Export" : undefined}
         variant="contained"
         color="secondary"
         onClick={() => {
-          const struct = jsonToGame(store.toJSON());
+          const struct = jsonToGame(editor.toJSON());
           setContent(compressData(struct));
           setValid(true);
           setOpen(true);
         }}
+        {...buttonProps}
       >
-        Import / Export
+        {iconOnly ? null : "Import / Export"}
       </Button>
       <Dialog
         isOpen={open}
@@ -67,7 +71,7 @@ export const FMSBExporter = ({ store }) => {
             <br/>
             Compressed Size: {content.length}
             <br/>
-            Deompressed Size: {JSON.stringify(store.toJSON()).length}
+            Deompressed Size: {JSON.stringify(editor.toJSON()).length}
           </p>
           {
             shapeCount >= 50 && (
@@ -119,7 +123,7 @@ export const FMSBExporter = ({ store }) => {
               onClick={() => {
                 try {
                   const data = decompressData(content);
-                  store.loadJSON(gameToJson(data));
+                  editor.loadJSON(gameToJson(data));
                   enqueueSnackbar(
                     `Import succeeded`,
                     {variant: "success"}
