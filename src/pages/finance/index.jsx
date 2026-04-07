@@ -1,4 +1,5 @@
 import BoardPayments from "@/components/Finance/BoardPayments";
+import FinanceOperations from "@/components/Finance/FinanceOperations";
 import SponsorPayments from "@/components/Finance/SponsorPayments";
 import * as React from "react";
 import {useContext} from "react";
@@ -22,6 +23,7 @@ export default function Page() {
       {name: "Sponsor Payments", tab: <SponsorPayments />},
       {name: "Cost Cap", tab: <CostCap />},
       {name: "Finance", tab: <Finance />},
+      {name: "Finance DB", tab: <FinanceOperations />},
       {name: "Spending Breakdown", tab: <Spending />},
     ]} />
   );

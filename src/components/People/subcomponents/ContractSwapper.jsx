@@ -1,17 +1,39 @@
-import {TeamName} from "@/components/Localization/Localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {getDriverName} from "@/js/localization";
-import {Alert, AlertTitle, Autocomplete, Box, Button, Divider, Grid, Modal, TextField, Typography} from "@mui/material";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {getDriverName, resolveLiteral, teamNames} from "@/js/localization";
+import {getCountryFlag} from "@/js/localization/ISOCountries";
+import {Autocomplete, Modal, TextField} from "@mui/material";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {assignRandomRaceNumber, fireDriverContract, getStaff} from "../commons/drivers";
 
+const teamLogoAssets = import.meta.glob("../../../assets/team-logos/**/*.{png,webp}", {
+  eager: true,
+  import: "default",
+});
+
+const teamLogoSlugsByYear = {
+  2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
+  2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
+  2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
+  2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
+  2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
+};
+
+function getOfficialTeamLogo(version, teamId) {
+  const year = Math.min(2026, Math.max(2022, version + 2020));
+  const slug = teamLogoSlugsByYear[year]?.[teamId];
+  if (!slug) return null;
+  const extension = year <= 2023 ? "png" : "webp";
+  return teamLogoAssets[`../../../assets/team-logos/${year}/${slug}.${extension}`] || null;
+}
+
 export default function ContractSwapper(props) {
   const { swapRow, setSwapRow, refresh } = props;
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext)
+  const {version, careerSaveMetadata} = useContext(MetadataContext)
   const basicInfo = useContext(BasicInfoContext);
-  const { player } = basicInfo;
+  const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
+  const { player, teamMap } = basicInfo;
 
   const ctx = { database, version, basicInfo };
   const [swapDriver, setSwapDriver] = useState(null);
@@ -19,6 +41,12 @@ export default function ContractSwapper(props) {
   const [_drivers, setDrivers] = useState([]);
   const [updated, setUpdated] = useState(0);
   const _refresh = () => setUpdated(+new Date());
+  const notifyRefresh = () => {
+    refresh?.();
+    if (typeof basicInfoUpdater === "function") {
+      basicInfoUpdater();
+    }
+  };
 
   useEffect(() => {
     if (swapRow) {
@@ -29,6 +57,31 @@ export default function ContractSwapper(props) {
   if (!swapRow) return null;
 
   const swapDriverUpdated = _drivers.filter(d => d.StaffID === swapDriver?.id)?.[0];
+  const currentContract = swapRow?.Contracts?.[0];
+  const targetContract = swapDriverUpdated?.Contracts?.[0];
+  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
+  const infoCardClass = "border border-white/10 bg-white/[0.03] p-4";
+  const currency = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+  const getTeamSummary = (teamId) => {
+    if (!teamId) {
+      return {name: "Currently unassigned", logo: null};
+    }
+    const name = teamId >= 32 && teamMap?.[teamId]?.TeamNameLocKey
+      ? resolveLiteral(teamMap[teamId].TeamNameLocKey)
+      : teamNames(teamId, version);
+    const logo = teamId >= 32 && customTeamLogoBase64
+      ? `data:image/png;base64,${customTeamLogoBase64}`
+      : getOfficialTeamLogo(version, teamId);
+    return {name, logo};
+  };
+  const currentTeam = getTeamSummary(currentContract?.TeamID);
+  const targetTeam = getTeamSummary(targetContract?.TeamID);
+  const currentFlag = swapRow?.Nationality ? getCountryFlag(swapRow.Nationality) : null;
+  const targetFlag = swapDriverUpdated?.Nationality ? getCountryFlag(swapDriverUpdated.Nationality) : null;
 
 
   /* swap contracts */
@@ -296,98 +349,195 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
     _refresh();
   }
   return (
-    <Modal
-      open={Boolean(swapRow)}
-      onClose={() => setSwapRow(null)}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
-      <Box style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        background: '#333',
-        border: '2px solid #000',
-        boxShadow: 24,
-        padding: 15,
-        borderRadius: 20,
-      }}>
-        <Typography id="modal-modal-title" variant="h6" component="h2">
-          Contract Swap for {getDriverName(swapRow)}
-        </Typography>
+    <Modal open={Boolean(swapRow)} onClose={() => setSwapRow(null)}>
+      <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/70 p-4">
+        <div className="w-full max-w-[860px] border border-sky-400/20 bg-[#1c2127] shadow-[0_18px_48px_rgba(0,0,0,0.45)]">
+          <div className="flex items-start justify-between gap-4">
+            <div className="p-5 pb-4">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Contract Replacement</div>
+              <h3 className="mt-2 text-lg font-bold text-white">Replace {getDriverName(swapRow)}</h3>
+              <p className="mt-2 text-sm text-slate-400">
+                Choose another contracted person in the same role, then apply a temporary or permanent swap.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSwapRow(null)}
+              className="m-5 border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06]"
+            >
+              Close
+            </button>
+          </div>
 
-        <Alert severity="info" sx={{ my: 2 }}>
-          <AlertTitle>Info</AlertTitle>
-          <p>Temporary: Won't affect Career History until driver changes team in-game.</p>
-          <p>Permanent: Career History will be updated and separated.</p>
-        </Alert>
-        <Divider variant="fullWidth" sx={{ my: 2 }} />
-        <Grid direction="row" container spacing={1}>
-          <Grid item style={{ flex: 1 }}>
-            <Autocomplete
-              disablePortal
-              options={_drivers.filter(x => x.StaffID !== swapRow.StaffID).map(r => ({
-                label: getDriverName(r), id: r.StaffID, number: r.CurrentNumber, driver: r
-              }))}
-              value={swapDriver}
-              sx={{ width: 240, m: 0, display: "inline-block" }}
-              isOptionEqualToValue={(opt, val) => opt.id === val.id}
-              onChange={ (e, nv) => setSwapDriver(nv)}
-              renderInput={(params) => <TextField {...params} label="Swap with" autoComplete="off" />}
-            />
-          </Grid>
-          <Grid item style={{ flex: 1 }}>
-            {
-              swapDriverUpdated?.TeamID && (
-                <TeamName
-                  TeamID={swapDriverUpdated?.TeamID}
-                  type="fanfare"
-                  posInTeam={swapDriverUpdated?.Contracts[0].PosInTeam}
-                  description={`Contract until ${swapDriverUpdated.Contracts[0].EndSeason}`}
-                />
-              )
-            }
-          </Grid>
-        </Grid>
-        <Divider variant="fullWidth" sx={{ my: 1 }} />
-        <Grid direction="row" container spacing={1}>
-          <Grid item>
-            <Button color="error" variant="contained" sx={{ m: 1 }} onClick={() => {
-              fireDriverContract(ctx, swapRow.StaffID);
-              refresh();
-            }}>Fire {getDriverName(swapRow)}</Button>
-          </Grid>
-          <Grid item>
-            <Button color="secondary" variant="contained" sx={{ m: 1 }} onClick={() => {
-              if (swapDriver && (swapRow.StaffID !== swapDriver.id)) {
-                if (swapRow.StaffType === swapRow.StaffType) {
-                  if (swapRow.StaffType === 0 && !swapDriver.number) {
-                    assignRandomRaceNumber(ctx, swapDriver.id);
+          <div className="border-t border-white/10 px-5 py-4">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className={infoCardClass}>
+                <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Current Contract</div>
+                <div className="mt-3 text-base font-semibold text-white">{getDriverName(swapRow)}</div>
+                <div className="mt-2 flex items-center gap-3 text-sm text-slate-300">
+                  {currentFlag ? <img src={currentFlag} alt="" className="h-4 w-4 rounded-full object-cover" /> : null}
+                  <span>{swapRow?.Nationality || "Nationality unavailable"}</span>
+                  {Number.isFinite(swapRow?.Overall) ? (
+                    <span className="ml-auto text-slate-200">Rating {swapRow.Overall.toFixed(1)}</span>
+                  ) : null}
+                </div>
+                <div className="mt-2 flex items-center gap-3">
+                  {currentTeam.logo ? <img src={currentTeam.logo} alt={currentTeam.name} className="h-8 w-8 object-contain" /> : null}
+                  <div className="text-sm text-slate-300">{currentTeam.name}</div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Role</div>
+                    <div className="mt-1 text-slate-200">{swapRow.StaffType === 0 ? "Driver" : swapRow.StaffType === 2 ? "Race Engineer" : "Staff"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Contract</div>
+                    <div className="mt-1 text-slate-200">
+                      {currentContract?.EndSeason ? `Until ${currentContract.EndSeason}` : "Active"}
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Salary</div>
+                    <div className="mt-1 text-slate-200">
+                      {Number.isFinite(currentContract?.Salary) ? currency.format(currentContract.Salary) : "Not available"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={infoCardClass}>
+                <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Replacement Target</div>
+                <div className="mt-3">
+                  <Autocomplete
+                    disablePortal={false}
+                    options={_drivers.filter((x) => x.StaffID !== swapRow.StaffID).map((r) => ({
+                      label: getDriverName(r),
+                      id: r.StaffID,
+                      number: r.CurrentNumber,
+                      driver: r,
+                    }))}
+                    value={swapDriver}
+                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                    onChange={(e, nv) => setSwapDriver(nv)}
+                    slotProps={{
+                      popper: {
+                        sx: {
+                          zIndex: 1700,
+                          "& .MuiAutocomplete-paper": {
+                            borderRadius: 0,
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            backgroundColor: "#131a22",
+                            color: "#fff",
+                          }
+                        }
+                      }
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Swap with" autoComplete="off" />}
+                  />
+                </div>
+                <div className="mt-2 text-xs text-slate-500">
+                  Only same-role contracted staff are available as swap targets.
+                </div>
+                <div className="mt-4 min-h-[72px] border border-white/10 bg-black/10 p-3">
+                  {swapDriverUpdated ? (
+                    <>
+                      <div className="text-sm font-semibold text-white">{getDriverName(swapDriverUpdated)}</div>
+                      <div className="mt-2 flex items-center gap-3 text-sm text-slate-300">
+                        {targetFlag ? <img src={targetFlag} alt="" className="h-4 w-4 rounded-full object-cover" /> : null}
+                        <span>{swapDriverUpdated?.Nationality || "Nationality unavailable"}</span>
+                        {Number.isFinite(swapDriverUpdated?.Overall) ? (
+                          <span className="ml-auto text-slate-200">Rating {swapDriverUpdated.Overall.toFixed(1)}</span>
+                        ) : null}
+                      </div>
+                      <div className="mt-2 flex items-center gap-3">
+                        {targetTeam.logo ? <img src={targetTeam.logo} alt={targetTeam.name} className="h-8 w-8 object-contain" /> : null}
+                        <div className="text-sm text-slate-300">{targetTeam.name}</div>
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500">
+                        {targetContract?.EndSeason ? `Contract until ${targetContract.EndSeason}` : "No active contract details"}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-400">
+                        {Number.isFinite(targetContract?.Salary) ? `Salary ${currency.format(targetContract.Salary)}` : "Salary not available"}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-500">Select a replacement to review the target contract.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="border border-sky-400/20 bg-sky-500/8 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-200">Temporary</div>
+                <div className="mt-2 text-sm text-slate-300">Swaps the active contract without writing a clean career-history split.</div>
+              </div>
+              <div className="border border-amber-400/20 bg-amber-500/8 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-200">Permanent</div>
+                <div className="mt-2 text-sm text-slate-300">Updates career history immediately and makes the move persistent.</div>
+              </div>
+              <div className="border border-rose-400/20 bg-rose-500/8 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-200">Fire</div>
+                <div className="mt-2 text-sm text-slate-300">Removes the current contract from this slot entirely.</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-black/10 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-rose-100 transition hover:border-rose-300/50 hover:bg-rose-500/16"
+                onClick={() => {
+                  fireDriverContract(ctx, swapRow.StaffID);
+                  notifyRefresh();
+                  setSwapRow(null);
+                }}
+              >
+                Fire Contract
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.06] disabled:cursor-default disabled:opacity-40"
+                disabled={!swapDriver || swapRow.StaffID === swapDriver.id}
+                onClick={() => {
+                  if (swapDriver && swapRow.StaffID !== swapDriver.id) {
+                    if (swapRow.StaffType === 0 && !swapDriver.number) {
+                      assignRandomRaceNumber(ctx, swapDriver.id);
+                    }
+                    swapContracts(swapRow, swapDriver.driver, false);
+                    _refresh();
+                    notifyRefresh();
+                    setSwapRow(null);
                   }
-                  swapContracts(swapRow, swapDriver.driver, false);
-                  _refresh();
-                }
-                refresh();
-              }
-            }} disabled={!swapDriver || (swapRow.StaffID === swapDriver.id)}>Temporary Swap</Button>
-          </Grid>
-          <Grid item>
-            <Button color="warning" variant="contained" sx={{ m: 1 }} onClick={() => {
-              if (swapDriver && (swapRow.StaffID !== swapDriver.id)) {
-                if (swapRow.StaffType === swapRow.StaffType) {
-                  if (swapRow.StaffType === 0 && !swapDriver.number) {
-                    assignRandomRaceNumber(ctx, swapDriver.id);
+                }}
+              >
+                Temporary Swap
+              </button>
+              <button
+                type="button"
+                className="border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:border-amber-300/50 hover:bg-amber-500/16 disabled:cursor-default disabled:opacity-40"
+                disabled={!swapDriver || swapRow.StaffID === swapDriver.id}
+                onClick={() => {
+                  if (swapDriver && swapRow.StaffID !== swapDriver.id) {
+                    if (swapRow.StaffType === 0 && !swapDriver.number) {
+                      assignRandomRaceNumber(ctx, swapDriver.id);
+                    }
+                    swapContracts(swapRow, swapDriver.driver, true);
+                    _refresh();
+                    notifyRefresh();
+                    setSwapRow(null);
                   }
-                  swapContracts(swapRow, swapDriver.driver, true);
-                  _refresh();
-                }
-                refresh();
-              }
-            }} disabled={!swapDriver || (swapRow.StaffID === swapDriver.id)}>Permanent Swap</Button>
-          </Grid>
-        </Grid>
-      </Box>
+                }}
+              >
+                Permanent Swap
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </Modal>
   )
 }

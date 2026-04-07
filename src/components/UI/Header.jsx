@@ -1,23 +1,60 @@
 import ViewAgendaOutlinedIcon from "@mui/icons-material/ViewAgendaOutlined";
 import ViewStreamOutlinedIcon from "@mui/icons-material/ViewStreamOutlined";
-import {Divider, IconButton, Link, Tooltip, Typography} from "@mui/material";
-import KofiButton from "./Kofi/Kofi";
+import {Divider, IconButton, Tooltip, Typography} from "@mui/material";
+import {useContext} from "react";
+import {EnvContext, MetadataContext} from "@/js/Contexts";
 
-export default function Header({fullWidth = false, onToggleFullWidth = () => {}}) {
+export default function Header({fullWidth = false, onToggleFullWidth = () => {}, hasLoadedSave = false}) {
+  const env = useContext(EnvContext);
+  const metadata = useContext(MetadataContext);
   const shellClassName = fullWidth ? "w-full px-4 pt-2 md:px-6" : "mx-auto w-full max-w-screen-2xl px-4 pt-2 md:px-6";
   return (
     <header className={shellClassName}>
-      <div className="px-0.5 py-1">
+      <div className="shell-hero">
         <div className="headerContainer">
           <div className="headerTitle">
-            <Typography variant="h4" component="h1" sx={{fontWeight: 700, lineHeight: 1.1}}>
-              F1 Manager Save Browser
+            <Typography variant="h3" component="h1" sx={{fontWeight: 800, lineHeight: 0.95, letterSpacing: "-0.04em"}}>
+              F1 Manager Save Reader
             </Typography>
-            <Typography variant="body2" sx={{mt: 0.75, color: "text.secondary", maxWidth: 760}}>
-              Tool for browsing, editing, and exporting F1 Manager save data locally.
+            <Typography variant="body1" sx={{mt: 1, color: "text.secondary", maxWidth: 840}}>
+              Browse, edit, and repack F1 Manager saves locally.
             </Typography>
+            <div className="headerMetaRow">
+              <span className="headerMetaItem">
+                <span className="headerMetaItem__label">Mode</span>
+                <span className="headerMetaItem__value">{env.inApp ? "Desktop app" : "Browser"}</span>
+              </span>
+              <span className="headerMetaItem">
+                <span className="headerMetaItem__label">File</span>
+                <span className="headerMetaItem__value">{metadata.filename || "No save loaded"}</span>
+              </span>
+              <span className="headerMetaItem">
+                <span className="headerMetaItem__label">Drop</span>
+                <span className="headerMetaItem__value">{hasLoadedSave ? "Save or DB replace" : "Save import ready"}</span>
+              </span>
+            </div>
           </div>
           <div className="headerUser">
+            <a
+              href="https://github.com/iebb/F1ManagerSaveReader/issues"
+              target="_blank"
+              rel="noreferrer"
+              className="support-button"
+              aria-label="GitHub issues"
+              title="GitHub issues"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://discord.gg/u46QWWaNfV"
+              target="_blank"
+              rel="noreferrer"
+              className="support-button"
+              aria-label="Discord"
+              title="Discord"
+            >
+              Discord
+            </a>
             <Tooltip title={fullWidth ? "Use constrained width" : "Use full width"}>
               <IconButton
                 size="small"
@@ -29,20 +66,24 @@ export default function Header({fullWidth = false, onToggleFullWidth = () => {}}
                 {fullWidth ? <ViewStreamOutlinedIcon fontSize="small" /> : <ViewAgendaOutlinedIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
-            <KofiButton kofiID='A0A8ERCTF' title="Support on Ko-fi" color='#29abe0' />
+            <a
+              href="https://ko-fi.com/A0A8ERCTF"
+              target="_blank"
+              rel="noreferrer"
+              className="kofi-button"
+              aria-label="Support on Ko-fi"
+              title="Support on Ko-fi"
+            >
+              <span className="kofi-button__icon" aria-hidden="true">♡</span>
+              <span className="kofi-button__text">Support on Ko-fi</span>
+            </a>
           </div>
         </div>
-        <Typography variant="body2" sx={{pt: 1.25, color: "text.secondary"}}>
-          Support:
-          {" "}
-          <Link href="https://github.com/iebb/F1ManagerSaveReader/issues" target="_blank" rel="noreferrer" underline="hover" color="inherit">
-            GitHub issues
-          </Link>
-          {" · "}
-          Local processing only
-        </Typography>
       </div>
-      <Divider variant="fullWidth" sx={{mt: 1}} />
+      <Typography variant="body2" sx={{pt: 1.25, color: "text.secondary"}}>
+        Local processing only
+      </Typography>
+      <Divider variant="fullWidth" sx={{mt: 1.25}} />
     </header>
   )
 }

@@ -3,21 +3,34 @@ import {circuitNames, countryNames, getDriverName} from "@/js/localization";
 import {
   Button,
   Divider,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography
 } from "@mui/material";
 
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
+import {useContext, useEffect, useMemo, useState} from "react";
 import {repack} from "@/js/Parser";
 import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "@/js/Contexts";
 
+const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
+  eager: true,
+  import: "default",
+});
+
+const teamLogoSlugsByYear = {
+  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
+  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
+  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
+  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
+  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
+};
+
+function getOfficialTeamLogo(version, teamId) {
+  const year = Math.min(2026, Math.max(2022, version + 2020));
+  const slug = teamLogoSlugsByYear[year]?.[teamId];
+  if (!slug) return null;
+  const extension = year <= 2023 ? "png" : "webp";
+  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
+}
 
 export const CarSetupParams = [
   {
@@ -82,7 +95,7 @@ export default function CarSetup() {
 
   const database = useContext(DatabaseContext);
   const env = useContext(EnvContext);
-  const {version, gameVersion} = useContext(MetadataContext)
+  const {version, gameVersion, careerSaveMetadata} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
 
@@ -113,92 +126,163 @@ export default function CarSetup() {
   }, [database])
 
   const alternativeId = basicInfo.player.TeamID === 32 ? 11 : basicInfo.player.TeamID
+  const currentTeamId = basicInfo.player.TeamID;
+  const visibleRows = useMemo(() => rows
+    .filter(teamOnly ? (row => currentTeamId === row.TeamID) : () => true)
+    .map(row => ({
+      ...row,
+      order: (currentTeamId === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
+    }))
+    .sort((x, y) => x.order - y.order), [currentTeamId, rows, teamOnly]);
+  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
+  const exportedLabel = env.inApp ? "Modify Savefile to Optimal" : "Export Optimal Savefile";
 
+  const applyOptimalSetup = (shouldExport) => {
+    database.exec(
+      "Update Save_CarConfig SET " +
+      "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
+      "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
+      "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
+      "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
+      "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
+      `WHERE TeamID = ${alternativeId}`
+    );
+
+    if (shouldExport) {
+      repack(database, metadata, true);
+    }
+  };
 
   return (
-    <div>
-      <Typography variant="h5" component="h5">
-        Perfect Car Setups for {circuitNames[trackId]}, {countryNames[trackId]}
-      </Typography>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <Typography variant="p" component="p" sx={{ color: "orange" }}>
-        <Button color="warning" variant="contained" sx={{ mr: 2 }} onClick={() => {
-          database.exec(
-            "Update Save_CarConfig SET " +
-            "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
-            "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
-            "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
-            "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
-            "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
-            `WHERE TeamID = ${alternativeId}`
-          );
-          repack(database, metadata, true);
-        }}>
-          {
-            env.inApp ? "Modify Savefile to Optimal" : "Export Optimal Savefile"
-          }
-        </Button>
-        <Button color="secondary" variant="contained" sx={{ mr: 2 }} onClick={() => {
-          database.exec(
-            "Update Save_CarConfig SET " +
-            "CurrentSetupFrontWingAngle = PerfectSetupFrontWingAngle, BestSetupFrontWingAngle = PerfectSetupFrontWingAngle, " +
-            "CurrentSetupAntiRollBars = PerfectSetupAntiRollBars, BestSetupAntiRollBars = PerfectSetupAntiRollBars, " +
-            "CurrentSetupCamber = PerfectSetupCamber, BestSetupCamber = PerfectSetupCamber, " +
-            "CurrentSetupToe = PerfectSetupToe, BestSetupToe = PerfectSetupToe, " +
-            "CurrentSetupRearWingAngle = PerfectSetupRearWingAngle, BestSetupRearWingAngle = PerfectSetupRearWingAngle " +
-            `WHERE TeamID = ${alternativeId}`
-          );
-        }}>
-          {
-            "Update to Optimal without Exporting"
-          }
-        </Button>
-      </Typography>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Team / Driver</TableCell>
-              {
-                CarSetupParams.map(p => {
-                  return <TableCell align="right" key={p.index}>{p.name}</TableCell>
-                })
-              }
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.filter(teamOnly ? (row => (
-              basicInfo.player.TeamID === row.TeamID
-            )) : () => true).map(row => ({
-              ...row,
-              order: (basicInfo.player.TeamID === row.TeamID ? 0 : row.TeamID) * 100 + row.LoadOutID
-            })).sort((x, y) => x.order - y.order).map((row) => (
-              <TableRow
-                key={`${row.TeamID}_${row.LoadOutID}`}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                style={basicInfo.player.TeamID === row.TeamID ? { background: "#333333" } : {}}
-              >
-                <TableCell component="th" scope="row">
-                  <TeamName
-                    TeamID={row.TeamID}
-                    type="fanfare"
-                    description={
-                      getDriverName(driverMap[row.Team[`Driver${row.LoadOutID === 0 ?  1: 2}ID`]])
-                    }
-                  />
-                </TableCell>
-                {
-                  CarSetupParams.map(p => {
-                    const val = p.render(p.min + (p.max - p.min) * row.Setups[p.index]);
-                    return <TableCell style={{ fontSize: 18 }} align="right" key={p.index}>{val}</TableCell>
-                  })
-                }
-              </TableRow>
+    <div className="grid gap-4">
+      <section className="border border-white/10 bg-white/[0.02] p-5">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Weekend Operations</div>
+            <Typography variant="h4" component="h2" sx={{mt: 1, fontWeight: 800, letterSpacing: "-0.03em"}}>
+              Setup Briefing
+            </Typography>
+            <Typography variant="body1" sx={{mt: 1.5, color: "text.secondary", maxWidth: 760}}>
+              Review the perfect setup targets for {circuitNames[trackId]}, {countryNames[trackId]} and push the optimal values into your team save when you are ready.
+            </Typography>
+          </div>
+          <div className="grid grid-cols-2 gap-2 xl:min-w-[240px]">
+            {[
+              {label: "Circuit", value: circuitNames[trackId] || "Unknown"},
+              {label: "Country", value: countryNames[trackId] || "Unknown"},
+            ].map((item) => (
+              <div key={item.label} className="border border-white/10 bg-black/10 p-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{item.label}</div>
+                <div className="mt-1 text-base font-semibold text-white">{item.value}</div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </div>
+        </div>
+
+        <Divider variant="fullWidth" sx={{my: 3}} />
+
+        <div className="flex flex-wrap gap-2">
+          <Button color="warning" variant="contained" onClick={() => applyOptimalSetup(true)}>
+            {exportedLabel}
+          </Button>
+          <Button color="secondary" variant="contained" onClick={() => applyOptimalSetup(false)}>
+            Update to Optimal Without Exporting
+          </Button>
+          <Button
+            color={teamOnly ? "inherit" : "primary"}
+            variant={teamOnly ? "outlined" : "contained"}
+            onClick={() => setTeamOnly(false)}
+          >
+            Show Entire Grid
+          </Button>
+          <Button
+            color={teamOnly ? "primary" : "inherit"}
+            variant={teamOnly ? "contained" : "outlined"}
+            onClick={() => setTeamOnly(true)}
+          >
+            Show My Team Only
+          </Button>
+        </div>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-2">
+        {visibleRows.map((row) => {
+          const driverSlot = row.LoadOutID === 0 ? 1 : 2;
+          const driverId = row.Team?.[`Driver${driverSlot}ID`];
+          const driverName = driverId ? getDriverName(driverMap[driverId]) : `Driver ${driverSlot}`;
+          const isCurrentTeam = currentTeamId === row.TeamID;
+
+          return (
+            <article
+              key={`${row.TeamID}_${row.LoadOutID}`}
+              className={`border p-3 ${
+                isCurrentTeam
+                  ? "border-sky-300/40 bg-sky-500/[0.08]"
+                  : "border-white/10 bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  {((row.TeamID >= 32 && customTeamLogoBase64)
+                    ? `data:image/png;base64,${customTeamLogoBase64}`
+                    : getOfficialTeamLogo(version, row.TeamID)) ? (
+                    <img
+                      src={(row.TeamID >= 32 && customTeamLogoBase64)
+                        ? `data:image/png;base64,${customTeamLogoBase64}`
+                        : getOfficialTeamLogo(version, row.TeamID)}
+                      alt=""
+                      className="mt-0.5 h-8 w-8 shrink-0 object-contain"
+                    />
+                  ) : null}
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    {isCurrentTeam ? "Player Team" : "Grid Reference"}
+                    </div>
+                    <div className="mt-1">
+                      <TeamName
+                        TeamID={row.TeamID}
+                        type="fanfare"
+                        description={driverName}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className={`border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                  isCurrentTeam ? "border-sky-300/40 text-sky-200" : "border-white/10 text-slate-400"
+                }`}>
+                  Car {row.LoadOutID + 1}
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-1.5">
+                {CarSetupParams.map((p) => {
+                  const rawValue = p.min + (p.max - p.min) * row.Setups[p.index];
+                  const value = p.render(rawValue);
+                  const progress = ((rawValue - p.min) / (p.max - p.min)) * 100;
+                  return (
+                    <div key={p.index} className="border border-white/10 bg-black/10 p-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 text-[10px] uppercase tracking-[0.12em] text-slate-500">{p.name}</div>
+                        <div className="shrink-0 text-[13px] font-semibold text-white">{value}</div>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <div className="text-[10px] text-slate-500">{p.render(p.min)}</div>
+                        <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.08]">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-sky-400/70"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <div className="text-[10px] text-slate-500">{p.render(p.max)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          );
+        })}
+      </section>
     </div>
   );
 }

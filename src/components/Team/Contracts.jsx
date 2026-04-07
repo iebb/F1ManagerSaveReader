@@ -1,10 +1,10 @@
 import { getStaff } from "@/components/People/commons/drivers";
+import ContractSwapper from "@/components/People/subcomponents/ContractSwapper";
 import { BasicInfoContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
 import { resolveLiteral, resolveName, resolveNameV4, teamNames } from "@/js/localization";
 import { getCountryFlag } from "@/js/localization/ISOCountries";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useState } from "react";
-import TeamContractSwapper from "./TeamContractSwapper";
 
 const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
   eager: true,
@@ -156,7 +156,7 @@ export default function Contracts() {
 
   return (
     <div className="grid gap-3">
-      <TeamContractSwapper
+      <ContractSwapper
         swapRow={swapRow}
         setSwapRow={setSwapRow}
         refresh={() => setUpdated(Date.now())}

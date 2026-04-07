@@ -11,10 +11,12 @@ export default defineConfig({
     vitePluginRequire(),
     nodePolyfills(),
   ],
+  server: {
+    port: 3316,
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src/"),
     },
   },
 })
-

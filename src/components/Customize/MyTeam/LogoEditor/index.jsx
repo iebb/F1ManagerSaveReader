@@ -54,6 +54,11 @@ function LayerArtwork({ layer }) {
   return <img src={src} alt="" className="pointer-events-none h-full w-full select-none" draggable={false} style={{ opacity: layer.opacity ?? 1 }} />;
 }
 
+function getDefaultSelectedLayerId(data) {
+  const children = getDocumentChildren(data);
+  return children[children.length - 1]?.id || null;
+}
+
 function AssetButton({ asset, onSelect }) {
   return (
     <button
@@ -128,7 +133,7 @@ export default function LogoEditor({ defaultData, onSave }) {
     commitDocument(nextData, {
       recordHistory: false,
       resetHistory: true,
-      nextSelectedId: getDocumentChildren(nextData)[0]?.id || null,
+      nextSelectedId: getDefaultSelectedLayerId(nextData),
     });
   }, [defaultData]);
 
@@ -143,7 +148,7 @@ export default function LogoEditor({ defaultData, onSave }) {
       const normalized = normalizeLogoJson(nextData);
       commitDocument(normalized, {
         recordHistory: true,
-        nextSelectedId: getDocumentChildren(normalized)[0]?.id || null,
+        nextSelectedId: getDefaultSelectedLayerId(normalized),
       });
     },
     toJSON: () => documentData,
@@ -494,7 +499,7 @@ export default function LogoEditor({ defaultData, onSave }) {
     syncHistoryState();
     setDocumentData(previous);
     const previousChildren = getDocumentChildren(previous);
-    setSelectedId((currentSelectedId) => previousChildren.some((layer) => layer.id === currentSelectedId) ? currentSelectedId : previousChildren[0]?.id || null);
+    setSelectedId((currentSelectedId) => previousChildren.some((layer) => layer.id === currentSelectedId) ? currentSelectedId : getDefaultSelectedLayerId(previous));
   }
 
   function redo() {
@@ -507,7 +512,7 @@ export default function LogoEditor({ defaultData, onSave }) {
     syncHistoryState();
     setDocumentData(next);
     const nextChildren = getDocumentChildren(next);
-    setSelectedId((currentSelectedId) => nextChildren.some((layer) => layer.id === currentSelectedId) ? currentSelectedId : nextChildren[0]?.id || null);
+    setSelectedId((currentSelectedId) => nextChildren.some((layer) => layer.id === currentSelectedId) ? currentSelectedId : getDefaultSelectedLayerId(next));
   }
 
   function openContextMenu(event, layerId) {

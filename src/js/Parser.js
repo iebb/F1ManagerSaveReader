@@ -2,6 +2,30 @@ import {Gvas, Serializer} from "./UESaveTool";
 import pako from "pako";
 import { saveAs } from "file-saver";
 
+const SQLITE_MAGIC = "SQLite format 3";
+
+const readFileAsArrayBuffer = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(reader.error || new Error("Failed to read file"));
+  reader.readAsArrayBuffer(file);
+});
+
+export const detectDatabaseFile = async (file) => {
+  if (!file) {
+    return false;
+  }
+
+  const extension = file.name?.split(".").pop()?.toLowerCase();
+  if (["db", "sqlite", "sqlite3"].includes(extension)) {
+    return true;
+  }
+
+  const headerBuffer = await file.slice(0, 16).arrayBuffer();
+  const header = new TextDecoder("latin1").decode(headerBuffer);
+  return header.startsWith(SQLITE_MAGIC);
+};
+
 export const parseGvasProps = (Properties) => {
   const careerSaveMetadata = {};
   const metadataProperty = Properties.Properties.filter(x => x.Name === "MetaData")[0];
@@ -17,11 +41,15 @@ export const parseGvasProps = (Properties) => {
 export const analyzeFileToDatabase = async (file) => {
   if (!window.SQL) return;
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    if (file === undefined) {
+      resolve(null);
+      return;
+    }
 
-    if (file !== undefined) {
-      let reader = new FileReader();
-      reader.onload = async (e) => {
+    let reader = new FileReader();
+    reader.onload = async () => {
+      try {
         const serial = new Serializer(Buffer.from(reader.result));
         const gvasMeta = new Gvas().deserialize(serial);
         const { Header, Properties } = gvasMeta;
@@ -97,11 +125,23 @@ export const analyzeFileToDatabase = async (file) => {
         }
 
         resolve({db, metadata});
-      };
-      reader.readAsArrayBuffer(file);
-    }
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = () => reject(reader.error || new Error("Failed to read save file"));
+    reader.readAsArrayBuffer(file);
   });
 }
+
+export const loadDatabaseFromFile = async (file) => {
+  if (!window.SQL) {
+    throw new Error("SQL.js is not loaded yet");
+  }
+
+  const databaseFile = new Uint8Array(await readFileAsArrayBuffer(file));
+  return new window.SQL.Database(databaseFile);
+};
 
 export const repack = (db, metadata, overwrite = false) => {
   const db_data = db.export();

@@ -155,15 +155,15 @@ export default function ResultsTable(ctx) {
                 sx={{ py: 0.1 }}
                 className={`race_cell_driver`}
               >
-                <div className="flex min-w-[150px] max-w-[160px] items-center gap-2">
-                  <img
-                    src={getCountryFlag(driverMap[row.DriverID].Nationality)}
-                    style={{ width: 22, height: 16, display: "block" }}
-                    alt={driverMap[row.DriverID].Nationality}
-                    className="rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
-                  />
-                  <div className="min-w-0 max-w-[130px]">
-                    <div className="flex items-baseline gap-1.5 leading-none">
+                <div className="flex min-w-[150px] max-w-[160px] items-center">
+                  <div className="min-w-0 w-full max-w-[130px]">
+                    <div className="relative flex items-baseline gap-1.5 pl-7 leading-none">
+                      <img
+                        src={getCountryFlag(driverMap[row.DriverID].Nationality)}
+                        style={{ width: 22, height: 16, display: "block" }}
+                        alt={driverMap[row.DriverID].Nationality}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+                      />
                       <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                         {formulae === 1 ? (
                           (championDriverID === row.DriverID && driverMap[row.DriverID].WantsChampionDriverNumber) ? 1 : driverMap[row.DriverID].PernamentNumber || "N/A"

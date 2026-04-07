@@ -4,19 +4,23 @@ import People from "@/components/People/Staff";
 import Plugins from "@/components/Plugin/Plugins";
 import Staff from "@/components/Staff/Staff";
 import {BasicInfoContext, MetadataContext} from "@/js/Contexts";
+import Board from "@/pages/board";
 import Facilities from "@/pages/facilities";
+import F1Results from "@/pages/f1-results";
+import F2Results from "@/pages/f2-results";
+import F3Results from "@/pages/f3-results";
 import Calendar from "@/pages/calendar";
 import Expertise from "@/pages/expertise";
 import Finance from "@/pages/finance";
-import Modding from "@/pages/modding";
+import Inbox from "@/pages/inbox";
 import RaceResults from "@/pages/race-results";
 import Regulations from "@/pages/regulations";
-import Results from "@/pages/results";
-import Weekend from "@/pages/weekend";
+import RaceControl from "@/pages/race-control";
+import Sporting from "@/pages/sporting";
 import TeamTools from "@/pages/team-tools";
 import Team from "@/pages/team";
+import WeekendSetup from "@/pages/weekend-setup";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import BuildIcon from "@mui/icons-material/Build";
 import ConstructionIcon from "@mui/icons-material/Construction";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import EventIcon from "@mui/icons-material/Event";
@@ -30,21 +34,27 @@ import TuneIcon from "@mui/icons-material/Tune";
 import TodayIcon from "@mui/icons-material/Today";
 import RuleIcon from "@mui/icons-material/Rule";
 import SportsScoreIcon from "@mui/icons-material/SportsScore";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import FlagIcon from "@mui/icons-material/Flag";
 import {useContext, useMemo, useState} from "react";
 
 const sections = [
   {
     label: "Race",
     items: [
-      {name: "Weekend", icon: <EventIcon fontSize="small" />, tab: <Weekend />, showOnlyInWeekend: true},
+      {name: "Weekend Setup", icon: <EventIcon fontSize="small" />, tab: <WeekendSetup />, showOnlyInWeekend: true},
+      {name: "Race Control", icon: <FlagIcon fontSize="small" />, tab: <RaceControl />, showOnlyInWeekend: true, minVersion: "3.0"},
+      {name: "Sporting Audit", icon: <FlagIcon fontSize="small" />, tab: <Sporting />},
     ],
   },
   {
     label: "Season",
     items: [
       {name: "Calendar", icon: <TodayIcon fontSize="small" />, tab: <Calendar />},
-      {name: "Race Results", icon: <SportsScoreIcon fontSize="small" />, tab: <RaceResults />},
-      {name: "Season Results", icon: <SportsScoreIcon fontSize="small" />, tab: <Results />},
+      {name: "F1 Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F1Results />},
+      {name: "F2 Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F2Results />, minVersion: "3.0"},
+      {name: "F3 Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F3Results />, minVersion: "3.0"},
+      {name: "Season Summary", icon: <SportsScoreIcon fontSize="small" />, tab: <RaceResults />},
       {name: "Regulations", icon: <RuleIcon fontSize="small" />, tab: <Regulations />},
     ],
   },
@@ -54,6 +64,7 @@ const sections = [
       {name: "Team", icon: <Groups2Icon fontSize="small" />, tab: <Team />},
       {name: "Logo", icon: <EditNoteIcon fontSize="small" />, tab: <Customize />, minVersion: "4.0"},
       {name: "Finance", icon: <PaymentsIcon fontSize="small" />, tab: <Finance />},
+      {name: "Board", icon: <InsightsIcon fontSize="small" />, tab: <Board />},
       {name: "Pit Crew", icon: <GroupIcon fontSize="small" />, tab: <Staff />},
       {name: "Facilities", icon: <ConstructionIcon fontSize="small" />, tab: <Facilities />},
       {name: "Parts", icon: <PrecisionManufacturingIcon fontSize="small" />, tab: <Parts />},
@@ -69,8 +80,8 @@ const sections = [
   {
     label: "Tools",
     items: [
-      {name: "Career", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
-      {name: "Modding", icon: <BuildIcon fontSize="small" />, tab: <Modding />},
+      {name: "Inbox", icon: <MailOutlineIcon fontSize="small" />, tab: <Inbox />},
+      {name: "Tools", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
       {name: "Plugins", icon: <AccountTreeIcon fontSize="small" />, tab: <Plugins />},
     ],
   },
@@ -107,7 +118,7 @@ export default function MainNav() {
 
   return (
     <div className="grid gap-2 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <div className="border border-white/10 bg-white/[0.015]">
+      <div className="border border-white/10 bg-white/[0.025] lg:sticky lg:top-4 lg:self-start">
         {visibleSections.map((section, index) => (
           <div key={section.label} className={index === 0 ? "" : "border-t border-white/5"}>
             <div className="block px-4 pb-2 pt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
@@ -118,10 +129,10 @@ export default function MainNav() {
                 <button
                   key={item.name}
                   onClick={() => setActive(item.name)}
-                  className={`mx-2 mb-1 flex w-[calc(100%-1rem)] items-center gap-3 rounded px-3 py-2 text-left transition ${
+                  className={`mx-2 mb-1 flex w-[calc(100%-1rem)] items-center gap-3 px-3 py-2.5 text-left transition ${
                     item.name === active
-                      ? "bg-white/10 text-white"
-                      : "text-slate-300 hover:bg-white/[0.06]"
+                      ? "border border-white/10 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                      : "border border-transparent text-slate-300 hover:border-white/10 hover:bg-white/[0.06]"
                   }`}
                 >
                   <span className={`flex w-[22px] shrink-0 items-center justify-center ${item.name === active ? "text-white" : "text-slate-400"}`}>

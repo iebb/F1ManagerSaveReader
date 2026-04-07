@@ -15,6 +15,17 @@ Date.prototype.getWeek = function() {
 
 export const dayToDate = d => new Date((d - 2)*86400000 - 2208988800000)
 export const dateToDay = d => Math.floor((+d + 2208988800000) / 86400000) + 2
+export const localDateToDay = d => {
+  const date = d instanceof Date ? d : new Date(d);
+  return Math.floor((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) + 2208988800000) / 86400000) + 2;
+}
+export const formatISODateLocal = d => {
+  const date = d instanceof Date ? d : new Date(d);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 export const yearToDateRange = y => [
   (+new Date(`${y}-01-01 00:00+00:00`) + 2208988800000 ) / 86400000 + 2,
   (+new Date(`${y+1}-01-01 00:00+00:00`) + 2208988800000 ) / 86400000 + 2,
