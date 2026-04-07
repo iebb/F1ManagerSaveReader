@@ -33,11 +33,75 @@ const grandPrixNames = {
   26: "Qatar Grand Prix",
 };
 
+const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
+  eager: true,
+  import: "default",
+});
+
+const teamLogoSlugsByYear = {
+  2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
+  2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
+  2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
+  2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
+  2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
+};
+
 function getGpName(trackId) {
   return grandPrixNames[trackId] || `${countryNames[trackId] || "Unknown"} Grand Prix`;
 }
 
-function DriverCell({driver}) {
+function getOfficialTeamLogo(version, teamId) {
+  const year = Math.min(2026, Math.max(2022, version + 2020));
+  const slug = teamLogoSlugsByYear[year]?.[teamId];
+  if (!slug) return null;
+  const extension = year <= 2023 ? "png" : "webp";
+  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
+}
+
+function getNumericValue(row, keys) {
+  for (const key of keys) {
+    const value = row?.[key];
+    if (value !== undefined && value !== null && value !== "") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return null;
+}
+
+function getRawValue(row, keys) {
+  for (const key of keys) {
+    const value = row?.[key];
+    if (value !== undefined && value !== null && value !== "") {
+      return value;
+    }
+  }
+  return null;
+}
+
+function formatRaceSeconds(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  const totalMilliseconds = Math.round(value * 1000);
+  const hours = Math.floor(totalMilliseconds / 3600000);
+  const minutes = Math.floor((totalMilliseconds % 3600000) / 60000);
+  const seconds = Math.floor((totalMilliseconds % 60000) / 1000);
+  const milliseconds = totalMilliseconds % 1000;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`;
+  }
+  return `${minutes}:${String(seconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`;
+}
+
+function getDriverNumber(driver) {
+  if (!driver) return "—";
+  return driver.CurrentNumber || driver.PernamentNumber || driver.DriverAssignedNumber || "—";
+}
+
+function DriverInline({driver}) {
   if (!driver) {
     return <span className="text-slate-600">-</span>;
   }
@@ -49,7 +113,7 @@ function DriverCell({driver}) {
   );
 }
 
-function TeamCell({team}) {
+function TeamInline({team}) {
   if (!team) {
     return <span className="text-slate-600">-</span>;
   }
@@ -61,42 +125,66 @@ function TeamCell({team}) {
   );
 }
 
+function getResultStatus(row) {
+  const finishPos = getNumericValue(row, ["FinishingPos", "FinishPosition", "Position"]);
+  const laps = getNumericValue(row, ["Laps", "LapCount", "CompletedLaps"]);
+  const dnf = Boolean(getNumericValue(row, ["DNF", "DidNotFinish"]));
+  const retiredReason = getRawValue(row, ["DNFReason", "RetirementReason", "Reason"]);
+
+  if (!dnf && Number.isFinite(finishPos) && finishPos > 0) {
+    return `${finishPos}`;
+  }
+  if (dnf && laps === 0) {
+    return "DNS";
+  }
+  if (dnf && Number.isFinite(finishPos) && finishPos > 0) {
+    return "NC";
+  }
+  if (dnf || retiredReason) {
+    return "Ret";
+  }
+  return Number.isFinite(finishPos) && finishPos > 0 ? `${finishPos}` : "—";
+}
+
+function getTimeOrRetired(row, winnerTime, winnerLaps) {
+  const dnf = Boolean(getNumericValue(row, ["DNF", "DidNotFinish"]));
+  const retiredReason = getRawValue(row, ["DNFReason", "RetirementReason", "Reason"]);
+  const ownTime = getNumericValue(row, ["RaceTime", "TotalTime", "Time"]);
+  const laps = getNumericValue(row, ["Laps", "LapCount", "CompletedLaps"]);
+
+  if (dnf || retiredReason) {
+    if (retiredReason) return `${retiredReason}`;
+    return "Retired";
+  }
+  if (Number.isFinite(ownTime) && Number.isFinite(winnerTime) && ownTime === winnerTime) {
+    return formatRaceSeconds(ownTime) || "—";
+  }
+  if (Number.isFinite(laps) && Number.isFinite(winnerLaps) && laps < winnerLaps) {
+    const lapsDown = winnerLaps - laps;
+    return `+${lapsDown} lap${lapsDown > 1 ? "s" : ""}`;
+  }
+  if (Number.isFinite(ownTime) && Number.isFinite(winnerTime) && ownTime > winnerTime) {
+    return `+${(ownTime - winnerTime).toFixed(3)}`;
+  }
+  if (Number.isFinite(ownTime) && ownTime > 0) {
+    return formatRaceSeconds(ownTime) || "—";
+  }
+  return "—";
+}
+
 export default function SeasonResultsSummary() {
   const basicInfo = useContext(BasicInfoContext);
   const database = useContext(DatabaseContext);
   const {version, careerSaveMetadata} = useContext(MetadataContext);
   const {player, driverMap, teamMap} = basicInfo;
   const [season, setSeason] = useState(player.CurrentSeason);
-  const [rows, setRows] = useState([]);
+  const [selectedRaceId, setSelectedRaceId] = useState(null);
+  const [seasons, setSeasons] = useState([]);
+  const [summaryRows, setSummaryRows] = useState([]);
+  const [classificationRows, setClassificationRows] = useState([]);
+  const reportRef = React.useRef(null);
 
-  const seasons = useMemo(() => {
-    const all = [];
-    for (let s = player.StartSeason; s <= player.CurrentSeason; s++) {
-      all.push(s);
-    }
-    return all.reverse();
-  }, [player.CurrentSeason, player.StartSeason]);
-
-  const teamLogoAssets = useMemo(() => import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-    eager: true,
-    import: "default",
-  }), []);
-
-  const teamLogoSlugsByYear = useMemo(() => ({
-    2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-    2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-    2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
-    2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
-    2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
-  }), []);
-
-  const getOfficialTeamLogo = (teamId) => {
-    const year = Math.min(2026, Math.max(2022, version + 2020));
-    const slug = teamLogoSlugsByYear[year]?.[teamId];
-    if (!slug) return null;
-    const extension = year <= 2023 ? "png" : "webp";
-    return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
-  };
+  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
 
   const getDriver = (driverId) => {
     const driver = driverMap[driverId];
@@ -105,12 +193,12 @@ export default function SeasonResultsSummary() {
       id: driverId,
       name: getDriverName(driver),
       flag: driver.Nationality ? getCountryFlag(driver.Nationality) : null,
+      number: getDriverNumber(driver),
     };
   };
 
   const getTeam = (teamId) => {
     if (!teamId) return null;
-    const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
     return {
       id: teamId,
       name: teamId >= 32 && teamMap?.[teamId]?.TeamNameLocKey
@@ -118,76 +206,157 @@ export default function SeasonResultsSummary() {
         : teamNames(teamId, version),
       logo: teamId >= 32 && customTeamLogoBase64
         ? `data:image/png;base64,${customTeamLogoBase64}`
-        : getOfficialTeamLogo(teamId),
+        : getOfficialTeamLogo(version, teamId),
     };
   };
 
   useEffect(() => {
-    const currentSeasonRaces = Object.values(basicInfo.races)
-      .filter((race) => race.SeasonID === season)
-      .sort((a, b) => a.Day - b.Day);
+    const resultColumns = database.getAllRows(`PRAGMA table_info('Races_Results')`);
+    const hasRaceFormula = resultColumns.some((column) => column.name === "RaceFormula");
+    const seasonRows = database.getAllRows(
+      `SELECT DISTINCT Season
+       FROM Races_Results
+       ${hasRaceFormula ? "WHERE RaceFormula = 1" : ""}
+       ORDER BY Season DESC`
+    ).map((row) => Number(row.Season)).filter((value) => Number.isFinite(value));
 
-    const poleByRace = {};
-    try {
-      const results = version >= 3
-        ? database.exec(`SELECT RaceID, DriverID FROM Races_QualifyingResults WHERE SeasonID = ${season} AND QualifyingStage = 3 AND FinishingPos = 1 ORDER BY RaceID ASC`)
-        : null;
-      if (results?.length) {
-        for (const [raceId, driverId] of results[0].values) {
-          poleByRace[raceId] = driverId;
-        }
+    if (seasonRows.length) {
+      setSeasons(seasonRows);
+      if (!seasonRows.includes(season)) {
+        setSeason(seasonRows[0]);
       }
-    } catch {}
+    } else {
+      setSeasons([player.CurrentSeason]);
+    }
+  }, [database, player.CurrentSeason, season]);
 
-    const raceResultsByRace = {};
-    try {
-      const results = database.exec(`SELECT * FROM Races_Results WHERE Season = ${season} ORDER BY RaceID ASC, FinishingPos ASC`);
-      if (results?.length) {
-        const {columns, values} = results[0];
-        for (const valueRow of values) {
-          const row = {};
-          valueRow.forEach((value, index) => {
-            row[columns[index]] = value;
-          });
-          if (!raceResultsByRace[row.RaceID]) {
-            raceResultsByRace[row.RaceID] = [];
-          }
-          raceResultsByRace[row.RaceID].push(row);
-        }
+  useEffect(() => {
+    const resultColumns = database.getAllRows(`PRAGMA table_info('Races_Results')`);
+    const hasRaceFormula = resultColumns.some((column) => column.name === "RaceFormula");
+    const seasonRaces = database.getAllRows(
+      `SELECT Races.RaceID, Races.TrackID, Races.Day
+       FROM Races
+       WHERE Races.SeasonID = :season
+       ORDER BY Races.Day ASC, Races.RaceID ASC`,
+      { ":season": season }
+    );
+
+    const resultsRows = database.getAllRows(
+      `SELECT *
+       FROM Races_Results
+       WHERE Season = :season
+       ${hasRaceFormula ? "AND RaceFormula = 1" : ""}
+       ORDER BY RaceID ASC, FinishingPos ASC`,
+      { ":season": season }
+    );
+
+    const raceResultsByRace = resultsRows.reduce((acc, row) => {
+      if (!acc[row.RaceID]) {
+        acc[row.RaceID] = [];
       }
-    } catch {}
+      acc[row.RaceID].push(row);
+      return acc;
+    }, {});
 
-    setRows(currentSeasonRaces.map((race, index) => {
+    const fallbackRaceIds = Object.keys(raceResultsByRace)
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value))
+      .sort((a, b) => a - b)
+      .map((raceId) => ({
+        RaceID: raceId,
+        TrackID: raceResultsByRace[raceId]?.[0]?.TrackID || 0,
+        Day: raceResultsByRace[raceId]?.[0]?.Day || raceId,
+      }));
+
+    const raceSchedule = (seasonRaces.length ? seasonRaces : fallbackRaceIds).map((race, index) => {
       const raceResults = raceResultsByRace[race.RaceID] || [];
-      const poleResult = version >= 3
-        ? raceResults.find((result) => result.DriverID === poleByRace[race.RaceID])
-        : raceResults.find((result) => result.StartingPos === 1);
-      const winner = raceResults.find((result) => result.FinishingPos === 1 && !result.DNF) || raceResults.find((result) => result.FinishingPos === 1);
+      const poleResult = raceResults.find((result) => Number(result.StartingPos) === 1 || Number(result.GridPosition) === 1);
+      const winner = raceResults.find((result) => Number(result.FinishingPos) === 1 && !Number(result.DNF))
+        || raceResults.find((result) => Number(result.FinishingPos) === 1);
       const fastest = raceResults
-        .filter((result) => result.FastestLap > 0)
-        .sort((a, b) => a.FastestLap - b.FastestLap)[0];
+        .filter((result) => Number(result.FastestLap) > 0)
+        .sort((a, b) => Number(a.FastestLap) - Number(b.FastestLap))[0];
 
       return {
         id: race.RaceID,
         round: index + 1,
         race,
+        raceResults,
         pole: getDriver(poleResult?.DriverID),
         fastest: getDriver(fastest?.DriverID),
         winner: getDriver(winner?.DriverID),
         constructor: getTeam(winner?.TeamID),
       };
-    }));
-  }, [basicInfo.races, database, driverMap, season, version]);
+    });
+
+    setSummaryRows(raceSchedule);
+    setSelectedRaceId((current) => {
+      if (raceSchedule.some((row) => row.id === current)) {
+        return current;
+      }
+      return raceSchedule[0]?.id ?? null;
+    });
+  }, [database, driverMap, season, teamMap, version]);
+
+  useEffect(() => {
+    const selectedRace = summaryRows.find((row) => row.id === selectedRaceId);
+    if (!selectedRace) {
+      setClassificationRows([]);
+      return;
+    }
+
+    const winnerRow = selectedRace.raceResults.find((row) => Number(row.FinishingPos) === 1);
+    const winnerTime = getNumericValue(
+      winnerRow,
+      ["RaceTime", "TotalTime", "Time"]
+    );
+    const winnerLaps = getNumericValue(
+      winnerRow,
+      ["Laps", "LapCount", "CompletedLaps"]
+    );
+
+    const nextRows = selectedRace.raceResults
+      .slice()
+      .sort((left, right) => {
+        const leftFinish = getNumericValue(left, ["FinishingPos", "FinishPosition", "Position"]) ?? 999;
+        const rightFinish = getNumericValue(right, ["FinishingPos", "FinishPosition", "Position"]) ?? 999;
+        return leftFinish - rightFinish;
+      })
+      .map((row) => {
+        const driver = getDriver(row.DriverID);
+        return {
+          id: `${selectedRaceId}-${row.DriverID}`,
+          driver,
+          team: getTeam(row.TeamID),
+          pos: getResultStatus(row),
+          number: driver?.number || "—",
+          laps: getNumericValue(row, ["Laps", "LapCount", "CompletedLaps"]) ?? "—",
+          timeOrRetired: getTimeOrRetired(row, winnerTime, winnerLaps),
+          grid: getNumericValue(row, ["StartingPos", "GridPosition"]) ?? "—",
+          points: getNumericValue(row, ["Points", "ChampionshipPoints"]) ?? "",
+        };
+      });
+
+    setClassificationRows(nextRows);
+  }, [selectedRaceId, summaryRows]);
+
+  const selectedRace = summaryRows.find((row) => row.id === selectedRaceId) || null;
+  const openRaceReport = (raceId) => {
+    setSelectedRaceId(raceId);
+    window.requestAnimationFrame(() => {
+      reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   return (
     <div className="grid gap-3">
       <section className="border border-white/10 bg-white/[0.02] p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Season Results</div>
-            <h2 className="mt-2 text-lg font-bold text-white">Race Results</h2>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Race Results</div>
+            <h2 className="mt-2 text-lg font-bold text-white">Season Summary & Race Report</h2>
             <p className="mt-2 max-w-[860px] text-sm text-slate-400">
-              Browse one season at a time with a compact race-by-race summary for pole, fastest lap, race winner, and winning constructor.
+              Browse stored season summaries from `Races_Results`, then open a race-by-race classification report for any completed grand prix.
             </p>
           </div>
           <label className="flex items-center gap-3">
@@ -211,7 +380,7 @@ export default function SeasonResultsSummary() {
         <table className="min-w-[980px] border-collapse text-left">
           <thead>
             <tr className="bg-white/[0.04]">
-              {["Round", "Grand Prix", "Pole Position", "Fastest Lap", "Winning Driver", "Winning Constructor"].map((header) => (
+              {["Round", "Grand Prix", "Pole Position", "Fastest Lap", "Winning Driver", "Winning Constructor", "Report"].map((header) => (
                 <th key={header} className="border border-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
                   {header}
                 </th>
@@ -219,8 +388,11 @@ export default function SeasonResultsSummary() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="bg-white/[0.01] even:bg-white/[0.03]">
+            {summaryRows.map((row) => (
+              <tr
+                key={row.id}
+                className={`bg-white/[0.01] even:bg-white/[0.03] ${row.id === selectedRaceId ? "bg-sky-500/[0.08] even:bg-sky-500/[0.08]" : ""}`}
+              >
                 <td className="border border-white/10 px-3 py-2 text-center text-sm font-semibold text-slate-100">{row.round}</td>
                 <td className="border border-white/10 px-3 py-2">
                   <div className="flex items-center gap-2">
@@ -228,14 +400,59 @@ export default function SeasonResultsSummary() {
                     <span className="text-[15px] text-slate-100">{getGpName(row.race.TrackID)}</span>
                   </div>
                 </td>
-                <td className="border border-white/10 px-3 py-2"><DriverCell driver={row.pole} /></td>
-                <td className="border border-white/10 px-3 py-2"><DriverCell driver={row.fastest} /></td>
-                <td className="border border-white/10 px-3 py-2"><DriverCell driver={row.winner} /></td>
-                <td className="border border-white/10 px-3 py-2"><TeamCell team={row.constructor} /></td>
+                <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.pole} /></td>
+                <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.fastest} /></td>
+                <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.winner} /></td>
+                <td className="border border-white/10 px-3 py-2"><TeamInline team={row.constructor} /></td>
+                <td className="border border-white/10 px-3 py-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => openRaceReport(row.id)}
+                    className="border border-white/10 bg-black/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.04]"
+                  >
+                    Report
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section ref={reportRef} className="border border-white/10 bg-white/[0.015]">
+        <div className="border-b border-white/10 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Race Classification</div>
+          <div className="mt-1 text-lg font-bold text-white">
+            {selectedRace ? getGpName(selectedRace.race.TrackID) : "No race selected"}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-[1120px] border-collapse text-left">
+            <thead>
+              <tr className="bg-white/[0.04]">
+                {["Pos.", "No.", "Driver", "Constructor", "Laps", "Time/Retired", "Grid", "Points"].map((header) => (
+                  <th key={header} className="border border-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {classificationRows.map((row) => (
+                <tr key={row.id} className="bg-white/[0.01] even:bg-white/[0.03]">
+                  <td className="border border-white/10 px-3 py-2 text-center text-sm font-semibold text-slate-100">{row.pos}</td>
+                  <td className="border border-white/10 px-3 py-2 text-center text-sm text-slate-200">{row.number}</td>
+                  <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.driver} /></td>
+                  <td className="border border-white/10 px-3 py-2"><TeamInline team={row.team} /></td>
+                  <td className="border border-white/10 px-3 py-2 text-center text-sm text-slate-200">{row.laps}</td>
+                  <td className="border border-white/10 px-3 py-2 text-sm text-slate-100">{row.timeOrRetired}</td>
+                  <td className="border border-white/10 px-3 py-2 text-center text-sm text-slate-200">{row.grid}</td>
+                  <td className="border border-white/10 px-3 py-2 text-center text-sm font-semibold text-slate-100">{row.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

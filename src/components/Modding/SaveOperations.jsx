@@ -9,6 +9,8 @@ import {
   dayToDate,
   formatDate,
   getDriverName,
+  raceAbbrevs,
+  raceFlags,
   resolveLiteral,
   teamNames
 } from "@/js/localization";
@@ -19,17 +21,6 @@ import { Alert, AlertTitle, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useState } from "react";
-
-const sponsorTypeLabels = {
-  0: "Title",
-  1: "Secondary",
-};
-
-const bonusDifficultyLabels = {
-  0: "Hard",
-  1: "Medium",
-  2: "Easy",
-};
 
 const objectiveStateLabels = {
   0: "Ongoing",
@@ -102,28 +93,85 @@ function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, n
   const database = useContext(DatabaseContext);
   const { enqueueSnackbar } = useSnackbar();
 
+  const titleSponsor = rows.find((row) => Number(row.SponsorType) === 0) || null;
+  const secondarySponsors = rows.filter((row) => Number(row.SponsorType) === 1).sort((a, b) => Number(a.Slot) - Number(b.Slot));
+  const titleOptions = availableRows.filter((row) => Number(row.SponsorType) === 0);
+  const secondaryOptions = availableRows.filter((row) => Number(row.SponsorType) === 1);
+  const completedBonuses = bonusRows.filter((row) => row.State === 2);
   const activeSponsorCount = rows.length;
   const availableSponsorCount = availableRows.length;
-  const selectedBonuses = bonusRows.filter((row) => row.Selected).length;
-  const achievedBonuses = bonusRows.filter((row) => row.Achieved).length;
+  const linkedAffiliates = secondaryRows.filter((row) => row.Affiliate && row.Affiliate !== "-").length;
+  const completedRaceColumns = useMemo(() => (
+    Array.from(
+      completedBonuses.reduce((map, row) => {
+        if (!map.has(row.RaceID)) {
+          map.set(row.RaceID, {
+            RaceID: row.RaceID,
+            TrackID: row.TrackID,
+            Race: row.Race,
+          });
+        }
+        return map;
+      }, new Map()).values()
+    ).sort((left, right) => Number(right.RaceID) - Number(left.RaceID))
+  ), [completedBonuses]);
+  const completedBonusMatrix = useMemo(() => {
+    const driverMap = new Map();
+    completedBonuses.forEach((row) => {
+      const key = `${row.DriverID}-${row.RaceID}`;
+      const current = driverMap.get(row.DriverID) || {
+        id: row.DriverID,
+        DriverID: row.DriverID,
+        Driver: row.Driver,
+      };
+      const existingCell = current[key];
+      const difficultyRank = Number(row.Difficulty);
+      const shouldReplace = !existingCell
+        || (row.Selected && !existingCell.Selected)
+        || (Boolean(row.Selected) === Boolean(existingCell.Selected) && difficultyRank < Number(existingCell.Difficulty));
+      if (shouldReplace) {
+        current[key] = row;
+      }
+      driverMap.set(row.DriverID, current);
+    });
+    return Array.from(driverMap.values()).sort((left, right) => left.Driver.localeCompare(right.Driver));
+  }, [completedBonuses]);
+
+  const updateActiveSponsor = (rowId, sponsorId) => {
+    try {
+      database.exec(
+        `UPDATE Sponsorship_ActivePackages
+         SET SponsorID = :sponsorId
+         WHERE rowid = :rowId`,
+        {
+          ":sponsorId": Number(sponsorId),
+          ":rowId": Number(rowId),
+        }
+      );
+      onRefresh();
+      enqueueSnackbar("Updated sponsor slot", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar(`Failed to update sponsor slot: ${error.message || error}`, { variant: "error" });
+    }
+  };
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-4">
       <section className="border border-white/10 bg-white/[0.02] p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Commercial Ops</div>
-            <h2 className="mt-2 text-lg font-bold text-white">Sponsorship Editor</h2>
+            <h2 className="mt-2 text-lg font-bold text-white">Sponsorship Manager</h2>
             <p className="mt-2 max-w-[880px] text-sm text-slate-400">
-              Review active sponsors, race bonus selections, and the pool of available packages for the current team.
+              Change the active title and secondary sponsor packages for each slot. This page stays focused on partner lineup changes, not race-bonus administration.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[440px]">
             {[
               { label: "Active", value: activeSponsorCount },
+              { label: "Secondary", value: secondarySponsors.length },
               { label: "Available", value: availableSponsorCount },
-              { label: "Selected Bonuses", value: selectedBonuses },
-              { label: "Achieved", value: achievedBonuses },
+              { label: "Affiliates", value: linkedAffiliates },
             ].map((item) => (
               <div key={item.label} className="border border-white/10 bg-black/10 p-3">
                 <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{item.label}</div>
@@ -132,218 +180,128 @@ function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, n
             ))}
           </div>
         </div>
+      </section>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => {
-              try {
-                database.exec(
-                  `UPDATE Sponsorship_RaceBonuses
-                   SET Selected = CASE WHEN Difficulty = 2 THEN 1 ELSE 0 END
-                   WHERE RaceID = (
-                     SELECT MIN(RaceID)
-                     FROM Races
-                     WHERE SeasonID = (SELECT CurrentSeason FROM Player_State)
-                       AND State = 0
-                   )
-                   AND DriverID IN (
-                       SELECT StaffID
-                       FROM Staff_GameData
-                       JOIN Staff_Contracts ON Staff_GameData.StaffID = Staff_Contracts.StaffID
-                       WHERE Staff_Contracts.TeamID = :teamId
-                         AND Staff_Contracts.ContractType = (
-                           SELECT Value
-                           FROM Staff_Enum_ContractType
-                           WHERE Name = 'Current'
-                         )
-                         AND Staff_GameData.StaffType = 0
-                   )`,
-                  {
-                    ":teamId": teamId,
-                  }
-                );
-                onRefresh();
-                enqueueSnackbar(`Selected easy race bonuses for ${nextRaceName || "the next race"}`, { variant: "success" });
-              } catch (error) {
-                enqueueSnackbar(`Failed to update race bonuses: ${error.message || error}`, { variant: "error" });
-              }
-            }}
-          >
-            Auto-select Easy Bonus
-          </Button>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={() => {
-              try {
-                database.exec(
-                  `UPDATE Sponsorship_RaceBonuses
-                   SET Achieved = 1
-                   WHERE Selected = 1
-                     AND RaceID IN (
-                       SELECT RaceID
-                       FROM Races
-                       WHERE SeasonID = (SELECT CurrentSeason FROM Player_State)
-                         AND State = 2
-                     )
-                     AND DriverID IN (
-                       SELECT StaffID
-                       FROM Staff_GameData
-                       JOIN Staff_Contracts ON Staff_GameData.StaffID = Staff_Contracts.StaffID
-                       WHERE Staff_Contracts.TeamID = :teamId
-                         AND Staff_Contracts.ContractType = (
-                           SELECT Value
-                           FROM Staff_Enum_ContractType
-                           WHERE Name = 'Current'
-                         )
-                         AND Staff_GameData.StaffType = 0
-                   )`,
-                  {
-                    ":teamId": teamId,
-                  }
-                );
-                onRefresh();
-                enqueueSnackbar("Marked selected completed race bonuses as achieved", { variant: "success" });
-              } catch (error) {
-                enqueueSnackbar(`Failed to mark achievements: ${error.message || error}`, { variant: "error" });
-              }
-            }}
-          >
-            Mark Selected As Achieved
-          </Button>
+      <section className="border border-white/10 bg-white/[0.015] p-5">
+        <div className="grid gap-5">
+          <div className="grid gap-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Title Sponsor</div>
+            {titleSponsor ? (
+              <div className="grid items-center gap-3 md:grid-cols-[120px_140px_minmax(0,320px)_minmax(0,1fr)]">
+                <div className="text-sm font-medium text-slate-300">Primary slot</div>
+                <div className="text-base font-semibold text-white">Sponsor {titleSponsor.SponsorID}</div>
+                <select
+                  value={titleSponsor.SponsorID}
+                  onChange={(event) => updateActiveSponsor(titleSponsor.id, event.target.value)}
+                  className="w-full border border-white/10 bg-[#131a22] px-3 py-2.5 text-sm text-white outline-none"
+                >
+                  {titleOptions.map((option) => (
+                    <option key={`title-option-${option.SponsorID}`} value={option.SponsorID}>
+                      Sponsor {option.SponsorID}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-sm text-slate-500">
+                  {titleSponsor?.Engagement !== undefined && titleSponsor?.Engagement !== null ? `Engagement ${titleSponsor.Engagement}` : ""}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400">No title sponsor slot is available for this team.</div>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Secondary Sponsors</div>
+              <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{secondarySponsors.length} slots</div>
+            </div>
+            <div className="grid gap-3 xl:grid-cols-5">
+              {secondarySponsors.map((sponsorRow) => (
+                <div key={`secondary-slot-${sponsorRow.id}`} className="grid gap-2">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Slot {sponsorRow.Slot}</div>
+                  <div className="text-sm font-semibold text-white">Sponsor {sponsorRow.SponsorID}</div>
+                  <select
+                    value={sponsorRow.SponsorID}
+                    onChange={(event) => updateActiveSponsor(sponsorRow.id, event.target.value)}
+                    className="w-full border border-white/10 bg-[#131a22] px-3 py-2.5 text-sm text-white outline-none"
+                  >
+                    {secondaryOptions.map((option) => (
+                      <option key={`secondary-option-${sponsorRow.id}-${option.SponsorID}`} value={option.SponsorID}>
+                        Sponsor {option.SponsorID}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="text-xs text-slate-500">
+                    {secondaryRows
+                      .filter((row) => Number(row.SponsorID) === Number(sponsorRow.SponsorID) && row.Affiliate && row.Affiliate !== "-")
+                      .slice(0, 2)
+                      .map((row) => row.Affiliate)
+                      .join(" · ") || "No linked affiliate"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="border border-white/10 bg-white/[0.015]">
-        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Active Packages</div>
-        <DataGrid
-          autoHeight
-          hideFooter
-          disableRowSelectionOnClick
-          rows={rows}
-          processRowUpdate={(newRow, oldRow) => {
-            try {
-              database.exec(
-                `UPDATE Sponsorship_ActivePackages
-                 SET Engagement = :engagement,
-                     Slot = :slot
-                 WHERE TeamID = :teamId
-                   AND SponsorID = :sponsorId`,
-                {
-                  ":engagement": newRow.Engagement === "" || newRow.Engagement === null ? null : Number(newRow.Engagement),
-                  ":slot": newRow.Slot === "" || newRow.Slot === null ? null : Number(newRow.Slot),
-                  ":teamId": newRow.TeamID,
-                  ":sponsorId": newRow.SponsorID,
-                }
-              );
-              onRefresh();
-              return newRow;
-            } catch (error) {
-              enqueueSnackbar(`Failed to update sponsor: ${error.message || error}`, { variant: "error" });
-              return oldRow;
-            }
-          }}
-          columns={[
-            { field: "SponsorID", headerName: "Sponsor", flex: 1, minWidth: 160 },
-            {
-              field: "SponsorType",
-              headerName: "Type",
-              width: 120,
-              valueFormatter: ({ value }) => sponsorTypeLabels[value] || value,
-            },
-            { field: "Slot", headerName: "Slot", width: 100, editable: true, type: "number" },
-            { field: "Engagement", headerName: "Engagement", width: 140, editable: true, type: "number" },
-          ]}
-        />
-      </section>
-
-      <section className="border border-white/10 bg-white/[0.015]">
-        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Secondary Bonus Links</div>
-        <DataGrid
-          autoHeight
-          hideFooter
-          disableRowSelectionOnClick
-          rows={secondaryRows}
-          columns={[
-            { field: "SponsorID", headerName: "Sponsor", flex: 1, minWidth: 160 },
-            { field: "ActiveEffectID", headerName: "Effect ID", width: 120 },
-            { field: "Affiliate", headerName: "Affiliate", width: 180 },
-          ]}
-        />
-      </section>
-
-      <section className="border border-white/10 bg-white/[0.015]">
-        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Race Bonuses</div>
-        <DataGrid
-          autoHeight
-          disableRowSelectionOnClick
-          rows={bonusRows}
-          processRowUpdate={(newRow, oldRow) => {
-            try {
-              database.exec(
-                `UPDATE Sponsorship_RaceBonuses
-                 SET Position = :position,
-                     Selected = :selected,
-                     Achieved = :achieved
-                 WHERE DriverID = :driverId
-                   AND RaceID = :raceId
-                   AND Difficulty = :difficulty`,
-                {
-                  ":position": Number(newRow.Position),
-                  ":selected": newRow.Selected ? 1 : 0,
-                  ":achieved": newRow.Achieved ? 1 : 0,
-                  ":driverId": newRow.DriverID,
-                  ":raceId": newRow.RaceID,
-                  ":difficulty": newRow.Difficulty,
-                }
-              );
-              onRefresh();
-              return newRow;
-            } catch (error) {
-              enqueueSnackbar(`Failed to update race bonus: ${error.message || error}`, { variant: "error" });
-              return oldRow;
-            }
-          }}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 18 } },
-          }}
-          pageSizeOptions={[18, 36]}
-          columns={[
-            { field: "Race", headerName: "Race", width: 150 },
-            { field: "Driver", headerName: "Driver", width: 180 },
-            {
-              field: "Difficulty",
-              headerName: "Difficulty",
-              width: 120,
-              valueFormatter: ({ value }) => bonusDifficultyLabels[value] || value,
-            },
-            { field: "Position", headerName: "Target", width: 100, editable: true, type: "number" },
-            { field: "Selected", headerName: "Selected", width: 110, editable: true, type: "boolean" },
-            { field: "Achieved", headerName: "Achieved", width: 110, editable: true, type: "boolean" },
-            { field: "Status", headerName: "Race State", width: 120 },
-          ]}
-        />
-      </section>
-
-      <section className="border border-white/10 bg-white/[0.015]">
-        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Available Packages</div>
-        <DataGrid
-          autoHeight
-          hideFooter
-          disableRowSelectionOnClick
-          rows={availableRows}
-          columns={[
-            { field: "SponsorID", headerName: "Sponsor", flex: 1, minWidth: 160 },
-            {
-              field: "SponsorType",
-              headerName: "Type",
-              width: 120,
-              valueFormatter: ({ value }) => sponsorTypeLabels[value] || value,
-            },
-          ]}
-        />
+        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Completed Bonus History</div>
+        <div className="overflow-x-auto">
+          <table className="min-w-max border-collapse">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="sticky left-0 z-[1] w-[150px] bg-[#11181f] px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Driver
+                </th>
+                {completedRaceColumns.map((race) => (
+                  <th
+                    key={`completed-race-${race.RaceID}`}
+                    className="min-w-[62px] px-1.5 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    title={race.Race}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <img src={`/flags/${raceFlags[race.TrackID]}.svg`} alt={race.Race} className="h-[14px] w-6 border border-white/10 object-cover" />
+                      <span>{raceAbbrevs[race.TrackID] || race.Race}</span>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {completedBonusMatrix.map((driverRow) => (
+                <tr key={`completed-driver-${driverRow.DriverID}`} className="border-b border-white/5">
+                  <td className="sticky left-0 bg-[#11181f] px-3 py-2 text-sm font-medium text-white">{driverRow.Driver}</td>
+                  {completedRaceColumns.map((race) => {
+                    const cell = driverRow[`${driverRow.DriverID}-${race.RaceID}`];
+                    const difficultyLabel = cell ? { 0: "H", 1: "M", 2: "E" }[Number(cell.Difficulty)] || "-" : null;
+                    const stateClass = !cell || !cell.Selected
+                      ? "text-slate-500"
+                      : cell.Achieved
+                        ? "text-emerald-300"
+                        : "text-rose-300";
+                    return (
+                      <td key={`completed-cell-${driverRow.DriverID}-${race.RaceID}`} className="px-1.5 py-2 text-center">
+                        {cell ? (
+                          <div
+                            className={`inline-grid gap-0.5 ${stateClass}`}
+                            title={`${race.Race}: ${cell.Selected ? `Target P${cell.Position} / Finish P${cell.FinishPosition ?? "-"}` : `Finish P${cell.FinishPosition ?? "-"}`}`}
+                          >
+                            <span className="text-[12px] font-semibold leading-none">{cell.Selected ? `P${cell.Position}` : "—"}</span>
+                            <span className="text-[9px] uppercase leading-none tracking-[0.08em]">{cell.Selected ? difficultyLabel : "—"}</span>
+                            <span className="text-[9px] leading-none text-slate-500">R{cell.FinishPosition ?? "-"}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[12px] text-slate-600">—</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
@@ -1258,11 +1216,26 @@ export default function SaveOperations({
       `
       : `SELECT 0 AS DriverID, 0 AS RaceID, 0 AS Difficulty, 0 AS Position, 0 AS Selected, 0 AS Achieved, 0 AS State, 0 AS TrackID WHERE 0`;
 
+    const raceResultMap = currentDrivers.length
+      ? readRows(
+        database,
+        `SELECT DriverID, RaceID, FinishPosition
+         FROM Races_RaceResults
+         WHERE SeasonID = :season
+           AND DriverID IN (${currentDrivers.join(",")})`,
+        { ":season": currentSeason }
+      ).reduce((acc, row) => {
+        acc[`${row.DriverID}-${row.RaceID}`] = row.FinishPosition;
+        return acc;
+      }, {})
+      : {};
+
     const bonusData = readRows(database, bonusQuery, { ":season": currentSeason }).map((row, index) => ({
       id: `${row.DriverID}-${row.RaceID}-${row.Difficulty}-${index}`,
       ...row,
       Selected: Boolean(row.Selected),
       Achieved: Boolean(row.Achieved),
+      FinishPosition: raceResultMap[`${row.DriverID}-${row.RaceID}`] ?? null,
       Driver: getDriverName(driverMap[row.DriverID]),
       Race: circuitNames[row.TrackID] || `Race ${row.RaceID}`,
       Status: row.State === 2 ? "Completed" : row.State === 1 ? "Active" : "Upcoming",

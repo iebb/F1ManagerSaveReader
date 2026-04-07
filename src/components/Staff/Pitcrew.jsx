@@ -1,22 +1,9 @@
 import { BasicInfoContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
-import { resolveLiteral, teamNames } from "@/js/localization";
+import TeamIdentity from "@/components/Common/TeamIdentity";
 import { Edit, Remove, Add } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
-
-const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
-  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
-  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
-};
 
 const PitCrewStatsList = {
   2: [
@@ -48,14 +35,6 @@ const PitCrewStatsList = {
     { id: 38, digits: 6, displayDigits: 3, negative: true, name: "Fatigue" },
   ],
 };
-
-function getOfficialTeamLogo(version, teamId) {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) return null;
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
-}
 
 function ActionButton({ title, onClick, children }) {
   return (
@@ -90,19 +69,14 @@ function getValueTone(value, negative = false, min = 0, max = 100) {
   };
 }
 
-function getTeamTextStyle(teamId) {
-  return {color: `rgb(var(--team${teamId}-triplet))`};
-}
-
 export default function PitcrewView() {
   const database = useContext(DatabaseContext);
-  const { version, careerSaveMetadata } = useContext(MetadataContext);
-  const { teamIds, teamMap, player } = useContext(BasicInfoContext);
+  const { version } = useContext(MetadataContext);
+  const { teamIds } = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const [pitCrewStats, setPitCrewStats] = useState([]);
   const [displayDigits, setDisplayDigits] = useState(1);
   const refresh = () => setUpdated(Date.now());
-  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
   const stats = PitCrewStatsList[version] || PitCrewStatsList[4];
   const statRanges = stats.reduce((acc, stat) => {
     const values = pitCrewStats
@@ -260,21 +234,9 @@ export default function PitcrewView() {
                 </div>
               ),
               renderCell: ({ value }) => {
-                const logoSrc = value >= 32 && customTeamLogoBase64
-                  ? `data:image/png;base64,${customTeamLogoBase64}`
-                  : getOfficialTeamLogo(version, value);
-                const teamLabel = value >= 32 && teamMap?.[value]?.TeamNameLocKey
-                  ? resolveLiteral(teamMap[value].TeamNameLocKey)
-                  : teamNames(value, version);
                 return (
-                  <div className="flex h-full items-center gap-2 py-1.5">
-                    {logoSrc ? <img src={logoSrc} alt="" className="h-6 w-6 shrink-0 object-contain opacity-95" /> : null}
-                    <div
-                      className="min-w-0 truncate text-[13px] font-medium leading-5"
-                      style={getTeamTextStyle(value)}
-                    >
-                      {teamLabel}
-                    </div>
+                  <div className="flex h-full items-center py-1.5">
+                    <TeamIdentity TeamID={value} size="sm" textClassName="text-[13px] leading-5" />
                   </div>
                 );
               },

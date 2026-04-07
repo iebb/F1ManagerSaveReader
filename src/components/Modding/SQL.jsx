@@ -1,10 +1,9 @@
 import { DatabaseContext } from "@/js/Contexts";
-import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useState } from "react";
 
-const PAGE_SIZE_OPTIONS = [25, 50, 100, 250];
+const PAGE_SIZE_OPTIONS = [25, 50, 100];
 const DEFAULT_PAGE_SIZE = 50;
 
 function quoteIdent(value) {
@@ -26,6 +25,69 @@ function parseEditedValue(value, oldValue) {
     return Number.isFinite(numeric) ? numeric : oldValue;
   }
   return String(value);
+}
+
+function GridShell({ columns, rows, emptyMessage, actionsLabel = "Actions", renderActions = null, onEditCell = null }) {
+  return (
+    <div className="h-full overflow-auto">
+      <table className="min-w-full border-collapse">
+        <thead className="sticky top-0 z-[1] bg-[#161d24]">
+          <tr>
+            {columns.map((column) => (
+              <th
+                key={column.field}
+                className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                style={column.width ? { width: column.width } : undefined}
+              >
+                {column.headerName}
+              </th>
+            ))}
+            {renderActions ? (
+              <th className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                {actionsLabel}
+              </th>
+            ) : null}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length ? rows.map((row, rowIndex) => (
+            <tr key={row.id ?? rowIndex} className="bg-white/[0.01] odd:bg-white/[0.03]">
+              {columns.map((column) => {
+                const value = row[column.field];
+                const editable = Boolean(column.editable && onEditCell && column.field !== "__rowid__");
+                return (
+                  <td
+                    key={`${row.id ?? rowIndex}-${column.field}`}
+                    className={`border-b border-white/5 px-3 py-2 align-top text-sm text-slate-200 ${editable ? "cursor-pointer hover:bg-white/[0.04]" : ""}`}
+                    onDoubleClick={editable ? () => onEditCell(row, column) : undefined}
+                    title={editable ? "Double-click to edit" : undefined}
+                  >
+                    <div className={`min-w-0 ${column.numeric ? "text-right" : "truncate"}`}>
+                      {column.render ? column.render(value, row) : formatCellValue(value)}
+                    </div>
+                  </td>
+                );
+              })}
+              {renderActions ? (
+                <td className="border-b border-white/5 px-3 py-2 align-top">
+                  {renderActions(row)}
+                </td>
+              ) : null}
+            </tr>
+          )) : (
+            <tr>
+              <td
+                colSpan={columns.length + (renderActions ? 1 : 0)}
+                className="px-3 py-8 text-center text-sm text-slate-500"
+              >
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export default function DataBrowser() {
@@ -182,78 +244,67 @@ export default function DataBrowser() {
 
   const browseGridColumns = useMemo(() => {
     if (!browseColumns.length) return [];
-    const metaByName = Object.fromEntries(browseMeta.tableInfo.map((col) => [col.name, col]));
-    return [
-      ...browseColumns.map((col) => {
-        if (col === "__rowid__") {
-          return {
-            field: col,
-            headerName: "#",
-            width: 86,
-            editable: false,
-            sortable: false,
-          };
-        }
-        return {
-          field: col,
-          headerName: col,
-          minWidth: 120,
-          flex: 1,
-          editable: isTable,
-          sortable: false,
-          renderCell: ({ value }) => (
-            <div className="min-w-0 truncate text-sm text-slate-200">{formatCellValue(value)}</div>
-          ),
-          headerClassName: metaByName[col]?.pk ? "db-pk-col" : "",
-        };
-      }),
-      ...(isTable ? [{
-        field: "__actions__",
-        headerName: "",
-        width: 90,
-        sortable: false,
-        filterable: false,
-        editable: false,
-        renderCell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() => {
-              try {
-                const quotedName = quoteIdent(selectedName);
-                if (pkColumns.length) {
-                  const where = pkColumns.map((col) => `${quoteIdent(col.name)} = :${col.name}`).join(" AND ");
-                  const params = Object.fromEntries(pkColumns.map((col) => [`:${col.name}`, row[col.name] ?? null]));
-                  database.exec(`DELETE FROM ${quotedName} WHERE ${where}`, params);
-                } else {
-                  database.exec(`DELETE FROM ${quotedName} WHERE _rowid_ = :rowid`, { ":rowid": row.__rowid__ });
-                }
-                enqueueSnackbar(`Deleted row from ${selectedName}`, { variant: "success" });
-                setRefreshToken(Date.now());
-              } catch (error) {
-                enqueueSnackbar(`Delete failed: ${error}`, { variant: "error" });
-              }
-            }}
-            className="border border-red-400/20 bg-red-500/[0.06] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-100 hover:bg-red-500/[0.1]"
-          >
-            Delete
-          </button>
-        ),
-      }] : []),
-    ];
+    return browseColumns.map((col) => ({
+      field: col,
+      headerName: col === "__rowid__" ? "#" : col,
+      width: col === "__rowid__" ? 86 : undefined,
+      editable: isTable && col !== "__rowid__",
+      numeric: typeof browseRows.find((row) => row[col] !== null && row[col] !== undefined)?.[col] === "number",
+    }));
   }, [browseColumns, browseMeta.tableInfo, database, enqueueSnackbar, isTable, pkColumns, selectedName]);
 
   const queryGridColumns = useMemo(() => (
     queryColumns.map((col) => ({
       field: col,
       headerName: col,
-      minWidth: 140,
-      flex: 1,
-      sortable: false,
-      renderCell: ({ value }) => (
-        <div className="min-w-0 truncate text-sm text-slate-200">{formatCellValue(value)}</div>
-      ),
+      numeric: typeof queryRows.find((row) => row[col] !== null && row[col] !== undefined)?.[col] === "number",
     }))
   ), [queryColumns]);
+
+  const deleteRow = React.useCallback((row) => {
+    try {
+      const quotedName = quoteIdent(selectedName);
+      if (pkColumns.length) {
+        const where = pkColumns.map((col) => `${quoteIdent(col.name)} = :${col.name}`).join(" AND ");
+        const params = Object.fromEntries(pkColumns.map((col) => [`:${col.name}`, row[col.name] ?? null]));
+        database.exec(`DELETE FROM ${quotedName} WHERE ${where}`, params);
+      } else {
+        database.exec(`DELETE FROM ${quotedName} WHERE _rowid_ = :rowid`, { ":rowid": row.__rowid__ });
+      }
+      enqueueSnackbar(`Deleted row from ${selectedName}`, { variant: "success" });
+      setRefreshToken(Date.now());
+    } catch (error) {
+      enqueueSnackbar(`Delete failed: ${error}`, { variant: "error" });
+    }
+  }, [database, enqueueSnackbar, pkColumns, selectedName]);
+
+  const editCell = React.useCallback((row, column) => {
+    if (!isTable || !column.editable) return;
+    const currentValue = row[column.field];
+    const input = window.prompt(`Edit ${selectedName}.${column.field}`, formatCellValue(currentValue));
+    if (input === null) return;
+    try {
+      const nextValue = parseEditedValue(input, currentValue);
+      const quotedName = quoteIdent(selectedName);
+      if (pkColumns.length) {
+        const where = pkColumns.map((col) => `${quoteIdent(col.name)} = :pk_${col.name}`).join(" AND ");
+        const params = {
+          ":value": nextValue,
+          ...Object.fromEntries(pkColumns.map((col) => [`:pk_${col.name}`, row[col.name] ?? null])),
+        };
+        database.exec(`UPDATE ${quotedName} SET ${quoteIdent(column.field)} = :value WHERE ${where}`, params);
+      } else {
+        database.exec(
+          `UPDATE ${quotedName} SET ${quoteIdent(column.field)} = :value WHERE _rowid_ = :rowid`,
+          { ":value": nextValue, ":rowid": row.__rowid__ }
+        );
+      }
+      enqueueSnackbar(`Updated ${selectedName}.${column.field}`, { variant: "success" });
+      setRefreshToken(Date.now());
+    } catch (error) {
+      enqueueSnackbar(`Update failed: ${error}`, { variant: "error" });
+    }
+  }, [database, enqueueSnackbar, isTable, pkColumns, selectedName]);
 
   const runQuery = React.useCallback(() => {
     try {
@@ -448,64 +499,64 @@ export default function DataBrowser() {
                 </pre>
               </div>
             ) : mode === "query" ? (
-              <div className="h-full min-w-0 overflow-x-auto">
-                <DataGrid
-                  key={`query-${querySql}`}
-                  rows={queryRows}
-                  columns={queryGridColumns}
-                  rowHeight={42}
-                  columnHeaderHeight={42}
-                  disableRowSelectionOnClick
-                  initialState={{
-                    pagination: { paginationModel: { pageSize: DEFAULT_PAGE_SIZE } },
-                  }}
-                  pageSizeOptions={PAGE_SIZE_OPTIONS}
-                />
-              </div>
+              <GridShell
+                columns={queryGridColumns}
+                rows={queryRows}
+                emptyMessage="Run a query to see results."
+              />
             ) : (
-              <div className="h-full min-w-0 overflow-x-auto">
-                <DataGrid
-                  key={`browse-${selectedName}-${paginationModel.page}-${paginationModel.pageSize}-${refreshToken}`}
-                  rows={browseRows}
+              <div className="grid h-full grid-rows-[minmax(0,1fr)_auto]">
+                <GridShell
                   columns={browseGridColumns}
-                  rowHeight={42}
-                  columnHeaderHeight={42}
-                  disableRowSelectionOnClick
-                  rowCount={browseMeta.totalRows}
-                  paginationMode="server"
-                  paginationModel={paginationModel}
-                  onPaginationModelChange={setPaginationModel}
-                  pageSizeOptions={PAGE_SIZE_OPTIONS}
-                  processRowUpdate={(newRow, oldRow) => {
-                    if (!isTable) return oldRow;
-                    try {
-                      const changedField = browseColumns.find((col) => col !== "__rowid__" && newRow[col] !== oldRow[col]);
-                      if (!changedField) return oldRow;
-                      const nextValue = parseEditedValue(newRow[changedField], oldRow[changedField]);
-                      const quotedName = quoteIdent(selectedName);
-                      if (pkColumns.length) {
-                        const where = pkColumns.map((col) => `${quoteIdent(col.name)} = :pk_${col.name}`).join(" AND ");
-                        const params = {
-                          ":value": nextValue,
-                          ...Object.fromEntries(pkColumns.map((col) => [`:pk_${col.name}`, oldRow[col.name] ?? null])),
-                        };
-                        database.exec(`UPDATE ${quotedName} SET ${quoteIdent(changedField)} = :value WHERE ${where}`, params);
-                      } else {
-                        database.exec(
-                          `UPDATE ${quotedName} SET ${quoteIdent(changedField)} = :value WHERE _rowid_ = :rowid`,
-                          { ":value": nextValue, ":rowid": oldRow.__rowid__ }
-                        );
-                      }
-                      enqueueSnackbar(`Updated ${selectedName}.${changedField}`, { variant: "success" });
-                      setRefreshToken(Date.now());
-                      return { ...newRow, [changedField]: nextValue };
-                    } catch (error) {
-                      enqueueSnackbar(`Update failed: ${error}`, { variant: "error" });
-                      return oldRow;
-                    }
-                  }}
-                  onProcessRowUpdateError={(error) => enqueueSnackbar(`Update failed: ${error}`, { variant: "error" })}
+                  rows={browseRows}
+                  emptyMessage={selectedObject ? `No rows found in ${selectedName}.` : "Select a table or view."}
+                  onEditCell={editCell}
+                  renderActions={isTable ? (row) => (
+                    <button
+                      type="button"
+                      onClick={() => deleteRow(row)}
+                      className="border border-red-400/20 bg-red-500/[0.06] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-100 hover:bg-red-500/[0.1]"
+                    >
+                      Delete
+                    </button>
+                  ) : null}
                 />
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-slate-400">
+                  <div>
+                    Page {paginationModel.page + 1} of {Math.max(1, Math.ceil(browseMeta.totalRows / paginationModel.pageSize))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-slate-400">Rows</label>
+                    <select
+                      value={paginationModel.pageSize}
+                      onChange={(e) => setPaginationModel({ page: 0, pageSize: Number(e.target.value) })}
+                      className="border border-white/10 bg-white/[0.03] px-2 py-1 text-xs text-white outline-none"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setPaginationModel((current) => ({ ...current, page: Math.max(0, current.page - 1) }))}
+                      disabled={paginationModel.page === 0}
+                      className="border border-white/10 bg-white/[0.03] px-2 py-1 text-xs text-slate-200 disabled:opacity-40"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaginationModel((current) => {
+                        const maxPage = Math.max(0, Math.ceil(browseMeta.totalRows / current.pageSize) - 1);
+                        return { ...current, page: Math.min(maxPage, current.page + 1) };
+                      })}
+                      disabled={(paginationModel.page + 1) * paginationModel.pageSize >= browseMeta.totalRows}
+                      className="border border-white/10 bg-white/[0.03] px-2 py-1 text-xs text-slate-200 disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
