@@ -7,10 +7,9 @@ import {
   NotStarted,
   PlayCircle
 } from "@mui/icons-material";
-import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
-import { circuitNames, countryNames, dayToDate, raceAbbrevs, raceFlags } from "@/js/localization";
+import { circuitNames, dayToDate, raceFlags } from "@/js/localization";
 import { BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
 
 const weathers = {
@@ -99,6 +98,77 @@ export default function CustomCalendar() {
   const upcomingRaces = races.filter((race) => race.State === 0).length;
   const activeRace = races.find((race) => race.State === 1) || null;
 
+  const updateRaceField = (raceId, field, value) => {
+    database.exec(`UPDATE Races SET ${field} = :value WHERE RaceID = :raceId`, {
+      ":value": value,
+      ":raceId": raceId,
+    });
+    refresh();
+  };
+
+  const renderWeatherCell = (row, field) => {
+    const editable = row.State === 0;
+    const value = row[field];
+    const options = [
+      { value: 1, label: "Sunny" },
+      { value: 2, label: "Partly Cloudy" },
+      { value: 4, label: "Cloudy" },
+      { value: 8, label: "Light Rain" },
+      { value: 16, label: "Moderate Rain" },
+      { value: 32, label: "Heavy Rain" },
+    ];
+
+    if (!editable) {
+      return (
+        <div className="flex justify-center" title={options.find((option) => option.value === value)?.label || ""}>
+          <span>{weathers[value]}</span>
+        </div>
+      );
+    }
+
+    return (
+      <select
+        value={value}
+        onChange={(event) => {
+          const nextValue = Number(event.target.value);
+          const suffix = field.replace("WeatherState", "");
+          database.exec(`UPDATE Races SET ${field} = :value, Rain${suffix} = :rainValue WHERE RaceID = :raceId`, {
+            ":value": nextValue,
+            ":rainValue": nextValue >= 8 ? 1 : 0,
+            ":raceId": row.RaceID,
+          });
+          refresh();
+        }}
+        className="w-11 border border-white/10 bg-black/20 px-1 py-1 text-center text-sm text-white outline-none"
+        title="Weather"
+      >
+        {options.map((option) => (
+          <option key={`${field}-${option.value}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  };
+
+  const renderTemperatureCell = (row, field) => {
+    const editable = row.State === 0;
+    if (!editable) {
+      return <div className="text-right text-sm text-slate-300">{Number(row[field]).toFixed(2)}</div>;
+    }
+    return (
+      <input
+        type="number"
+        step="0.01"
+        value={Number(row[field]).toFixed(2)}
+        onChange={(event) => updateRaceField(row.RaceID, field, Number(event.target.value))}
+        className="w-16 border border-white/10 bg-black/20 px-2 py-1 text-right text-sm text-white outline-none"
+      />
+    );
+  };
+
+  const actionButtonClass = "inline-flex h-7 w-7 items-center justify-center border border-white/10 bg-white/[0.03] text-slate-200 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-35";
+
 
 
   const weatherConfigs = [];
@@ -107,27 +177,11 @@ export default function CustomCalendar() {
       field: 'WeatherState' + event,
       headerName: EventToDay[event],
       width: 48,
-      type: "singleSelect",
-      editable: true,
-      valueOptions: [
-        { value: 1, label: "Sunny" },
-        { value: 2, label: "Partly Cloudy" },
-        { value: 4, label: "Cloudy" },
-        { value: 8, label: "Light Rain" },
-        { value: 16, label: "Moderate Rain" },
-        { value: 32, label: "Heavy Rain" },
-      ],
-      renderCell: ({ value, formattedValue }) => {
-        return <span title={formattedValue}>{weathers[value]}</span>
-      },
     });
     weatherConfigs.push({
       field: 'Temperature' + event,
       headerName: '°C',
       width: 65,
-      type: "number",
-      editable: true,
-      valueGetter: ({ value }) => Number(value).toFixed(2),
     });
 
   }
@@ -189,180 +243,37 @@ export default function CustomCalendar() {
       ) : null}
 
       <section className="border border-white/10 bg-white/[0.015]">
-        <DataGrid
-          getRowId={r => r.RaceID}
-          rows={races.map((x, _idx) => ({ id: _idx + 1, ...x }))}
-          hideFooter
-          isCellEditable={({ row }) => {
-            return row.State === 0;
-          }}
-          onProcessRowUpdateError={e => console.error(e)}
-          processRowUpdate={(newRow, oldRow) => {
-            if (newRow.State > 0) {
-              return oldRow;
-            }
-            if (newRow._DOW !== undefined) {
-              if (newRow._DOW !== (oldRow.Day % 7)) {
-                database.exec(`UPDATE Races SET Day = Day + :n WHERE RaceID = ${newRow.RaceID};`, {
-                  ":n": newRow._DOW - (oldRow.Day % 7)
-                });
-                refresh();
-              }
-            }
-            if (newRow.TrackID !== oldRow.TrackID) {
-              database.exec(`UPDATE Races SET TrackID = ${newRow.TrackID} WHERE RaceID = ${newRow.RaceID};`);
-              refresh();
-            }
-            if (newRow.WeekendType !== oldRow.WeekendType) {
-              database.exec(`UPDATE Races SET WeekendType = ${newRow.WeekendType} WHERE RaceID = ${newRow.RaceID};`);
-              refresh();
-            }
-            for (const prefix of WeatherPrefix) {
-              for (const suffix of EventSuffix) {
-                if (newRow[prefix + suffix] !== oldRow[prefix + suffix]) {
-                  database.exec(`UPDATE Races SET ${prefix + suffix} = ${newRow[prefix + suffix]} WHERE RaceID = ${newRow.RaceID};`);
-                  if (prefix === "WeatherState") {
-                    const rainValue = newRow[prefix + suffix] >= 8 ? 1 : 0;
-                    database.exec(`UPDATE Races SET Rain${suffix} = ${rainValue} WHERE RaceID = ${newRow.RaceID};`);
-                  }
-                  refresh();
-                }
-              }
-            }
-            return newRow;
-          }}
-          columns={[
-            {
-              field: 'Race',
-              headerName: 'Race',
-              width: 92,
-              renderCell: ({ row }) => {
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead className="bg-white/[0.03]">
+              <tr>
+                <th className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Race</th>
+                <th className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Circuit</th>
+                {version >= 3 ? <th className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">F1</th> : null}
+                {version !== 2 ? <th className="border-b border-white/10 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">F2</th> : null}
+                {version !== 2 ? <th className="border-b border-white/10 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">F3</th> : null}
+                <th className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Date</th>
+                {version >= 4 ? <th className="border-b border-white/10 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Sat</th> : null}
+                <th className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Actions</th>
+                {weatherConfigs.map((config) => (
+                  <th
+                    key={config.field}
+                    className="border-b border-white/10 px-2 py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400"
+                  >
+                    {config.headerName}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {races.map((row, index) => {
                 const stateIcon = [
                   <NotStarted sx={{ color: "#33b8ff", fontSize: 16 }} />,
                   <PlayCircle sx={{ color: "#fff533", fontSize: 16 }} />,
                   <CheckCircle sx={{ color: "#33ff66", fontSize: 16 }} />,
                 ][row.State];
-                return (
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0">{stateIcon}</span>
-                    <span className="w-5 text-center text-xs font-semibold text-slate-300">{row.id}</span>
-                    <img
-                      src={`/flags/${raceFlags[row.TrackID]}.svg`}
-                      width={20} height={15}
-                      alt={row.Name}
-                      className="shrink-0"
-                    />
-                  </div>
-                )
-              }
-            },
-            {
-              field: 'TrackID',
-              headerName: 'Circuit',
-              width: 180,
-              editable: true,
-              type: 'singleSelect',
-              valueOptions: Object.keys(raceTemplates).map(
-                rt => ({ value: rt, label: `${circuitNames[rt]}` })
-              ),
-              renderCell: ({ value }) => {
-                return `${circuitNames[value]}`
-              }
-            },
-            ...(version >= 3) ? [{
-              field: 'WeekendType',
-              headerName: 'F1',
-              type: 'singleSelect',
-              editable: true,
-              valueOptions: version === 3 ? [
-                { value: 0, label: "Normal" },
-                { value: 1, label: "Sprint" },
-                { value: 2, label: "ATA" },
-              ] : [
-                { value: 0, label: "Normal" },
-                { value: 1, label: "Sprint" },
-              ],
-              width: 100,
-            }] : [],
-            ...(version !== 2) ? [
-              {
-                field: 'IsF2Race',
-                headerName: 'F2',
-                width: 30,
-                renderCell: ({ row, value }) => {
-                  return (
-                    <a className="noselect" onClick={() => {
-                      database.exec(`UPDATE Races_Tracks SET IsF2Race = ${1 - value} WHERE TrackID = ${row.TrackID};`);
-                      refresh();
-                    }}>{value ? "F2" : "-"}</a>
-                  )
-                }
-              },
-              {
-                field: 'IsF3Race',
-                headerName: 'F3',
-                width: 30,
-                renderCell: ({ row, value }) => {
-                  return (
-                    <a className="noselect" onClick={() => {
-                      database.exec(`UPDATE Races_Tracks SET IsF3Race = ${1 - value} WHERE TrackID = ${row.TrackID};`);
-                      refresh();
-                    }}>{value ? "F3" : "-"}</a>
-                  )
-                }
-              },
-            ] : [],
-            {
-              field: '_Date',
-              headerName: 'Date',
-              width: 120,
-              renderCell: ({ row }) => {
-                return (
-                  <>
-                    W{row.week}: {dayToDate(row.Day).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })}
-                  </>
-                )
-              }
-            },
-            ...(version >= 4 ? [{
-              field: '_DOW',
-              headerName: 'Sat',
-              width: 56,
-              renderCell: ({ row }) => {
+                const editable = row.State === 0;
                 const isSaturday = (row.Day % 7) === 0;
-                const disabled = row.State !== 0;
-                return (
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => {
-                      const nextDow = isSaturday ? 1 : 0;
-                      database.exec(`UPDATE Races SET Day = Day + :n WHERE RaceID = ${row.RaceID};`, {
-                        ":n": nextDow - (row.Day % 7)
-                      });
-                      refresh();
-                    }}
-                    className={`flex h-5 w-5 items-center justify-center border text-[10px] transition ${disabled
-                      ? `cursor-default border-white/10 bg-white/[0.03] ${isSaturday ? "text-slate-500" : "text-transparent"}`
-                      : isSaturday
-                        ? "border-sky-300/50 bg-sky-500/15 text-sky-100"
-                        : "border-white/15 bg-black/10 text-transparent hover:border-white/25 hover:bg-white/[0.05]"
-                      }`}
-                    title={isSaturday ? "Saturday race" : "Sunday race"}
-                  >
-                    ✓
-                  </button>
-                );
-              },
-            }] : []),
-            {
-              field: '_actions',
-              headerName: 'Actions',
-              headerAlign: 'center',
-              sortable: false,
-              filterable: false,
-              width: 150,
-              renderCell: ({ row }) => {
                 let nextAvailableDuplicateWeek = -1;
                 for (let w = Math.max(playerWeek, row.week + 1); w <= 51; w++) {
                   if (!weeks[w]) {
@@ -372,110 +283,209 @@ export default function CustomCalendar() {
                 }
 
                 return (
-                  <div>
-                    <GridActionsCellItem
-                      icon={<KeyboardDoubleArrowUp />}
-                      disabled={row.State !== 0 || row.Day - 7 - 2 /* race weekend */ <= player.Day || row.week <= 2}
-                      label="Expedite"
-                      onClick={() => {
-                        if (weeks[row.week - 1]) {
-                          database.exec(`UPDATE Races SET Day = Day + 7 WHERE RaceID = ${weeks[row.week - 1]};
-                                       UPDATE Races SET Day = Day - 7 WHERE RaceID = ${row.RaceID};`);
-                        } else {
-                          database.exec(`UPDATE Races SET Day = Day - 7 WHERE RaceID = ${row.RaceID}`);
-                        }
-                        refresh();
-                      }}
-                    />
-                    <GridActionsCellItem
-                      icon={<KeyboardDoubleArrowDown />}
-                      disabled={row.State !== 0 || row.week >= 51}
-                      label="Postpone"
-                      onClick={() => {
-                        if (weeks[row.week + 1]) {
-                          database.exec(`UPDATE Races SET Day = Day - 7 WHERE RaceID = ${weeks[row.week + 1]};
-                                       UPDATE Races SET Day = Day + 7 WHERE RaceID = ${row.RaceID};`);
-                        } else {
-                          database.exec(`UPDATE Races SET Day = Day + 7 WHERE RaceID = ${row.RaceID}`);
-                        }
-                        refresh();
-                      }}
-                    />
-                    <GridActionsCellItem
-                      icon={<Delete />}
-                      disabled={row.State !== 0 || races.length < 2}
-                      label="Delete"
-                      onClick={() => {
-                        database.exec(`DELETE FROM Races WHERE RaceID = ${row.RaceID}`);
-                        refresh();
-                      }}
-                    />
-                    <GridActionsCellItem
-                      icon={<CopyAll />}
-                      disabled={nextAvailableDuplicateWeek === -1}
-                      label="Duplicate"
-                      onClick={(event) => {
-                        let [{ columns, values }] = database.exec(`select * from Races WHERE RaceID = ${row.RaceID}`);
-                        const r = values[0].map(x => typeof x === 'number' ? x : `"${x}"`);
-                        const targetWeekDelta = nextAvailableDuplicateWeek - row.week;
-                        let reverseColumns = {};
-                        for (let i = 0; i < columns.length; i++) reverseColumns[columns[i]] = i;
+                  <tr key={row.RaceID} className="odd:bg-white/[0.03]">
+                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-200">
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0">{stateIcon}</span>
+                        <span className="w-5 text-center text-xs font-semibold text-slate-300">{index + 1}</span>
+                        <img
+                          src={`/flags/${raceFlags[row.TrackID]}.svg`}
+                          width={20}
+                          height={15}
+                          alt={row.Name}
+                          className="shrink-0"
+                        />
+                      </div>
+                    </td>
+                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-200">
+                      {editable ? (
+                        <select
+                          value={row.TrackID}
+                          onChange={(event) => updateRaceField(row.RaceID, "TrackID", event.target.value)}
+                          className="w-[180px] border border-white/10 bg-black/20 px-2 py-1 text-sm text-white outline-none"
+                        >
+                          {Object.keys(raceTemplates).map((trackId) => (
+                            <option key={`track-${trackId}`} value={trackId}>{circuitNames[trackId]}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        circuitNames[row.TrackID]
+                      )}
+                    </td>
+                    {version >= 3 ? (
+                      <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-200">
+                        {editable ? (
+                          <select
+                            value={row.WeekendType}
+                            onChange={(event) => updateRaceField(row.RaceID, "WeekendType", Number(event.target.value))}
+                            className="w-24 border border-white/10 bg-black/20 px-2 py-1 text-sm text-white outline-none"
+                          >
+                            {(version === 3 ? [
+                              { value: 0, label: "Normal" },
+                              { value: 1, label: "Sprint" },
+                              { value: 2, label: "ATA" },
+                            ] : [
+                              { value: 0, label: "Normal" },
+                              { value: 1, label: "Sprint" },
+                            ]).map((option) => (
+                              <option key={`weekend-${option.value}`} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span>{row.WeekendType === 1 ? "Sprint" : row.WeekendType === 2 ? "ATA" : "Normal"}</span>
+                        )}
+                      </td>
+                    ) : null}
+                    {version !== 2 ? (
+                      <td className="border-b border-white/5 px-3 py-2 text-center text-sm text-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            database.exec(`UPDATE Races_Tracks SET IsF2Race = ${1 - row.IsF2Race} WHERE TrackID = ${row.TrackID};`);
+                            refresh();
+                          }}
+                          className="text-xs font-semibold text-sky-200"
+                        >
+                          {row.IsF2Race ? "F2" : "-"}
+                        </button>
+                      </td>
+                    ) : null}
+                    {version !== 2 ? (
+                      <td className="border-b border-white/5 px-3 py-2 text-center text-sm text-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            database.exec(`UPDATE Races_Tracks SET IsF3Race = ${1 - row.IsF3Race} WHERE TrackID = ${row.TrackID};`);
+                            refresh();
+                          }}
+                          className="text-xs font-semibold text-sky-200"
+                        >
+                          {row.IsF3Race ? "F3" : "-"}
+                        </button>
+                      </td>
+                    ) : null}
+                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-300">
+                      W{row.week}: {dayToDate(row.Day).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </td>
+                    {version >= 4 ? (
+                      <td className="border-b border-white/5 px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          disabled={!editable}
+                          onClick={() => {
+                            const nextDow = isSaturday ? 1 : 0;
+                            database.exec(`UPDATE Races SET Day = Day + :n WHERE RaceID = :raceId;`, {
+                              ":n": nextDow - (row.Day % 7),
+                              ":raceId": row.RaceID,
+                            });
+                            refresh();
+                          }}
+                          className={`mx-auto flex h-5 w-5 items-center justify-center border text-[10px] transition ${!editable
+                            ? `cursor-default border-white/10 bg-white/[0.03] ${isSaturday ? "text-slate-500" : "text-transparent"}`
+                            : isSaturday
+                              ? "border-sky-300/50 bg-sky-500/15 text-sky-100"
+                              : "border-white/15 bg-black/10 text-transparent hover:border-white/25 hover:bg-white/[0.05]"
+                            }`}
+                          title={isSaturday ? "Saturday race" : "Sunday race"}
+                        >
+                          ✓
+                        </button>
+                      </td>
+                    ) : null}
+                    <td className="border-b border-white/5 px-3 py-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className={actionButtonClass}
+                          disabled={row.State !== 0 || row.Day - 7 - 2 <= player.Day || row.week <= 2}
+                          title="Expedite"
+                          onClick={() => {
+                            if (weeks[row.week - 1]) {
+                              database.exec(`UPDATE Races SET Day = Day + 7 WHERE RaceID = ${weeks[row.week - 1]};
+                                           UPDATE Races SET Day = Day - 7 WHERE RaceID = ${row.RaceID};`);
+                            } else {
+                              database.exec(`UPDATE Races SET Day = Day - 7 WHERE RaceID = ${row.RaceID}`);
+                            }
+                            refresh();
+                          }}
+                        >
+                          <KeyboardDoubleArrowUp fontSize="small" />
+                        </button>
+                        <button
+                          type="button"
+                          className={actionButtonClass}
+                          disabled={row.State !== 0 || row.week >= 51}
+                          title="Postpone"
+                          onClick={() => {
+                            if (weeks[row.week + 1]) {
+                              database.exec(`UPDATE Races SET Day = Day - 7 WHERE RaceID = ${weeks[row.week + 1]};
+                                           UPDATE Races SET Day = Day + 7 WHERE RaceID = ${row.RaceID};`);
+                            } else {
+                              database.exec(`UPDATE Races SET Day = Day + 7 WHERE RaceID = ${row.RaceID}`);
+                            }
+                            refresh();
+                          }}
+                        >
+                          <KeyboardDoubleArrowDown fontSize="small" />
+                        </button>
+                        <button
+                          type="button"
+                          className={actionButtonClass}
+                          disabled={row.State !== 0 || races.length < 2}
+                          title="Delete"
+                          onClick={() => {
+                            database.exec(`DELETE FROM Races WHERE RaceID = ${row.RaceID}`);
+                            refresh();
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </button>
+                        <button
+                          type="button"
+                          className={actionButtonClass}
+                          disabled={nextAvailableDuplicateWeek === -1}
+                          title="Duplicate"
+                          onClick={() => {
+                            let [{ columns, values }] = database.exec(`select * from Races WHERE RaceID = ${row.RaceID}`);
+                            const r = values[0].map(x => typeof x === "number" ? x : `"${x}"`);
+                            const targetWeekDelta = nextAvailableDuplicateWeek - row.week;
+                            let reverseColumns = {};
+                            for (let i = 0; i < columns.length; i++) reverseColumns[columns[i]] = i;
 
-                        r[reverseColumns.RaceID] = "NULL";
-                        r[reverseColumns.Day] += 7 * targetWeekDelta;
-                        r[reverseColumns.State] = 0;
+                            r[reverseColumns.RaceID] = "NULL";
+                            r[reverseColumns.Day] += 7 * targetWeekDelta;
+                            r[reverseColumns.State] = 0;
 
-                        const RT = raceTemplates[r[3]]; // TrackID
-                        for (const suffix of EventSuffix) {
-                          const rain = Math.random() < RT.RainMax ? 1 : 0;
-                          const weather = 1 << (Math.floor(Math.random() * 3) + rain * 3);
-                          const temperature = Math.random() * (RT.TemperatureMax - RT.TemperatureMin) + RT.TemperatureMin;
-                          r[reverseColumns["Rain" + suffix]] = rain;
-                          r[reverseColumns["WeatherState" + suffix]] = weather;
-                          r[reverseColumns["Temperature" + suffix]] = temperature;
-                        }
-                        database.exec(`INSERT INTO Races SELECT ${r.join(",")} WHERE NOT EXISTS (SELECT 1 FROM Races WHERE Day = ${r[reverseColumns.Day]});`);
-
-                        // database.exec(`INSERT INTO Races VALUES (${r.join(",")});`);
-                        refresh();
-                      }}
-                    />
-                  </div>
-                )
-              }
-            },
-            ...weatherConfigs
-          ]}
-          density="compact"
-          rowHeight={38}
-          columnHeaderHeight={40}
-          sx={{
-            border: 0,
-            "& .MuiDataGrid-columnHeaders": {
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-              backgroundColor: "rgba(255,255,255,0.03)",
-            },
-            "& .MuiDataGrid-columnHeaderTitle": {
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "rgb(148 163 184)",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
-            },
-            "& .MuiDataGrid-row:nth-of-type(2n)": {
-              backgroundColor: "rgba(255,255,255,0.015)",
-            },
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: "rgba(255,255,255,0.035)",
-            },
-            "& .MuiDataGrid-actionsCell": {
-              gap: "2px",
-            },
-          }}
-        />
+                            const RT = raceTemplates[r[3]];
+                            for (const suffix of EventSuffix) {
+                              const rain = Math.random() < RT.RainMax ? 1 : 0;
+                              const weather = 1 << (Math.floor(Math.random() * 3) + rain * 3);
+                              const temperature = Math.random() * (RT.TemperatureMax - RT.TemperatureMin) + RT.TemperatureMin;
+                              r[reverseColumns["Rain" + suffix]] = rain;
+                              r[reverseColumns["WeatherState" + suffix]] = weather;
+                              r[reverseColumns["Temperature" + suffix]] = temperature;
+                            }
+                            database.exec(`INSERT INTO Races SELECT ${r.join(",")} WHERE NOT EXISTS (SELECT 1 FROM Races WHERE Day = ${r[reverseColumns.Day]});`);
+                            refresh();
+                          }}
+                        >
+                          <CopyAll fontSize="small" />
+                        </button>
+                      </div>
+                    </td>
+                    {weatherConfigs.map((config) => (
+                      <td key={`${row.RaceID}-${config.field}`} className="border-b border-white/5 px-2 py-2 text-center text-sm text-slate-200">
+                        {config.field.startsWith("WeatherState")
+                          ? renderWeatherCell(row, config.field)
+                          : renderTemperatureCell(row, config.field)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

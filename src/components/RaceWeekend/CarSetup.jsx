@@ -1,4 +1,5 @@
 import {TeamName} from "@/components/Localization/Localization";
+import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
 import {circuitNames, countryNames, getDriverName} from "@/js/localization";
 import {
   Button,
@@ -9,28 +10,7 @@ import {
 import * as React from "react";
 import {useContext, useEffect, useMemo, useState} from "react";
 import {repack} from "@/js/Parser";
-import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext} from "@/js/Contexts";
-
-const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
-  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
-  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
-};
-
-function getOfficialTeamLogo(version, teamId) {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) return null;
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
-}
+import {BasicInfoContext, DatabaseContext, EnvContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
 
 export const CarSetupParams = [
   {
@@ -98,6 +78,7 @@ export default function CarSetup() {
   const {version, gameVersion, careerSaveMetadata} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
+  const {logoStyle = "colored"} = useContext(UiSettingsContext);
 
   const [rows, setRows] = useState([]);
   const [teamOnly, setTeamOnly] = useState(false);
@@ -225,11 +206,11 @@ export default function CarSetup() {
                 <div className="flex min-w-0 items-start gap-3">
                   {((row.TeamID >= 32 && customTeamLogoBase64)
                     ? `data:image/png;base64,${customTeamLogoBase64}`
-                    : getOfficialTeamLogo(version, row.TeamID)) ? (
+                    : getOfficialTeamLogo(version, row.TeamID, logoStyle)) ? (
                     <img
                       src={(row.TeamID >= 32 && customTeamLogoBase64)
                         ? `data:image/png;base64,${customTeamLogoBase64}`
-                        : getOfficialTeamLogo(version, row.TeamID)}
+                        : getOfficialTeamLogo(version, row.TeamID, logoStyle)}
                       alt=""
                       className="mt-0.5 h-8 w-8 shrink-0 object-contain"
                     />

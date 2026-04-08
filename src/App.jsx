@@ -7,6 +7,8 @@ import {
   DatabaseContext,
   EnvContext,
   MetadataContext,
+  UiSettingsContext,
+  UiSettingsUpdaterContext,
 } from "@/js/Contexts";
 import {
   analyzeFileToDatabase,
@@ -271,6 +273,15 @@ export default function App() {
   const [haveBackup, setHaveBackup] = useState(false);
   const [filePath, setFilePath] = useState("");
   const [basicInfo, setBasicInfo] = useState(null);
+  const [uiSettings, setUiSettings] = useState(() => {
+    if (typeof window === "undefined") {
+      return { logoStyle: "colored" };
+    }
+    const savedLogoStyle = window.localStorage.getItem("f1manager.logoStyle");
+    return {
+      logoStyle: savedLogoStyle === "white" ? "white" : "colored",
+    };
+  });
 
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
@@ -324,58 +335,70 @@ export default function App() {
     <DatabaseContext.Provider value={db}>
       <MetadataContext.Provider value={metadata}>
         <BasicInfoContext.Provider value={basicInfo}>
-          <ThemeProvider theme={theme}>
-            <Helmet>
-              <meta name="viewport" content="initial-scale=1, width=device-width"/>
-              <title>F1 Manager Save Browser</title>
-              <meta name="description" content="F1 Manager Save Browser by ieb"/>
-              <link rel="icon" href="/favicon.ico"/>
-            </Helmet>
-            <SnackbarProvider
-              maxSnack={10}
-              anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-            >
-              <CssBaseline />
-              {
-                loaded ? (
-                  <BasicInfoUpdaterContext.Provider value={({ metadata }) => {
-                    if (metadata) {
-                      metadata = {
-                        ...metadata,
-                        ...parseGvasProps(metadata.gvasMeta.Properties),
-                      };
-                      setMetadata(metadata);
-                    }
-                    updateBasicInfo()
-                  }}>
-                    <AppShell
-                      fullWidth={fullWidth}
-                      setFullWidth={setFullWidth}
-                      db={db}
-                      setDb={setDb}
-                      metadata={metadata}
-                      setMetadata={setMetadata}
-                      inApp={inApp}
-                      setInApp={setInApp}
-                      haveBackup={haveBackup}
-                      setHaveBackup={setHaveBackup}
-                      filePath={filePath}
-                      setFilePath={setFilePath}
-                      basicInfo={basicInfo}
-                      setBasicInfo={setBasicInfo}
-                      refresh={refresh}
-                    />
-                  </BasicInfoUpdaterContext.Provider>
-                ) : (
-                  <main className="w-full px-4 md:px-6">
-                    <Typography variant="h5" component="h5">
-                      Loading Database parser. Please wait.
-                    </Typography>
-                  </main>
-                )
-              }
-            </SnackbarProvider>
-          </ThemeProvider>
+          <UiSettingsContext.Provider value={uiSettings}>
+            <UiSettingsUpdaterContext.Provider value={(nextSettings) => {
+              setUiSettings((current) => {
+                const resolved = typeof nextSettings === "function"
+                  ? nextSettings(current)
+                  : { ...current, ...nextSettings };
+                window.localStorage.setItem("f1manager.logoStyle", resolved.logoStyle === "white" ? "white" : "colored");
+                return resolved;
+              });
+            }}>
+              <ThemeProvider theme={theme}>
+                <Helmet>
+                  <meta name="viewport" content="initial-scale=1, width=device-width"/>
+                  <title>F1 Manager Save Browser</title>
+                  <meta name="description" content="F1 Manager Save Browser by ieb"/>
+                  <link rel="icon" href="/favicon.ico"/>
+                </Helmet>
+                <SnackbarProvider
+                  maxSnack={10}
+                  anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                >
+                  <CssBaseline />
+                  {
+                    loaded ? (
+                      <BasicInfoUpdaterContext.Provider value={({ metadata }) => {
+                        if (metadata) {
+                          metadata = {
+                            ...metadata,
+                            ...parseGvasProps(metadata.gvasMeta.Properties),
+                          };
+                          setMetadata(metadata);
+                        }
+                        updateBasicInfo()
+                      }}>
+                        <AppShell
+                          fullWidth={fullWidth}
+                          setFullWidth={setFullWidth}
+                          db={db}
+                          setDb={setDb}
+                          metadata={metadata}
+                          setMetadata={setMetadata}
+                          inApp={inApp}
+                          setInApp={setInApp}
+                          haveBackup={haveBackup}
+                          setHaveBackup={setHaveBackup}
+                          filePath={filePath}
+                          setFilePath={setFilePath}
+                          basicInfo={basicInfo}
+                          setBasicInfo={setBasicInfo}
+                          refresh={refresh}
+                        />
+                      </BasicInfoUpdaterContext.Provider>
+                    ) : (
+                      <main className="w-full px-4 md:px-6">
+                        <Typography variant="h5" component="h5">
+                          Loading Database parser. Please wait.
+                        </Typography>
+                      </main>
+                    )
+                  }
+                </SnackbarProvider>
+              </ThemeProvider>
+            </UiSettingsUpdaterContext.Provider>
+          </UiSettingsContext.Provider>
         </BasicInfoContext.Provider>
       </MetadataContext.Provider>
     </DatabaseContext.Provider>

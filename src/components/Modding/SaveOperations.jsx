@@ -2,7 +2,8 @@ import {
   BasicInfoContext,
   BasicInfoUpdaterContext,
   DatabaseContext,
-  MetadataContext
+  MetadataContext,
+  UiSettingsContext
 } from "@/js/Contexts";
 import {
   circuitNames,
@@ -16,6 +17,7 @@ import {
 } from "@/js/localization";
 import { getExistingTableSet, recalculateRaceStandings } from "@/components/Customize/Player/timeMachineUtils";
 import { currencyFormatter } from "@/components/Finance/utils";
+import { getOfficialTeamLogo } from "@/components/Common/teamLogos";
 import { DataGrid } from "@mui/x-data-grid";
 import { Alert, AlertTitle, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -46,32 +48,11 @@ const eventTypeLabels = {
   6: "Part Researched",
 };
 
-const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
-  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
-  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
-};
-
 const getTeamDisplayName = (teamMap, teamId, version) => {
   if (teamId > 31 && teamMap?.[teamId]?.TeamNameLocKey) {
     return resolveLiteral(teamMap[teamId].TeamNameLocKey);
   }
   return teamNames(teamId, version);
-};
-
-const getOfficialTeamLogo = (version, teamId) => {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) return null;
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
 };
 
 const readRows = (database, query, params = {}) => {
@@ -89,9 +70,120 @@ const clampPercentage = (value, max) => {
   return Math.max(0, Math.min(100, (value / max) * 100));
 };
 
-function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, nextRaceName, onRefresh, teamId }) {
+function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, nextRaceName, onRefresh, teamId, mode = "modern", legacyObligations = [], legacyIncentives = [] }) {
   const database = useContext(DatabaseContext);
   const { enqueueSnackbar } = useSnackbar();
+
+  if (mode === "legacy") {
+    const acceptedObligations = legacyObligations.filter((row) => Number(row.Accepted));
+    const achievedIncentives = legacyIncentives.filter((row) => Number(row.Achieved));
+    const pendingIncentives = legacyIncentives.filter((row) => !Number(row.Achieved));
+
+    return (
+      <div className="grid gap-4">
+        <section className="border border-white/10 bg-white/[0.02] p-5">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Commercial Ops</div>
+              <h2 className="mt-2 text-lg font-bold text-white">Legacy Sponsorship Manager</h2>
+              <p className="mt-2 max-w-[880px] text-sm text-slate-400">
+                F1 Manager 2023 uses obligations plus guarantees and incentives instead of active sponsor slots. This view keeps that older structure readable.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[440px]">
+              {[
+                { label: "Accepted", value: acceptedObligations.length },
+                { label: "All Obligations", value: legacyObligations.length },
+                { label: "Achieved", value: achievedIncentives.length },
+                { label: "Pending", value: pendingIncentives.length },
+              ].map((item) => (
+                <div key={item.label} className="border border-white/10 bg-black/10 p-3">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{item.label}</div>
+                  <div className="mt-1 text-base font-semibold text-white">{item.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border border-white/10 bg-white/[0.015] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Contract Obligations</div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {legacyObligations.map((row) => {
+              const progressPct = row.Quantity > 0 ? clampPercentage(Number(row.Progress || 0), Number(row.Quantity || 0)) : 0;
+              return (
+                <div key={`legacy-obligation-${row.id}`} className="border border-white/10 bg-black/10 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-white">{row.Label}</div>
+                      <div className="mt-1 text-xs text-slate-500">{row.UnitLabel}</div>
+                    </div>
+                    <div className={`border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${Number(row.Accepted) ? "border-emerald-300/30 bg-emerald-500/[0.08] text-emerald-100" : "border-white/10 bg-white/[0.03] text-slate-300"}`}>
+                      {Number(row.Accepted) ? "Accepted" : "Not accepted"}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Target</div>
+                      <div className="mt-1 font-semibold text-white">{row.Quantity}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Progress</div>
+                      <div className="mt-1 font-semibold text-white">{row.Progress}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Minimum</div>
+                      <div className="mt-1 font-semibold text-white">{row.MandatoryMin}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 border border-white/10 bg-white/[0.03]">
+                    <div className="h-full bg-[linear-gradient(90deg,#7dd3fc,#38bdf8)]" style={{ width: `${progressPct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="border border-white/10 bg-white/[0.015]">
+          <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Guarantees & Incentives</div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-white/[0.04]">
+                  {["Race", "Condition", "Target", "Type", "Status"].map((header) => (
+                    <th key={header} className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {legacyIncentives.map((row) => (
+                  <tr key={`legacy-incentive-${row.id}`} className="bg-white/[0.01] odd:bg-white/[0.03]">
+                    <td className="border-b border-white/5 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        {row.TrackID ? <img src={`/flags/${raceFlags[row.TrackID]}.svg`} alt="" className="h-[16px] w-6 border border-white/10 object-cover" /> : null}
+                        <span className="text-sm text-white">{row.TrackID ? (raceAbbrevs[row.TrackID] || row.RaceID) : row.RaceID}</span>
+                      </div>
+                    </td>
+                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-200">{row.Label}</td>
+                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-300">{row.TargetText}</td>
+                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-300">{row.IsIncentive ? "Incentive" : "Guarantee"}</td>
+                    <td className="border-b border-white/5 px-3 py-2">
+                      <span className={`border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${row.Achieved ? "border-emerald-300/30 bg-emerald-500/[0.08] text-emerald-100" : "border-amber-300/30 bg-amber-500/[0.08] text-amber-100"}`}>
+                        {row.Achieved ? "Achieved" : "Pending"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   const titleSponsor = rows.find((row) => Number(row.SponsorType) === 0) || null;
   const secondarySponsors = rows.filter((row) => Number(row.SponsorType) === 1).sort((a, b) => Number(a.Slot) - Number(b.Slot));
@@ -311,6 +403,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
   const { version, careerSaveMetadata } = useContext(MetadataContext);
+  const { logoStyle = "colored" } = useContext(UiSettingsContext);
   const { enqueueSnackbar } = useSnackbar();
   const { player, teamMap, teamIds } = basicInfo;
   const [displayTeamId, setDisplayTeamId] = useState(teamId);
@@ -325,7 +418,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
   const selectedTeamLabel = getTeamDisplayName(teamMap, displayTeamId, version);
   const selectedTeamLogo = displayTeamId >= 32 && (careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64)
     ? `data:image/png;base64,${careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64}`
-    : getOfficialTeamLogo(version, displayTeamId);
+    : getOfficialTeamLogo(version, displayTeamId, logoStyle);
   const isOwnTeam = displayTeamId === teamId;
   const currentConfidence = confidenceRows.find((row) => row.Season === currentSeason)?.Confidence ?? "-";
   const selectedObjectiveRows = objectiveRows.filter((row) => row.TeamID === displayTeamId);
@@ -486,7 +579,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
                 const selected = optionTeamId === displayTeamId;
                 const logoSrc = optionTeamId >= 32 && (careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64)
                   ? `data:image/png;base64,${careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64}`
-                  : getOfficialTeamLogo(version, optionTeamId);
+                  : getOfficialTeamLogo(version, optionTeamId, logoStyle);
                 return (
                   <button
                     key={optionTeamId}
@@ -1110,6 +1203,9 @@ export default function SaveOperations({
   const [availableSponsorRows, setAvailableSponsorRows] = useState([]);
   const [secondarySponsorRows, setSecondarySponsorRows] = useState([]);
   const [bonusRows, setBonusRows] = useState([]);
+  const [sponsorshipMode, setSponsorshipMode] = useState("modern");
+  const [legacyObligationRows, setLegacyObligationRows] = useState([]);
+  const [legacyIncentiveRows, setLegacyIncentiveRows] = useState([]);
   const [confidenceRows, setConfidenceRows] = useState([]);
   const [objectiveRows, setObjectiveRows] = useState([]);
   const [ratingRows, setRatingRows] = useState([]);
@@ -1137,44 +1233,115 @@ export default function SaveOperations({
       return;
     }
 
-    const activeSponsors = readRows(
-      database,
-      `SELECT rowid AS id, TeamID, SponsorID, SponsorType, Engagement, Slot
-       FROM Sponsorship_ActivePackages
-       WHERE TeamID = :teamId
-       ORDER BY SponsorType ASC, Slot ASC, SponsorID ASC`,
-      {
-        ":teamId": teamId,
-      }
-    );
-    setSponsorshipRows(activeSponsors);
+    const existingTables = getExistingTableSet(database);
+    const hasModernSponsorship = existingTables.has("Sponsorship_ActivePackages");
 
-    const availableSponsors = readRows(
-      database,
-      `SELECT rowid AS id, TeamID, SponsorID, SponsorType
-       FROM Sponsorship_AvailablePackages
-       WHERE TeamID = :teamId
-       ORDER BY SponsorType ASC, SponsorID ASC`,
-      {
-        ":teamId": teamId,
-      }
-    );
-    setAvailableSponsorRows(availableSponsors);
+    setSponsorshipMode(hasModernSponsorship ? "modern" : "legacy");
 
-    const secondaryBonuses = readRows(
-      database,
-      `SELECT rowid AS id, TeamID, SponsorID, ActiveEffectID, AffiliateID
-       FROM Sponsorship_ActivePackages_SecondaryBonuses
-       WHERE TeamID = :teamId
-       ORDER BY SponsorID ASC, ActiveEffectID ASC`,
-      {
-        ":teamId": teamId,
-      }
-    ).map((row) => ({
-      ...row,
-      Affiliate: row.AffiliateID ? getDriverName(driverMap[row.AffiliateID]) : "-",
-    }));
-    setSecondarySponsorRows(secondaryBonuses);
+    if (hasModernSponsorship) {
+      const activeSponsors = readRows(
+        database,
+        `SELECT rowid AS id, TeamID, SponsorID, SponsorType, Engagement, Slot
+         FROM Sponsorship_ActivePackages
+         WHERE TeamID = :teamId
+         ORDER BY SponsorType ASC, Slot ASC, SponsorID ASC`,
+        {
+          ":teamId": teamId,
+        }
+      );
+      setSponsorshipRows(activeSponsors);
+
+      const availableSponsors = readRows(
+        database,
+        `SELECT rowid AS id, TeamID, SponsorID, SponsorType
+         FROM Sponsorship_AvailablePackages
+         WHERE TeamID = :teamId
+         ORDER BY SponsorType ASC, SponsorID ASC`,
+        {
+          ":teamId": teamId,
+        }
+      );
+      setAvailableSponsorRows(availableSponsors);
+
+      const secondaryBonuses = readRows(
+        database,
+        `SELECT rowid AS id, TeamID, SponsorID, ActiveEffectID, AffiliateID
+         FROM Sponsorship_ActivePackages_SecondaryBonuses
+         WHERE TeamID = :teamId
+         ORDER BY SponsorID ASC, ActiveEffectID ASC`,
+        {
+          ":teamId": teamId,
+        }
+      ).map((row) => ({
+        ...row,
+        Affiliate: row.AffiliateID ? getDriverName(driverMap[row.AffiliateID]) : "-",
+      }));
+      setSecondarySponsorRows(secondaryBonuses);
+    } else {
+      setSponsorshipRows([]);
+      setAvailableSponsorRows([]);
+      setSecondarySponsorRows([]);
+
+      const legacyObligations = readRows(
+        database,
+        `SELECT Sponsorship_ContractObligations.TeamID,
+                Sponsorship_ContractObligations.ObligationID,
+                Sponsorship_ContractObligations.Accepted,
+                Sponsorship_ContractObligations.Quantity,
+                Sponsorship_ContractObligations.Progress,
+                Sponsorship_ContractObligations.MandatoryMin,
+                Sponsorship_ContractObligations.PosInTeam,
+                Sponsorship_Enum_Obligations.LocKey,
+                Sponsorship_Enum_Obligations.UnitTypeLocKey
+         FROM Sponsorship_ContractObligations
+         LEFT JOIN Sponsorship_Enum_Obligations
+           ON Sponsorship_Enum_Obligations.ObligationID = Sponsorship_ContractObligations.ObligationID
+         WHERE Sponsorship_ContractObligations.TeamID = :teamId
+         ORDER BY Sponsorship_ContractObligations.Accepted DESC, Sponsorship_ContractObligations.ObligationID ASC`,
+        { ":teamId": teamId }
+      ).map((row) => ({
+        ...row,
+        id: `${row.TeamID}-${row.ObligationID}`,
+        Label: resolveLiteral(row.LocKey || row.ObligationID),
+        UnitLabel: resolveLiteral(row.UnitTypeLocKey || ""),
+      }));
+      setLegacyObligationRows(legacyObligations);
+
+      const legacyIncentives = readRows(
+        database,
+        `SELECT Sponsorship_GuaranteesAndIncentives.TeamID,
+                Sponsorship_GuaranteesAndIncentives.ConditionID,
+                Sponsorship_GuaranteesAndIncentives.RaceID,
+                Sponsorship_GuaranteesAndIncentives.IsIncentive,
+                Sponsorship_GuaranteesAndIncentives.Achieved,
+                Sponsorship_GuaranteesAndIncentives.NumDrivers,
+                Sponsorship_GuaranteesAndIncentives.RacePosition,
+                Sponsorship_GuaranteesAndIncentives.StreakLength,
+                Sponsorship_GuaranteesAndIncentives.Driver1TargetPos,
+                Sponsorship_GuaranteesAndIncentives.Driver2TargetPos,
+                Sponsorship_Enum_Conditions.LocKey,
+                Races.TrackID
+         FROM Sponsorship_GuaranteesAndIncentives
+         LEFT JOIN Sponsorship_Enum_Conditions
+           ON Sponsorship_Enum_Conditions.ConditionID = Sponsorship_GuaranteesAndIncentives.ConditionID
+         LEFT JOIN Races
+           ON Races.RaceID = Sponsorship_GuaranteesAndIncentives.RaceID
+         WHERE Sponsorship_GuaranteesAndIncentives.TeamID = :teamId
+         ORDER BY Sponsorship_GuaranteesAndIncentives.RaceID DESC, Sponsorship_GuaranteesAndIncentives.ConditionID ASC`,
+        { ":teamId": teamId }
+      ).map((row) => ({
+        ...row,
+        id: `${row.TeamID}-${row.ConditionID}-${row.RaceID}`,
+        Label: resolveLiteral(row.LocKey || row.ConditionID),
+        TargetText:
+          Number(row.RacePosition) > 0 ? `Finish P${row.RacePosition}` :
+          Number(row.StreakLength) > 0 ? `${row.StreakLength}-race streak` :
+          Number(row.Driver1TargetPos) > 0 || Number(row.Driver2TargetPos) > 0
+            ? `D1 P${row.Driver1TargetPos || "-"} · D2 P${row.Driver2TargetPos || "-"}`
+            : Number(row.NumDrivers) > 0 ? `${row.NumDrivers} driver target` : "Condition target",
+      }));
+      setLegacyIncentiveRows(legacyIncentives);
+    }
 
     const contractTypeRows = readRows(
       database,
@@ -1261,15 +1428,27 @@ export default function SaveOperations({
     }));
     setObjectiveRows(objectiveData);
 
-    const ratingData = readRows(
-      database,
-      `SELECT *
-       FROM Board_TeamRating
-       ORDER BY SeasonID DESC`
-    ).map((row) => ({
-      ...row,
-      id: `${row.TeamID}-${row.SeasonID}`,
-    }));
+    const ratingData = existingTables.has("Board_TeamRating")
+      ? readRows(
+        database,
+        `SELECT *
+         FROM Board_TeamRating
+         ORDER BY SeasonID DESC`
+      ).map((row) => ({
+        ...row,
+        PtsFromNewTeamHype: Number(row.PtsFromNewTeamHype || 0),
+        id: `${row.TeamID}-${row.SeasonID}`,
+      }))
+      : readRows(
+        database,
+        `SELECT *
+         FROM Board_Prestige
+         ORDER BY SeasonID DESC`
+      ).map((row) => ({
+        ...row,
+        PtsFromNewTeamHype: 0,
+        id: `${row.TeamID}-${row.SeasonID}`,
+      }));
     setRatingRows(ratingData);
 
     const boardPaymentData = readRows(
@@ -1423,6 +1602,9 @@ export default function SaveOperations({
           nextRaceName={nextRaceName}
           onRefresh={refresh}
           teamId={teamId}
+          mode={sponsorshipMode}
+          legacyObligations={legacyObligationRows}
+          legacyIncentives={legacyIncentiveRows}
         />
       ),
     },

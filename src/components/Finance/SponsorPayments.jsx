@@ -1,4 +1,5 @@
 import {currencyFormatter} from "@/components/Finance/utils";
+import { getExistingTableSet } from "@/components/Customize/Player/timeMachineUtils";
 import {statRenderer} from "@/components/Parts/consts_2023";
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
@@ -20,7 +21,7 @@ import {
 } from "@mui/material";
 import {DataGrid, GridActionsCellItem} from "@mui/x-data-grid";
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
+import {useContext, useEffect, useMemo, useState} from "react";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {TeamName} from "../Localization/Localization";
 
@@ -31,22 +32,31 @@ export default function SponsorPayments() {
   const {player, currentSeasonRaces} = useContext(BasicInfoContext)
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
+  const existingTables = useMemo(() => getExistingTableSet(database), [database]);
 
   const [prestiges, setPrestiges] = useState([]);
   const [SponsorshipValues, setSponsorshipValues] = useState([]);
-  
-  if (version === 4) {
-    return null;
-  }
+
+  const hasSponsorPaymentTables = existingTables.has("Sponsorship_Values")
+    && existingTables.has("Sponsorship_Constants")
+    && existingTables.has("Sponsorship_ContractObligations")
+    && existingTables.has("Sponsorship_Enum_Obligations")
+    && (existingTables.has("Board_Prestige") || existingTables.has("Board_TeamRating"));
 
   const season = player.CurrentSeason;
 
   const races = {
     2: 22,
     3: 23
-  }[version]; // based on original race count
+  }[version] || currentSeasonRaces.length || 24;
 
   useEffect(() => {
+    if (!hasSponsorPaymentTables) {
+      setSponsorshipValues([]);
+      setPrestiges([]);
+      return;
+    }
+
     const sponsorValues = database.getAllRows(`SELECT * FROM Sponsorship_Values ORDER BY "StandingPosition" ASC`);
     setSponsorshipValues(sponsorValues);
     const sponsorConsts =  database.getAllRows(`SELECT * FROM Sponsorship_Constants`)[0];
@@ -65,7 +75,8 @@ export default function SponsorPayments() {
     // });
     setPrestiges(
       database.getAllRows(
-        `SELECT Board_Prestige.TeamID, PtsFromConstructorResults + PtsFromDriverResults + PtsFromSeasonsEntered + PtsFromChampionshipsWon AS Prestige,
+        `${existingTables.has("Board_Prestige")
+          ? `SELECT Board_Prestige.TeamID, PtsFromConstructorResults + PtsFromDriverResults + PtsFromSeasonsEntered + PtsFromChampionshipsWon AS Prestige,
                    PtsFromConstructorResults, PtsFromDriverResults, PtsFromSeasonsEntered, PtsFromChampionshipsWon,
                    ObligationReward, MerchandiseNum, MerchReward
                    FROM Board_Prestige LEFT JOIN (
@@ -80,6 +91,23 @@ export default function SponsorPayments() {
                      ON Sponsorship_ContractObligations.ObligationID = Sponsorship_Enum_Obligations.ObligationID
                      WHERE Accepted = 1 AND Sponsorship_ContractObligations.ObligationID = 7 GROUP BY TeamID ORDER BY TeamID ASC
                   ) ob2 ON ob2.TeamID = Board_Prestige.TeamID WHERE ( SeasonID = ${season - 1} ) ORDER BY Prestige DESC`
+          : `SELECT Board_TeamRating.TeamID,
+                    PtsFromNewTeamHype + PtsFromDriverResults + PtsFromConstructorResults + PtsFromChampionshipsWon + PtsFromSeasonsEntered AS Prestige,
+                    PtsFromConstructorResults, PtsFromDriverResults, PtsFromSeasonsEntered, PtsFromChampionshipsWon,
+                    ObligationReward, MerchandiseNum, MerchReward
+             FROM Board_TeamRating LEFT JOIN (
+                   SELECT TeamID, SUM(Quantity * UnitReward) as ObligationReward
+                   FROM Sponsorship_ContractObligations LEFT JOIN Sponsorship_Enum_Obligations
+                   ON Sponsorship_ContractObligations.ObligationID = Sponsorship_Enum_Obligations.ObligationID
+                   WHERE Accepted = 1 AND Sponsorship_ContractObligations.ObligationID != 7 GROUP BY TeamID ORDER BY TeamID ASC
+                ) ob1 ON ob1.TeamID = Board_TeamRating.TeamID
+             LEFT JOIN (
+                   SELECT TeamID, SUM(Quantity * UnitReward) as MerchReward, SUM(Quantity) as MerchandiseNum
+                   FROM Sponsorship_ContractObligations LEFT JOIN Sponsorship_Enum_Obligations
+                   ON Sponsorship_ContractObligations.ObligationID = Sponsorship_Enum_Obligations.ObligationID
+                   WHERE Accepted = 1 AND Sponsorship_ContractObligations.ObligationID = 7 GROUP BY TeamID ORDER BY TeamID ASC
+                ) ob2 ON ob2.TeamID = Board_TeamRating.TeamID
+             WHERE ( SeasonID = ${season - 1} ) ORDER BY Prestige DESC`}`
       ).map((x, _idx) => {
 
         const SponsorPackage = sponsorValues[_idx].SponsorValue;
@@ -107,7 +135,7 @@ export default function SponsorPayments() {
       })
     );
 
-  }, [database, season, updated])
+  }, [database, existingTables, hasSponsorPaymentTables, season, updated])
 
 
   const setSponsorshipValueBySlider = (initialValue, targetGap) => {
@@ -118,7 +146,7 @@ export default function SponsorPayments() {
       })
   }
 
-  if (!SponsorshipValues.length) return null;
+  if (!hasSponsorPaymentTables || !SponsorshipValues.length) return null;
   const initialValue = SponsorshipValues[0].SponsorValue;
   const paymentGap = Math.round((SponsorshipValues[0].SponsorValue - SponsorshipValues[9].SponsorValue) / 9);
   const minSponsorValueFor1st = 5000000;

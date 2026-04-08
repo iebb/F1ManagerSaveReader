@@ -7,8 +7,6 @@ import {BasicInfoContext, MetadataContext} from "@/js/Contexts";
 import Board from "@/pages/board";
 import Facilities from "@/pages/facilities";
 import F1Results from "@/pages/f1-results";
-import F2Results from "@/pages/f2-results";
-import F3Results from "@/pages/f3-results";
 import Calendar from "@/pages/calendar";
 import Expertise from "@/pages/expertise";
 import Finance from "@/pages/finance";
@@ -16,7 +14,9 @@ import Inbox from "@/pages/inbox";
 import RaceResults from "@/pages/race-results";
 import Regulations from "@/pages/regulations";
 import RaceControl from "@/pages/race-control";
+import Settings from "@/pages/settings";
 import Sporting from "@/pages/sporting";
+import Sponsorship from "@/pages/sponsorship";
 import TeamTools from "@/pages/team-tools";
 import Team from "@/pages/team";
 import WeekendSetup from "@/pages/weekend-setup";
@@ -30,12 +30,14 @@ import Groups2Icon from "@mui/icons-material/Groups2";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 import TuneIcon from "@mui/icons-material/Tune";
 import TodayIcon from "@mui/icons-material/Today";
 import RuleIcon from "@mui/icons-material/Rule";
 import SportsScoreIcon from "@mui/icons-material/SportsScore";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import FlagIcon from "@mui/icons-material/Flag";
+import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import {useContext, useMemo, useState} from "react";
 
 const sections = [
@@ -51,9 +53,7 @@ const sections = [
     label: "Season",
     items: [
       {name: "Calendar", icon: <TodayIcon fontSize="small" />, tab: <Calendar />},
-      {name: "F1 Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F1Results />},
-      {name: "F2 Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F2Results />, minVersion: "3.0"},
-      {name: "F3 Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F3Results />, minVersion: "3.0"},
+      {name: "Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F1Results />},
       {name: "Season Summary", icon: <SportsScoreIcon fontSize="small" />, tab: <RaceResults />},
       {name: "Regulations", icon: <RuleIcon fontSize="small" />, tab: <Regulations />},
     ],
@@ -61,7 +61,8 @@ const sections = [
   {
     label: "Team",
     items: [
-      {name: "Team", icon: <Groups2Icon fontSize="small" />, tab: <Team />},
+      {name: "Contracts", icon: <Groups2Icon fontSize="small" />, tab: <Team />},
+      {name: "Sponsorship", icon: <StorefrontIcon fontSize="small" />, tab: <Sponsorship />},
       {name: "Logo", icon: <EditNoteIcon fontSize="small" />, tab: <Customize />, minVersion: "4.0"},
       {name: "Finance", icon: <PaymentsIcon fontSize="small" />, tab: <Finance />},
       {name: "Board", icon: <InsightsIcon fontSize="small" />, tab: <Board />},
@@ -82,6 +83,7 @@ const sections = [
     items: [
       {name: "Inbox", icon: <MailOutlineIcon fontSize="small" />, tab: <Inbox />},
       {name: "Tools", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
+      {name: "Settings", icon: <SettingsSuggestIcon fontSize="small" />, tab: <Settings />},
       {name: "Plugins", icon: <AccountTreeIcon fontSize="small" />, tab: <Plugins />},
     ],
   },

@@ -1,4 +1,5 @@
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {BasicInfoContext, DatabaseContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
+import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
 import {countryNames, getDriverName, raceFlags, resolveLiteral, teamNames} from "@/js/localization";
 import {getCountryFlag} from "@/js/localization/ISOCountries";
 import * as React from "react";
@@ -33,29 +34,8 @@ const grandPrixNames = {
   26: "Qatar Grand Prix",
 };
 
-const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-  2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-  2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
-  2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
-  2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
-};
-
 function getGpName(trackId) {
   return grandPrixNames[trackId] || `${countryNames[trackId] || "Unknown"} Grand Prix`;
-}
-
-function getOfficialTeamLogo(version, teamId) {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) return null;
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
 }
 
 function getNumericValue(row, keys) {
@@ -176,6 +156,7 @@ export default function SeasonResultsSummary() {
   const basicInfo = useContext(BasicInfoContext);
   const database = useContext(DatabaseContext);
   const {version, careerSaveMetadata} = useContext(MetadataContext);
+  const {logoStyle = "colored"} = useContext(UiSettingsContext);
   const {player, driverMap, teamMap} = basicInfo;
   const [season, setSeason] = useState(player.CurrentSeason);
   const [selectedRaceId, setSelectedRaceId] = useState(null);
@@ -206,7 +187,7 @@ export default function SeasonResultsSummary() {
         : teamNames(teamId, version),
       logo: teamId >= 32 && customTeamLogoBase64
         ? `data:image/png;base64,${customTeamLogoBase64}`
-        : getOfficialTeamLogo(version, teamId),
+        : getOfficialTeamLogo(version, teamId, logoStyle),
     };
   };
 
@@ -270,18 +251,26 @@ export default function SeasonResultsSummary() {
 
     const raceSchedule = (seasonRaces.length ? seasonRaces : fallbackRaceIds).map((race, index) => {
       const raceResults = raceResultsByRace[race.RaceID] || [];
+      const driverCount = new Set(
+        raceResults
+          .map((result) => Number(result.DriverID))
+          .filter((driverId) => Number.isFinite(driverId) && driverId > 0)
+      ).size;
       const poleResult = raceResults.find((result) => Number(result.StartingPos) === 1 || Number(result.GridPosition) === 1);
       const winner = raceResults.find((result) => Number(result.FinishingPos) === 1 && !Number(result.DNF))
         || raceResults.find((result) => Number(result.FinishingPos) === 1);
-      const fastest = raceResults
-        .filter((result) => Number(result.FastestLap) > 0)
-        .sort((a, b) => Number(a.FastestLap) - Number(b.FastestLap))[0];
+      const fastest = driverCount >= 10
+        ? raceResults
+          .filter((result) => Number(result.FastestLap) > 0)
+          .sort((a, b) => Number(a.FastestLap) - Number(b.FastestLap))[0]
+        : null;
 
       return {
         id: race.RaceID,
         round: index + 1,
         race,
         raceResults,
+        driverCount,
         pole: getDriver(poleResult?.DriverID),
         fastest: getDriver(fastest?.DriverID),
         winner: getDriver(winner?.DriverID),
@@ -405,13 +394,17 @@ export default function SeasonResultsSummary() {
                 <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.winner} /></td>
                 <td className="border border-white/10 px-3 py-2"><TeamInline team={row.constructor} /></td>
                 <td className="border border-white/10 px-3 py-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => openRaceReport(row.id)}
-                    className="border border-white/10 bg-black/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.04]"
-                  >
-                    Report
-                  </button>
+                  {row.driverCount >= 10 ? (
+                    <button
+                      type="button"
+                      onClick={() => openRaceReport(row.id)}
+                      className="border border-white/10 bg-black/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.04]"
+                    >
+                      Report
+                    </button>
+                  ) : (
+                    <span className="text-sm text-slate-600">-</span>
+                  )}
                 </td>
               </tr>
             ))}

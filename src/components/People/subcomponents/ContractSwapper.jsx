@@ -1,4 +1,5 @@
-import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
+import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
 import {getDriverName, resolveLiteral, teamNames} from "@/js/localization";
 import {getCountryFlag} from "@/js/localization/ISOCountries";
 import {Autocomplete, Modal, TextField} from "@mui/material";
@@ -6,31 +7,11 @@ import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import {assignRandomRaceNumber, fireDriverContract, getStaff} from "../commons/drivers";
 
-const teamLogoAssets = import.meta.glob("../../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-  2023: {1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin"},
-  2024: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin"},
-  2025: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin"},
-  2026: {1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac"},
-};
-
-function getOfficialTeamLogo(version, teamId) {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) return null;
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../../assets/team-logos/${year}/${slug}.${extension}`] || null;
-}
-
 export default function ContractSwapper(props) {
   const { swapRow, setSwapRow, refresh } = props;
   const database = useContext(DatabaseContext);
   const {version, careerSaveMetadata} = useContext(MetadataContext)
+  const {logoStyle = "colored"} = useContext(UiSettingsContext);
   const basicInfo = useContext(BasicInfoContext);
   const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
   const { player, teamMap } = basicInfo;
@@ -75,7 +56,7 @@ export default function ContractSwapper(props) {
       : teamNames(teamId, version);
     const logo = teamId >= 32 && customTeamLogoBase64
       ? `data:image/png;base64,${customTeamLogoBase64}`
-      : getOfficialTeamLogo(version, teamId);
+      : getOfficialTeamLogo(version, teamId, logoStyle);
     return {name, logo};
   };
   const currentTeam = getTeamSummary(currentContract?.TeamID);

@@ -1,79 +1,11 @@
-import { BasicInfoContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
+import { BasicInfoContext, DatabaseContext, MetadataContext, UiSettingsContext } from "@/js/Contexts";
+import { getOfficialTeamLogo } from "@/components/Common/teamLogos";
 import { Edit, KeyboardDoubleArrowDown, KeyboardDoubleArrowUp, Refresh } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import { resolveLiteral, teamNames } from "@/js/localization";
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
 import TeamSize from "@/components/Staff/TeamSize";
-
-const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: {
-    1: "ferrari",
-    2: "mclaren",
-    3: "red-bull-racing",
-    4: "mercedes",
-    5: "alpine",
-    6: "williams",
-    7: "haas-f1-team",
-    8: "alphatauri",
-    9: "alfa-romeo",
-    10: "aston-martin",
-  },
-  2023: {
-    1: "ferrari",
-    2: "mclaren",
-    3: "red-bull-racing",
-    4: "mercedes",
-    5: "alpine",
-    6: "williams",
-    7: "haas-f1-team",
-    8: "alphatauri",
-    9: "alfa-romeo",
-    10: "aston-martin",
-  },
-  2024: {
-    1: "ferrari",
-    2: "mclaren",
-    3: "redbullracing",
-    4: "mercedes",
-    5: "alpine",
-    6: "williams",
-    7: "haas",
-    8: "rb",
-    9: "kicksauber",
-    10: "astonmartin",
-  },
-  2025: {
-    1: "ferrari",
-    2: "mclaren",
-    3: "redbullracing",
-    4: "mercedes",
-    5: "alpine",
-    6: "williams",
-    7: "haasf1team",
-    8: "racingbulls",
-    9: "kicksauber",
-    10: "astonmartin",
-  },
-  2026: {
-    1: "ferrari",
-    2: "mclaren",
-    3: "redbullracing",
-    4: "mercedes",
-    5: "alpine",
-    6: "williams",
-    7: "haasf1team",
-    8: "racingbulls",
-    9: "audi",
-    10: "astonmartin",
-    11: "cadillac",
-  },
-};
 
 export const BuildingsCategorized = [
   {
@@ -230,21 +162,11 @@ function FacilityActionButton({ label, title, disabled, onClick, children }) {
   );
 }
 
-function getOfficialTeamLogo(version, teamId) {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) {
-    return null;
-  }
-
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
-}
-
 export default function Facilities() {
 
   const database = useContext(DatabaseContext);
   const { version, careerSaveMetadata } = useContext(MetadataContext)
+  const { logoStyle = "colored" } = useContext(UiSettingsContext);
   const { teamIds, teamMap, player } = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
@@ -586,7 +508,7 @@ export default function Facilities() {
                 renderCell: ({ value }) => {
                   const logoSrc = value >= 32 && customTeamLogoBase64
                     ? `data:image/png;base64,${customTeamLogoBase64}`
-                    : getOfficialTeamLogo(version, value);
+                    : getOfficialTeamLogo(version, value, logoStyle);
                 return (
                   <div className="flex h-full items-center gap-2 py-1.5">
                     {logoSrc ? (

@@ -1,23 +1,21 @@
+import TeamIdentity from "@/components/Common/TeamIdentity";
+import { currencyFormatter } from "@/components/Finance/utils";
 import { getStaff } from "@/components/People/commons/drivers";
 import ContractSwapper from "@/components/People/subcomponents/ContractSwapper";
 import { BasicInfoContext, DatabaseContext, MetadataContext } from "@/js/Contexts";
-import { resolveLiteral, resolveName, resolveNameV4, teamNames } from "@/js/localization";
+import {
+  dayToDate,
+  formatDate,
+  formatISODateLocal,
+  localDateToDay,
+  resolveName,
+  resolveNameV4,
+  resolveLiteral,
+  teamNames,
+} from "@/js/localization";
 import { getCountryFlag } from "@/js/localization/ISOCountries";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useState } from "react";
-
-const teamLogoAssets = import.meta.glob("../../assets/team-logos/**/*.{png,webp}", {
-  eager: true,
-  import: "default",
-});
-
-const teamLogoSlugsByYear = {
-  2022: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2023: { 1: "ferrari", 2: "mclaren", 3: "red-bull-racing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas-f1-team", 8: "alphatauri", 9: "alfa-romeo", 10: "aston-martin" },
-  2024: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haas", 8: "rb", 9: "kicksauber", 10: "astonmartin" },
-  2025: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "kicksauber", 10: "astonmartin" },
-  2026: { 1: "ferrari", 2: "mclaren", 3: "redbullracing", 4: "mercedes", 5: "alpine", 6: "williams", 7: "haasf1team", 8: "racingbulls", 9: "audi", 10: "astonmartin", 11: "cadillac" },
-};
 
 const roleRows = [
   [
@@ -37,13 +35,16 @@ const roleRows = [
   ],
 ];
 
-function getOfficialTeamLogo(version, teamId) {
-  const year = Math.min(2026, Math.max(2022, version + 2020));
-  const slug = teamLogoSlugsByYear[year]?.[teamId];
-  if (!slug) return null;
-  const extension = year <= 2023 ? "png" : "webp";
-  return teamLogoAssets[`../../assets/team-logos/${year}/${slug}.${extension}`] || null;
-}
+const editableContractFields = [
+  { key: "Salary", label: "Salary", type: "currency", min: 0, step: 100000 },
+  { key: "StartingBonus", label: "Starting Bonus", type: "currency", min: 0, step: 100000 },
+  { key: "RaceBonus", label: "Race Bonus", type: "currency", min: 0, step: 10000 },
+  { key: "RaceBonusTargetPos", label: "Race Bonus Target", type: "number", min: 1, max: 30, step: 1 },
+  { key: "BreakoutClause", label: "Breakout Clause", type: "decimal", min: 0, max: 1, step: 0.01 },
+  { key: "AffiliateDualRoleClause", label: "Affiliate Dual Role", type: "toggle" },
+  { key: "StartDay", label: "Start Date", type: "date" },
+  { key: "EndSeason", label: "End Season", type: "number", min: 2022, max: 2100, step: 1 },
+];
 
 function getTeamTextStyle(teamId) {
   return { color: `rgb(var(--team${teamId}-triplet))` };
@@ -55,24 +56,188 @@ function resolveStaffName(version, staff) {
   return `${resolver(staff.FirstName)} ${resolver(staff.LastName)}`;
 }
 
-function RoleCard({ teamId, title, subtitle, person, onReplace, replaceDisabled = false, className = "" }) {
+function formatOrdinal(value) {
+  if (!Number.isFinite(Number(value))) {
+    return "—";
+  }
+  return `${value}${{
+    one: "st",
+    two: "nd",
+    few: "rd",
+    other: "th",
+  }[new Intl.PluralRules("en", { type: "ordinal" }).select(value)]}`;
+}
+
+function formatMoney(value) {
+  return Number.isFinite(Number(value)) ? currencyFormatter.format(Number(value)) : "—";
+}
+
+function formatContractDate(value) {
+  return Number.isFinite(Number(value)) && Number(value) > 0 ? formatDate(dayToDate(Number(value))) : "—";
+}
+
+function DetailStat({ label, value, tone = "text-white" }) {
+  return (
+    <div className="border border-white/10 bg-black/10 p-3">
+      <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{label}</div>
+      <div className={`mt-1 text-sm font-semibold ${tone}`}>{value}</div>
+    </div>
+  );
+}
+
+function ContractEditorModal({ editingContract, setEditingContract, onSave, currentSeason, editableFields }) {
+  if (!editingContract) {
+    return null;
+  }
+
+  const { person, form } = editingContract;
+
+  const updateField = (field, value) => {
+    setEditingContract((current) => ({
+      ...current,
+      form: {
+        ...current.form,
+        [field]: value,
+      },
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/75 p-4">
+      <div className="w-full max-w-[960px] border border-white/10 bg-[#0b1116] shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+        <div className="border-b border-white/10 px-5 py-4">
+          <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Contract Editor</div>
+          <div className="mt-2 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="truncate text-lg font-bold text-white">{person.name}</div>
+              <div className="mt-1 text-sm text-slate-400">
+                {editingContract.roleTitle} · {editingContract.teamLabel}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditingContract(null)}
+              className="border border-white/10 bg-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.04]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {editableFields.map((field) => {
+                const value = form[field.key];
+                return (
+                  <label key={field.key} className="grid gap-2">
+                    <span className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{field.label}</span>
+                    {field.type === "toggle" ? (
+                      <select
+                        value={Number(value) ? "1" : "0"}
+                        onChange={(event) => updateField(field.key, Number(event.target.value))}
+                        className="border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-sky-300/50"
+                      >
+                        <option value="0">Off</option>
+                        <option value="1">On</option>
+                      </select>
+                    ) : field.type === "date" ? (
+                      <input
+                        type="date"
+                        value={value}
+                        onChange={(event) => updateField(field.key, event.target.value)}
+                        className="border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-sky-300/50"
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        value={value}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        onChange={(event) => updateField(field.key, event.target.value)}
+                        className="border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-sky-300/50"
+                      />
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <DetailStat label="Position" value={editingContract.contract.PosInTeam ? `Slot ${editingContract.contract.PosInTeam}` : "—"} />
+            <DetailStat label="Contract Type" value={editingContract.contract.ContractType} />
+            <DetailStat label="Formula" value={editingContract.contract.Formula || "—"} />
+            <DetailStat label="Current Season" value={currentSeason} />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-5 py-4">
+          <div className="text-sm text-slate-500">
+            Updates apply directly to the active `Staff_Contracts` row for this staff member.
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setEditingContract(null)}
+              className="border border-white/10 bg-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.04]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              className="border border-sky-300/50 bg-sky-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-sky-100 transition hover:bg-sky-500/15"
+            >
+              Save Contract
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoleCard({
+  teamId,
+  title,
+  subtitle,
+  person,
+  contract,
+  onReplace,
+  onEdit,
+  replaceDisabled = false,
+  editDisabled = false,
+}) {
   const personName = person ? person.name : "Unassigned";
   return (
-    <div className={`border border-white/10 bg-white/[0.015] p-4 ${className}`}>
+    <div className="border border-white/10 bg-white/[0.015] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">{subtitle}</div>
           <div className="mt-2 text-sm font-semibold" style={getTeamTextStyle(teamId)}>{title}</div>
         </div>
-        <button
-          type="button"
-          onClick={onReplace}
-          disabled={!person?.row || replaceDisabled}
-          className="border border-white/10 bg-black/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-default disabled:opacity-40"
-        >
-          Replace
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={!person?.row || editDisabled}
+            className="border border-white/10 bg-black/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-default disabled:opacity-40"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={onReplace}
+            disabled={!person?.row || replaceDisabled}
+            className="border border-white/10 bg-black/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-default disabled:opacity-40"
+          >
+            Replace
+          </button>
+        </div>
       </div>
+
       <div className="mt-3 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {person?.flag ? (
@@ -83,9 +248,8 @@ function RoleCard({ teamId, title, subtitle, person, onReplace, replaceDisabled 
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-white">{personName}</div>
             <div className="mt-0.5 text-xs text-slate-500">
-              {person?.carNumber ? (
-                <span className="text-slate-300">#{person.carNumber} </span>
-              ) : null}{person?.meta || "No contracted staff member in this slot"}
+              {person?.carNumber ? <span className="text-slate-300">#{person.carNumber} </span> : null}
+              {person?.meta || "No contracted staff member in this slot"}
             </div>
           </div>
         </div>
@@ -96,6 +260,17 @@ function RoleCard({ teamId, title, subtitle, person, onReplace, replaceDisabled 
           </div>
         ) : null}
       </div>
+
+      {contract ? (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <DetailStat label="Salary" value={formatMoney(contract.Salary)} />
+          <DetailStat label="Ends" value={contract.EndSeason || "—"} />
+          <DetailStat label="Starting Bonus" value={formatMoney(contract.StartingBonus)} />
+          <DetailStat label="Race Bonus" value={`${formatMoney(contract.RaceBonus)} · ${formatOrdinal(contract.RaceBonusTargetPos)}`} />
+          <DetailStat label="Breakout Clause" value={Number.isFinite(Number(contract.BreakoutClause)) ? Number(contract.BreakoutClause).toFixed(2) : "—"} />
+          <DetailStat label="Start Date" value={formatContractDate(contract.StartDay)} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -103,13 +278,15 @@ function RoleCard({ teamId, title, subtitle, person, onReplace, replaceDisabled 
 export default function Contracts() {
   const database = useContext(DatabaseContext);
   const metadata = useContext(MetadataContext);
-  const { version, careerSaveMetadata } = metadata;
+  const { version } = metadata;
   const basicInfo = useContext(BasicInfoContext);
   const { player, teamMap, teamIds } = basicInfo;
   const [staffMap, setStaffMap] = useState({});
   const [swapRow, setSwapRow] = useState(null);
   const [updated, setUpdated] = useState(0);
   const [selectedTeamId, setSelectedTeamId] = useState(player.TeamID);
+  const [editingContract, setEditingContract] = useState(null);
+  const [contractColumns, setContractColumns] = useState([]);
 
   const visibleRoleRows = useMemo(
     () => roleRows
@@ -123,14 +300,10 @@ export default function Contracts() {
     return [player.TeamID, ...rest];
   }, [player.TeamID, teamIds]);
 
-  const customTeamLogoBase64 = careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64;
-  const selectedTeam = teamMap[selectedTeamId];
-  const selectedTeamLabel = selectedTeamId >= 32 && selectedTeam?.TeamNameLocKey
-    ? resolveLiteral(selectedTeam.TeamNameLocKey)
-    : teamNames(selectedTeamId, version);
-  const selectedLogoSrc = selectedTeamId >= 32 && customTeamLogoBase64
-    ? `data:image/png;base64,${customTeamLogoBase64}`
-    : getOfficialTeamLogo(version, selectedTeamId);
+  useEffect(() => {
+    const nextColumns = database.getAllRows(`PRAGMA table_info('Staff_Contracts')`).map((row) => row.name);
+    setContractColumns(nextColumns);
+  }, [database]);
 
   useEffect(() => {
     const ctx = { basicInfo, database, version };
@@ -151,8 +324,100 @@ export default function Contracts() {
     setStaffMap(nextMap);
   }, [basicInfo, database, version, visibleRoleRows, updated]);
 
-  useEffect(() => {
-  }, [swapRow]);
+  const selectedTeam = teamMap[selectedTeamId];
+  const getTeamLabel = (teamId) => {
+    if (!teamId) {
+      return "Unknown Team";
+    }
+    return teamId >= 32 && teamMap?.[teamId]?.TeamNameLocKey
+      ? resolveLiteral(teamMap[teamId].TeamNameLocKey)
+      : teamNames(teamId, version);
+  };
+
+  const roleCards = useMemo(() => visibleRoleRows.map((row, rowIndex) => row.map((role) => {
+    const person = staffMap[selectedTeam?.[role.key]];
+    const contract = person?.Contracts?.find((entry) => Number(entry.TeamID) === Number(selectedTeamId))
+      || person?.Contracts?.[0]
+      || null;
+    return {
+      id: `${selectedTeamId}-${rowIndex}-${role.key}`,
+      role,
+      person,
+      contract,
+    };
+  })), [selectedTeam, selectedTeamId, staffMap, visibleRoleRows]);
+
+  const flattenedContracts = useMemo(
+    () => roleCards.flat().filter((entry) => entry.contract),
+    [roleCards]
+  );
+
+  const payrollSummary = useMemo(() => ({
+    payroll: flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.Salary || 0), 0),
+    startingBonus: flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.StartingBonus || 0), 0),
+    raceBonus: flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.RaceBonus || 0), 0),
+    averageEndSeason: flattenedContracts.length
+      ? Math.round(flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.EndSeason || player.CurrentSeason), 0) / flattenedContracts.length)
+      : player.CurrentSeason,
+  }), [flattenedContracts, player.CurrentSeason]);
+
+  const editableFields = useMemo(
+    () => editableContractFields.filter((field) => contractColumns.includes(field.key)),
+    [contractColumns]
+  );
+
+  const saveEditedContract = () => {
+    if (!editingContract) {
+      return;
+    }
+
+    const updates = {};
+    editableFields.forEach((field) => {
+      let value = editingContract.form[field.key];
+      if (field.type === "date") {
+        value = localDateToDay(value);
+      } else if (field.type === "toggle") {
+        value = Number(value) ? 1 : 0;
+      } else {
+        value = Number(value);
+      }
+
+      if (field.min !== undefined) {
+        value = Math.max(field.min, value);
+      }
+      if (field.max !== undefined) {
+        value = Math.min(field.max, value);
+      }
+      if (field.key === "EndSeason") {
+        value = Math.max(player.CurrentSeason, Math.round(value));
+      }
+      if (field.key === "RaceBonusTargetPos") {
+        value = Math.max(1, Math.round(value));
+      }
+      if (field.key !== "BreakoutClause") {
+        value = Math.round(value);
+      } else {
+        value = Number(value.toFixed(2));
+      }
+
+      updates[field.key] = value;
+    });
+
+    const assignments = Object.keys(updates).map((key) => `${key} = :${key}`).join(", ");
+    database.exec(
+      `UPDATE Staff_Contracts
+       SET ${assignments}
+       WHERE StaffID = :staffId AND ContractType = 0 AND TeamID = :teamId`,
+      {
+        ...Object.fromEntries(Object.entries(updates).map(([key, value]) => [`:${key}`, value])),
+        ":staffId": editingContract.person.StaffID,
+        ":teamId": editingContract.contract.TeamID,
+      }
+    );
+
+    setEditingContract(null);
+    setUpdated(Date.now());
+  };
 
   return (
     <div className="grid gap-3">
@@ -162,51 +427,44 @@ export default function Contracts() {
         refresh={() => setUpdated(Date.now())}
       />
 
+      <ContractEditorModal
+        editingContract={editingContract}
+        setEditingContract={setEditingContract}
+        onSave={saveEditedContract}
+        currentSeason={player.CurrentSeason}
+        editableFields={editableFields}
+      />
+
       <div className="border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="grid gap-4">
           <div>
             <h2 className="text-lg font-bold text-white">Team Contracts</h2>
             <p className="mt-2 max-w-[920px] text-sm text-slate-400">
-              Review contracted roles one team at a time. Use `Replace` on any assigned slot to open the existing contract swap workflow for that position.
+              Review each team&apos;s contracted roles, compare salary and bonus structure, and edit active contract terms without leaving the workspace.
             </p>
           </div>
           <div className="border border-white/10 bg-black/10 p-3">
             <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Choose Team</div>
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5 xl:flex xl:flex-nowrap xl:gap-2">
               {orderedTeamIds.map((teamId) => {
-                const label = teamId >= 32 && teamMap?.[teamId]?.TeamNameLocKey
-                  ? resolveLiteral(teamMap[teamId].TeamNameLocKey)
-                  : teamNames(teamId, version);
                 const selected = teamId === selectedTeamId;
-                const logoSrc = teamId >= 32 && customTeamLogoBase64
-                  ? `data:image/png;base64,${customTeamLogoBase64}`
-                  : getOfficialTeamLogo(version, teamId);
                 return (
                   <button
                     key={teamId}
                     type="button"
                     onClick={() => setSelectedTeamId(teamId)}
-                    title={label}
-                    className={`group border p-2 text-left transition xl:min-w-0 xl:flex-1 ${selected
-                      ? "border-sky-300/60 bg-sky-600/15 shadow-[0_0_0_1px_rgba(125,211,252,0.2)]"
-                      : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]"
-                      }`}
+                    className={`group border p-2 text-left transition xl:min-w-0 xl:flex-1 ${
+                      selected
+                        ? "border-sky-300/60 bg-sky-600/15 shadow-[0_0_0_1px_rgba(125,211,252,0.2)]"
+                        : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]"
+                    }`}
                   >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className={`flex h-10 w-full items-center justify-center ${selected ? "opacity-100" : "opacity-90 group-hover:opacity-100"}`}>
-                        {logoSrc ? (
-                          <img src={logoSrc} alt={label} className="h-8 w-8 object-contain" />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full border border-white/10 bg-white/5" />
-                        )}
-                      </div>
-                      <div
-                        className={`w-full truncate text-center text-[11px] font-semibold ${selected ? "text-white" : ""}`}
-                        style={selected ? undefined : getTeamTextStyle(teamId)}
-                      >
-                        {label}
-                      </div>
-                    </div>
+                    <TeamIdentity
+                      TeamID={teamId}
+                      size="sm"
+                      className="flex-col justify-center gap-2"
+                      textClassName={`w-full truncate text-center text-[11px] font-semibold ${selected ? "text-white" : ""}`}
+                    />
                   </button>
                 );
               })}
@@ -215,49 +473,70 @@ export default function Contracts() {
         </div>
       </div>
 
-      <section className="grid gap-2 border border-white/10 bg-white/[0.015] p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="grid gap-3 border border-white/10 bg-white/[0.015] p-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">
               {selectedTeamId === player.TeamID ? "Current Team" : "Team"}
             </div>
-            <div className="mt-2 text-base font-bold" style={getTeamTextStyle(selectedTeamId)}>{selectedTeamLabel}</div>
+            <div className="mt-2">
+              <TeamIdentity TeamID={selectedTeamId} size="lg" textClassName="text-lg font-bold" />
+            </div>
           </div>
-          {selectedLogoSrc ? (
-            <img src={selectedLogoSrc} alt={selectedTeamLabel} className="h-12 w-12 shrink-0 object-contain opacity-95" />
-          ) : null}
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <DetailStat label="Annual Payroll" value={formatMoney(payrollSummary.payroll)} />
+            <DetailStat label="Signing Bonuses" value={formatMoney(payrollSummary.startingBonus)} />
+            <DetailStat label="Race Bonuses" value={formatMoney(payrollSummary.raceBonus)} />
+            <DetailStat label="Average End Season" value={payrollSummary.averageEndSeason} />
+          </div>
         </div>
 
         <div className="grid gap-2">
           <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Contracted Roles</div>
           <div className="grid gap-2">
-            {visibleRoleRows.map((row, rowIndex) => (
+            {roleCards.map((row, rowIndex) => (
               <div key={`${selectedTeamId}-row-${rowIndex}`} className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-                {row.map((role) => {
-                  const person = staffMap[selectedTeam?.[role.key]];
-                  return (
-                    <RoleCard
-                      key={`${selectedTeamId}-${rowIndex}-${role.key}`}
-                      teamId={selectedTeamId}
-                      title={role.title}
-                      subtitle={role.subtitle}
-                      replaceDisabled={role.staffType === 5}
-                      person={person ? {
-                        name: person.name,
-                        flag: person.flag,
-                        meta: person.Nationality || "Contracted role",
-                        carNumber: person.CurrentNumber || person.PernamentNumber || null,
-                        rating: Number.isFinite(person.Overall) ? person.Overall : null,
-                        row: person,
-                      } : null}
-                      onReplace={() => {
-                        if (person) {
-                          setSwapRow({ ...person });
-                        }
-                      }}
-                    />
-                  );
-                })}
+                {row.map(({ id, role, person, contract }) => (
+                  <RoleCard
+                    key={id}
+                    teamId={selectedTeamId}
+                    title={role.title}
+                    subtitle={role.subtitle}
+                    replaceDisabled={role.staffType === 5}
+                    editDisabled={!contract}
+                    person={person ? {
+                      name: person.name,
+                      flag: person.flag,
+                      meta: person.Nationality || "Contracted role",
+                      carNumber: person.CurrentNumber || person.PernamentNumber || null,
+                      rating: Number.isFinite(person.Overall) ? person.Overall : null,
+                      row: person,
+                    } : null}
+                    contract={contract}
+                    onEdit={() => {
+                      if (!person || !contract) {
+                        return;
+                      }
+                      setEditingContract({
+                        person,
+                        roleTitle: role.title,
+                        teamLabel: getTeamLabel(contract.TeamID || person.TeamID || selectedTeamId),
+                        contract,
+                        form: Object.fromEntries(editableFields.map((field) => [
+                          field.key,
+                          field.type === "date"
+                            ? formatISODateLocal(dayToDate(contract[field.key] || player.Day))
+                            : contract[field.key] ?? (field.type === "toggle" ? 0 : ""),
+                        ])),
+                      });
+                    }}
+                    onReplace={() => {
+                      if (person) {
+                        setSwapRow({ ...person });
+                      }
+                    }}
+                  />
+                ))}
               </div>
             ))}
           </div>

@@ -2,9 +2,10 @@ import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts"
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
 import ResultsTable from "./subcomponents/ResultsTable";
+import SeriesSwitch from "./SeriesSwitch";
 
 
-export default function RaceResultsF1() {
+export default function RaceResultsF1({ seriesOptions = [], activeSeries = 1, onSeriesChange = null }) {
 
   const database = useContext(DatabaseContext);
   const {version, gameVersion} = useContext(MetadataContext)
@@ -274,20 +275,25 @@ PR1.PracticeSession IS NULL`
               Standings table with race-by-race points, sprint weekends, pole markers, and fastest-lap highlights.
             </p>
           </div>
-          <label className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-300">Season</span>
-            <select
-              value={season}
-              onChange={(event) => setSeason(Number(event.target.value))}
-              className="border border-white/10 bg-black/10 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-300/50"
-            >
-              {seasons.map((value) => (
-                <option key={value} value={value} className="bg-[#182026] text-white">
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {onSeriesChange ? (
+              <SeriesSwitch options={seriesOptions} value={activeSeries} onChange={onSeriesChange} />
+            ) : null}
+            <label className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-300">Season</span>
+              <select
+                value={season}
+                onChange={(event) => setSeason(Number(event.target.value))}
+                className="border border-white/10 bg-black/10 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-300/50"
+              >
+                {seasons.map((value) => (
+                  <option key={value} value={value} className="bg-[#182026] text-white">
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
       </section>
       <div className="overflow-x-auto border border-white/10 bg-white/[0.015]">

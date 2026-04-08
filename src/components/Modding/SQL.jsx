@@ -27,7 +27,35 @@ function parseEditedValue(value, oldValue) {
   return String(value);
 }
 
-function GridShell({ columns, rows, emptyMessage, actionsLabel = "Actions", renderActions = null, onEditCell = null }) {
+function compareValues(left, right) {
+  if (left === right) return 0;
+  if (left === null || left === undefined || left === "") return 1;
+  if (right === null || right === undefined || right === "") return -1;
+  if (typeof left === "number" && typeof right === "number") {
+    return left - right;
+  }
+  return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: "base" });
+}
+
+function GridShell({ columns, rows, emptyMessage, actionsLabel = "Actions", renderActions = null, onEditCell = null, filterText = "", filterPlaceholder = "Filter rows" }) {
+  const [sortModel, setSortModel] = useState({ field: "", direction: "asc" });
+
+  const filteredRows = useMemo(() => {
+    const needle = filterText.trim().toLowerCase();
+    if (!needle) return rows;
+    return rows.filter((row) =>
+      columns.some((column) => formatCellValue(row[column.field]).toLowerCase().includes(needle))
+    );
+  }, [columns, filterText, rows]);
+
+  const visibleRows = useMemo(() => {
+    if (!sortModel.field) return filteredRows;
+    return [...filteredRows].sort((left, right) => {
+      const result = compareValues(left[sortModel.field], right[sortModel.field]);
+      return sortModel.direction === "asc" ? result : -result;
+    });
+  }, [filteredRows, sortModel]);
+
   return (
     <div className="h-full overflow-auto">
       <table className="min-w-full border-collapse">
@@ -39,7 +67,26 @@ function GridShell({ columns, rows, emptyMessage, actionsLabel = "Actions", rend
                 className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                 style={column.width ? { width: column.width } : undefined}
               >
-                {column.headerName}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSortModel((current) => {
+                      if (current.field !== column.field) {
+                        return { field: column.field, direction: "asc" };
+                      }
+                      if (current.direction === "asc") {
+                        return { field: column.field, direction: "desc" };
+                      }
+                      return { field: "", direction: "asc" };
+                    });
+                  }}
+                  className="inline-flex items-center gap-1 text-left text-inherit"
+                >
+                  <span>{column.headerName}</span>
+                  <span className="text-[10px] text-slate-600">
+                    {sortModel.field === column.field ? (sortModel.direction === "asc" ? "▲" : "▼") : ""}
+                  </span>
+                </button>
               </th>
             ))}
             {renderActions ? (
@@ -50,7 +97,7 @@ function GridShell({ columns, rows, emptyMessage, actionsLabel = "Actions", rend
           </tr>
         </thead>
         <tbody>
-          {rows.length ? rows.map((row, rowIndex) => (
+          {visibleRows.length ? visibleRows.map((row, rowIndex) => (
             <tr key={row.id ?? rowIndex} className="bg-white/[0.01] odd:bg-white/[0.03]">
               {columns.map((column) => {
                 const value = row[column.field];
@@ -99,6 +146,7 @@ export default function DataBrowser() {
   const [objectFilter, setObjectFilter] = useState("");
   const [mode, setMode] = useState("browse");
   const [tableSearch, setTableSearch] = useState("");
+  const [resultFilter, setResultFilter] = useState("");
   const [querySql, setQuerySql] = useState("");
 
   const [browseColumns, setBrowseColumns] = useState([]);
@@ -244,22 +292,82 @@ export default function DataBrowser() {
 
   const browseGridColumns = useMemo(() => {
     if (!browseColumns.length) return [];
-    return browseColumns.map((col) => ({
+    const orderedColumns = [
+      ...browseColumns.filter((col) => col === "__rowid__"),
+      ...browseColumns.filter((col) => col !== "__rowid__"),
+    ];
+    return orderedColumns.map((col) => ({
       field: col,
       headerName: col === "__rowid__" ? "#" : col,
       width: col === "__rowid__" ? 86 : undefined,
       editable: isTable && col !== "__rowid__",
       numeric: typeof browseRows.find((row) => row[col] !== null && row[col] !== undefined)?.[col] === "number",
     }));
-  }, [browseColumns, browseMeta.tableInfo, database, enqueueSnackbar, isTable, pkColumns, selectedName]);
+  }, [browseColumns, browseRows, isTable]);
+
+  const queryResultsEditable = useMemo(
+    () => isTable && queryColumns.includes("__rowid__"),
+    [isTable, queryColumns]
+  );
 
   const queryGridColumns = useMemo(() => (
-    queryColumns.map((col) => ({
+    [
+      ...queryColumns.filter((col) => col === "__rowid__"),
+      ...queryColumns.filter((col) => col !== "__rowid__"),
+    ].map((col) => ({
       field: col,
-      headerName: col,
+      headerName: col === "__rowid__" ? "#" : col,
+      width: col === "__rowid__" ? 86 : undefined,
+      editable: queryResultsEditable && col !== "__rowid__",
       numeric: typeof queryRows.find((row) => row[col] !== null && row[col] !== undefined)?.[col] === "number",
     }))
-  ), [queryColumns]);
+  ), [queryColumns, queryResultsEditable, queryRows]);
+
+  const loadQueryResults = React.useCallback((sqlText, options = {}) => {
+    const { notify = true } = options;
+    try {
+      const result = database.exec(sqlText);
+      if (!result.length) {
+        setQueryColumns([]);
+        setQueryRows([]);
+        if (notify) {
+          enqueueSnackbar("Statement executed successfully", { variant: "success" });
+        }
+        return;
+      }
+      const [{ columns, values }] = result;
+      setQueryColumns(columns);
+      setQueryRows(values.map((row, index) => {
+        const nextRow = { id: index };
+        columns.forEach((col, idx) => {
+          nextRow[col] = row[idx];
+        });
+        if (nextRow.__rowid__ !== undefined) {
+          nextRow.id = nextRow.__rowid__;
+        }
+        return nextRow;
+      }));
+      if (notify) {
+        enqueueSnackbar(`Loaded ${values.length} row${values.length === 1 ? "" : "s"}`, { variant: "success" });
+      }
+    } catch (error) {
+      if (notify) {
+        enqueueSnackbar(`SQL error: ${error}`, { variant: "error" });
+      }
+      throw error;
+    }
+  }, [database, enqueueSnackbar]);
+
+  const reloadAfterMutation = React.useCallback(() => {
+    setRefreshToken(Date.now());
+    if (mode === "query" && querySql.trim()) {
+      try {
+        loadQueryResults(querySql, { notify: false });
+      } catch {
+        // Keep the previous query grid visible if the refresh query fails.
+      }
+    }
+  }, [loadQueryResults, mode, querySql]);
 
   const deleteRow = React.useCallback((row) => {
     try {
@@ -272,11 +380,11 @@ export default function DataBrowser() {
         database.exec(`DELETE FROM ${quotedName} WHERE _rowid_ = :rowid`, { ":rowid": row.__rowid__ });
       }
       enqueueSnackbar(`Deleted row from ${selectedName}`, { variant: "success" });
-      setRefreshToken(Date.now());
+      reloadAfterMutation();
     } catch (error) {
       enqueueSnackbar(`Delete failed: ${error}`, { variant: "error" });
     }
-  }, [database, enqueueSnackbar, pkColumns, selectedName]);
+  }, [database, enqueueSnackbar, pkColumns, reloadAfterMutation, selectedName]);
 
   const editCell = React.useCallback((row, column) => {
     if (!isTable || !column.editable) return;
@@ -300,48 +408,34 @@ export default function DataBrowser() {
         );
       }
       enqueueSnackbar(`Updated ${selectedName}.${column.field}`, { variant: "success" });
-      setRefreshToken(Date.now());
+      reloadAfterMutation();
     } catch (error) {
       enqueueSnackbar(`Update failed: ${error}`, { variant: "error" });
     }
-  }, [database, enqueueSnackbar, isTable, pkColumns, selectedName]);
+  }, [database, enqueueSnackbar, isTable, pkColumns, reloadAfterMutation, selectedName]);
 
   const runQuery = React.useCallback(() => {
     try {
-      const result = database.exec(querySql);
-      if (!result.length) {
-        setQueryColumns([]);
-        setQueryRows([]);
-        enqueueSnackbar("Statement executed successfully", { variant: "success" });
+      loadQueryResults(querySql, { notify: true });
+      if (!querySql.trim().toLowerCase().startsWith("select")) {
         setRefreshToken(Date.now());
         loadObjects();
-        return;
       }
-      const [{ columns, values }] = result;
-      setQueryColumns(columns);
-      setQueryRows(values.map((row, index) => {
-        const nextRow = { id: index };
-        columns.forEach((col, idx) => {
-          nextRow[col] = row[idx];
-        });
-        return nextRow;
-      }));
-      enqueueSnackbar(`Loaded ${values.length} row${values.length === 1 ? "" : "s"}`, { variant: "success" });
-    } catch (error) {
-      enqueueSnackbar(`SQL error: ${error}`, { variant: "error" });
+    } catch {
+      // loadQueryResults already reported the error.
     }
-  }, [database, enqueueSnackbar, loadObjects, querySql]);
+  }, [loadObjects, loadQueryResults, querySql]);
 
   const insertRow = React.useCallback(() => {
     if (!selectedObject || !isTable) return;
     try {
       database.exec(`INSERT INTO ${quoteIdent(selectedName)} DEFAULT VALUES`);
       enqueueSnackbar(`Inserted row into ${selectedName}`, { variant: "success" });
-      setRefreshToken(Date.now());
+      reloadAfterMutation();
     } catch (error) {
       enqueueSnackbar(`Insert failed: ${error}`, { variant: "error" });
     }
-  }, [database, enqueueSnackbar, isTable, selectedName, selectedObject]);
+  }, [database, enqueueSnackbar, isTable, reloadAfterMutation, selectedName, selectedObject]);
 
   return (
     <div className="grid gap-3">
@@ -464,6 +558,13 @@ export default function DataBrowser() {
           ) : mode === "query" ? (
             <div className="border-b border-white/10 px-4 py-3">
               <div className="grid gap-3">
+                <input
+                  type="text"
+                  value={resultFilter}
+                  onChange={(e) => setResultFilter(e.target.value)}
+                  placeholder="Filter current query results"
+                  className="w-full border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+                />
                 <textarea
                   value={querySql}
                   onChange={(e) => setQuerySql(e.target.value)}
@@ -503,6 +604,18 @@ export default function DataBrowser() {
                 columns={queryGridColumns}
                 rows={queryRows}
                 emptyMessage="Run a query to see results."
+                filterText={resultFilter}
+                filterPlaceholder="Filter current query results"
+                onEditCell={queryResultsEditable ? editCell : null}
+                renderActions={queryResultsEditable ? (row) => (
+                  <button
+                    type="button"
+                    onClick={() => deleteRow(row)}
+                    className="border border-red-400/20 bg-red-500/[0.06] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-100 hover:bg-red-500/[0.1]"
+                  >
+                    Delete
+                  </button>
+                ) : null}
               />
             ) : (
               <div className="grid h-full grid-rows-[minmax(0,1fr)_auto]">
@@ -511,6 +624,7 @@ export default function DataBrowser() {
                   rows={browseRows}
                   emptyMessage={selectedObject ? `No rows found in ${selectedName}.` : "Select a table or view."}
                   onEditCell={editCell}
+                  filterText={tableSearch}
                   renderActions={isTable ? (row) => (
                     <button
                       type="button"

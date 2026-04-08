@@ -1,28 +1,4 @@
 {
-  "2022": [
-    "alfa-romeo.png",
-    "alphatauri.png",
-    "alpine.png",
-    "aston-martin.png",
-    "ferrari.png",
-    "haas-f1-team.png",
-    "mclaren.png",
-    "mercedes.png",
-    "red-bull-racing.png",
-    "williams.png"
-  ],
-  "2023": [
-    "alfa-romeo.png",
-    "alphatauri.png",
-    "alpine.png",
-    "aston-martin.png",
-    "ferrari.png",
-    "haas-f1-team.png",
-    "mclaren.png",
-    "mercedes.png",
-    "red-bull-racing.png",
-    "williams.png"
-  ],
   "2024": [
     "alpine.webp",
     "astonmartin.webp",
@@ -59,5 +35,9 @@
     "racingbulls.webp",
     "redbullracing.webp",
     "williams.webp"
+  ],
+  "misc": [
+    "alfaromeo-white.webp",
+    "alphatauri-white.webp"
   ]
 }
