@@ -4,7 +4,7 @@ import {
   setCareerSaveMetadataFields,
 } from "@/components/Customize/Player/timeMachineUtils";
 import { parseBasicInfo } from "@/js/BasicInfo";
-import { dateToDay, resolveDriverCode, resolveLiteral, resolveName, unresolveDriverCode, unresolveName } from "@/js/localization";
+import { dateToDay, dayToDate, resolveDriverCode, resolveLiteral, resolveName, unresolveDriverCode, unresolveName } from "@/js/localization";
 
 const SEASON_RACE_DELETE_TABLES = [
   { table: "Races_Results", seasonColumn: "Season" },
@@ -431,6 +431,7 @@ function applySingleSeasonImport({
     createdDrivers: [],
     appliedSeries: [],
     metadata,
+    initialPlayerDay: Number(basicInfo?.player?.Day || 0),
     customTeamRandomization: normalizeCustomTeamRandomization({ basicInfo, customTeamRandomization }),
     driverReplacements: normalizeDriverReplacements({ basicInfo, driverReplacements }),
   };
@@ -2392,6 +2393,39 @@ function rebuildPostRaceDerivedTables({ database, tableSet, importState, raceShe
   rebuildSponsorshipRaceBonuses({ database, tableSet, importState, raceShells });
   rebuildRaceRecordTables({ database, tableSet, importState });
   rebuildPitCrewRecordTables({ database, tableSet, importState });
+  refreshStartOfMonthPerformanceSnapshot({ database, tableSet, importState });
+}
+
+function refreshStartOfMonthPerformanceSnapshot({ database, tableSet, importState }) {
+  if (!tableSet.has("Staff_PerformanceStats_StartOfMonth") || !tableSet.has("Staff_PerformanceStats")) {
+    return;
+  }
+
+  const currentDay = Number(readRows(database, `SELECT Day FROM Player_State LIMIT 1`)[0]?.Day || 0);
+  const startMonthKey = toMonthKey(importState.initialPlayerDay);
+  const currentMonthKey = toMonthKey(currentDay);
+  if (!startMonthKey || !currentMonthKey || startMonthKey === currentMonthKey) {
+    return;
+  }
+
+  database.exec(`DELETE FROM Staff_PerformanceStats_StartOfMonth`);
+  const templateRow = getTemplateRow(database, "Staff_PerformanceStats_StartOfMonth");
+  readRows(database, `SELECT StaffID, StatID, Val FROM Staff_PerformanceStats`).forEach((row) => {
+    insertTableRow(database, "Staff_PerformanceStats_StartOfMonth", templateRow, sanitizeRowObject({
+      StaffID: row.StaffID,
+      StatID: row.StatID,
+      Val: row.Val,
+    }));
+  });
+}
+
+function toMonthKey(dayNumber) {
+  const numericDay = Number(dayNumber || 0);
+  if (!Number.isFinite(numericDay) || numericDay <= 0) {
+    return "";
+  }
+  const date = dayToDate(numericDay);
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 function rebuildPowertrainRaceHistory({ database, tableSet, importState, raceShells }) {
