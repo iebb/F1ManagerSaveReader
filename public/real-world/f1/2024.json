@@ -1,8 +1,9 @@
 {
   "series": "f1",
-  "generatedAt": "2026-04-10T13:20:18.859447+00:00",
+  "generatedAt": "2026-04-10T14:50:06.954405+00:00",
   "sourceSummary": {
     "results": "Jolpica F1 / Ergast-compatible API",
+    "pitStops": "OpenF1 pit endpoint when stationary stop-duration data exists",
     "driverProfiles": "save2024.db",
     "estimationBenchmarks": [
       "hamilton",
@@ -19002,6 +19003,646 @@
               "Alexander Albon"
             ]
           },
+          "pitStops": {
+            "provider": "openf1",
+            "sourceUrl": "https://api.openf1.org/v1/pit?session_key=9617",
+            "sessionKey": 9617,
+            "results": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "lap": 25,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "lap": 31,
+                "fastestPitStopTime": 2.2,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "lap": 18,
+                "fastestPitStopTime": 6.9,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "lap": 26,
+                "fastestPitStopTime": 2.3,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "lap": 26,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "lap": 26,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "lap": 27,
+                "fastestPitStopTime": 4.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "lap": 17,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "lap": 18,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "lap": 33,
+                "fastestPitStopTime": 3.0,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "lap": 13,
+                "fastestPitStopTime": 2.8,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "lap": 27,
+                "fastestPitStopTime": 3.0,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "lap": 36,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 31,
+                "driverName": "Esteban Ocon",
+                "driverCode": "OCO",
+                "teamName": "Alpine F1 Team",
+                "lap": 31,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "lap": 39,
+                "fastestPitStopTime": 3.3,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "lap": 21,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "lap": 40,
+                "fastestPitStopTime": 8.0,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "lap": 15,
+                "fastestPitStopTime": 2.9,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "lap": 32,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              }
+            ],
+            "timings": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 25,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 31,
+                "stopDuration": 2.2,
+                "stageDurations": [
+                  0.3696,
+                  0.3058,
+                  0.3696,
+                  0.3696,
+                  0.3058,
+                  0.2398,
+                  0.2398,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 18,
+                "stopDuration": 6.9,
+                "stageDurations": [
+                  1.1592,
+                  0.9591,
+                  1.1592,
+                  1.1592,
+                  0.9591,
+                  0.7521,
+                  0.7521,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 2.3,
+                "stageDurations": [
+                  0.3864,
+                  0.3197,
+                  0.3864,
+                  0.3864,
+                  0.3197,
+                  0.2507,
+                  0.2507,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 27,
+                "stopDuration": 4.7,
+                "stageDurations": [
+                  0.7896,
+                  0.6533,
+                  0.7896,
+                  0.7896,
+                  0.6533,
+                  0.5123,
+                  0.5123,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 17,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 2,
+                "lap": 38,
+                "stopDuration": 3.0,
+                "stageDurations": [
+                  0.504,
+                  0.417,
+                  0.504,
+                  0.504,
+                  0.417,
+                  0.327,
+                  0.327,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 18,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 3,
+                "stopDuration": 12.5,
+                "stageDurations": [
+                  2.1,
+                  1.7375,
+                  2.1,
+                  2.1,
+                  1.7375,
+                  1.3625,
+                  1.3625,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "pitStopId": 2,
+                "lap": 33,
+                "stopDuration": 3.0,
+                "stageDurations": [
+                  0.504,
+                  0.417,
+                  0.504,
+                  0.504,
+                  0.417,
+                  0.327,
+                  0.327,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 13,
+                "stopDuration": 2.8,
+                "stageDurations": [
+                  0.4704,
+                  0.3892,
+                  0.4704,
+                  0.4704,
+                  0.3892,
+                  0.3052,
+                  0.3052,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 2,
+                "lap": 35,
+                "stopDuration": 3.0,
+                "stageDurations": [
+                  0.504,
+                  0.417,
+                  0.504,
+                  0.504,
+                  0.417,
+                  0.327,
+                  0.327,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 27,
+                "stopDuration": 3.0,
+                "stageDurations": [
+                  0.504,
+                  0.417,
+                  0.504,
+                  0.504,
+                  0.417,
+                  0.327,
+                  0.327,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 36,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 31,
+                "driverName": "Esteban Ocon",
+                "driverCode": "OCO",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 31,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 31,
+                "driverName": "Esteban Ocon",
+                "driverCode": "OCO",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 2,
+                "lap": 51,
+                "stopDuration": 4.6,
+                "stageDurations": [
+                  0.7728,
+                  0.6394,
+                  0.7728,
+                  0.7728,
+                  0.6394,
+                  0.5014,
+                  0.5014,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 39,
+                "stopDuration": 3.3,
+                "stageDurations": [
+                  0.5544,
+                  0.4587,
+                  0.5544,
+                  0.5544,
+                  0.4587,
+                  0.3597,
+                  0.3597,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 21,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 40,
+                "stopDuration": 8.0,
+                "stageDurations": [
+                  1.344,
+                  1.112,
+                  1.344,
+                  1.344,
+                  1.112,
+                  0.872,
+                  0.872,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 15,
+                "stopDuration": 2.9,
+                "stageDurations": [
+                  0.4872,
+                  0.4031,
+                  0.4872,
+                  0.4872,
+                  0.4031,
+                  0.3161,
+                  0.3161,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 32,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
           "lineupChanges": [
             {
               "teamName": "RB F1 Team",
@@ -19739,6 +20380,588 @@
             "Williams": [
               "Franco Colapinto",
               "Alexander Albon"
+            ]
+          },
+          "pitStops": {
+            "provider": "openf1",
+            "sourceUrl": "https://api.openf1.org/v1/pit?session_key=9625",
+            "sessionKey": 9625,
+            "results": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "lap": 26,
+                "fastestPitStopTime": 24.0,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "lap": 30,
+                "fastestPitStopTime": 2.3,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "lap": 28,
+                "fastestPitStopTime": 3.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "lap": 68,
+                "fastestPitStopTime": 2.1,
+                "pitStopCount": 3
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "lap": 69,
+                "fastestPitStopTime": 2.8,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "lap": 26,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "lap": 30,
+                "fastestPitStopTime": 3.8,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "lap": 43,
+                "fastestPitStopTime": 2.9,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "lap": 29,
+                "fastestPitStopTime": 3.2,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "lap": 39,
+                "fastestPitStopTime": 2.9,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 31,
+                "driverName": "Esteban Ocon",
+                "driverCode": "OCO",
+                "teamName": "Alpine F1 Team",
+                "lap": 48,
+                "fastestPitStopTime": 3.2,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "lap": 47,
+                "fastestPitStopTime": 4.4,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "lap": 28,
+                "fastestPitStopTime": 3.1,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "lap": 32,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "lap": 31,
+                "fastestPitStopTime": 2.8,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "lap": 49,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "lap": 39,
+                "fastestPitStopTime": 2.0,
+                "pitStopCount": 1
+              }
+            ],
+            "timings": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 24.0,
+                "stageDurations": [
+                  4.032,
+                  3.336,
+                  4.032,
+                  4.032,
+                  3.336,
+                  2.616,
+                  2.616,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 30,
+                "stopDuration": 2.3,
+                "stageDurations": [
+                  0.3864,
+                  0.3197,
+                  0.3864,
+                  0.3864,
+                  0.3197,
+                  0.2507,
+                  0.2507,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 28,
+                "stopDuration": 3.5,
+                "stageDurations": [
+                  0.588,
+                  0.4865,
+                  0.588,
+                  0.588,
+                  0.4865,
+                  0.3815,
+                  0.3815,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 20,
+                "stopDuration": 8.1,
+                "stageDurations": [
+                  1.3608,
+                  1.1259,
+                  1.3608,
+                  1.3608,
+                  1.1259,
+                  0.8829,
+                  0.8829,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "pitStopId": 2,
+                "lap": 43,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "pitStopId": 3,
+                "lap": 68,
+                "stopDuration": 2.1,
+                "stageDurations": [
+                  0.3528,
+                  0.2919,
+                  0.3528,
+                  0.3528,
+                  0.2919,
+                  0.2289,
+                  0.2289,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 31,
+                "stopDuration": 3.1,
+                "stageDurations": [
+                  0.5208,
+                  0.4309,
+                  0.5208,
+                  0.5208,
+                  0.4309,
+                  0.3379,
+                  0.3379,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "pitStopId": 2,
+                "lap": 69,
+                "stopDuration": 2.8,
+                "stageDurations": [
+                  0.4704,
+                  0.3892,
+                  0.4704,
+                  0.4704,
+                  0.3892,
+                  0.3052,
+                  0.3052,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 30,
+                "stopDuration": 3.8,
+                "stageDurations": [
+                  0.6384,
+                  0.5282,
+                  0.6384,
+                  0.6384,
+                  0.5282,
+                  0.4142,
+                  0.4142,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 43,
+                "stopDuration": 2.9,
+                "stageDurations": [
+                  0.4872,
+                  0.4031,
+                  0.4872,
+                  0.4872,
+                  0.4031,
+                  0.3161,
+                  0.3161,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 29,
+                "stopDuration": 3.2,
+                "stageDurations": [
+                  0.5376,
+                  0.4448,
+                  0.5376,
+                  0.5376,
+                  0.4448,
+                  0.3488,
+                  0.3488,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 39,
+                "stopDuration": 2.9,
+                "stageDurations": [
+                  0.4872,
+                  0.4031,
+                  0.4872,
+                  0.4872,
+                  0.4031,
+                  0.3161,
+                  0.3161,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 2,
+                "lap": 65,
+                "stopDuration": 10.4,
+                "stageDurations": [
+                  1.7472,
+                  1.4456,
+                  1.7472,
+                  1.7472,
+                  1.4456,
+                  1.1336,
+                  1.1336,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 31,
+                "driverName": "Esteban Ocon",
+                "driverCode": "OCO",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 48,
+                "stopDuration": 3.2,
+                "stageDurations": [
+                  0.5376,
+                  0.4448,
+                  0.5376,
+                  0.5376,
+                  0.4448,
+                  0.3488,
+                  0.3488,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 47,
+                "stopDuration": 4.4,
+                "stageDurations": [
+                  0.7392,
+                  0.6116,
+                  0.7392,
+                  0.7392,
+                  0.6116,
+                  0.4796,
+                  0.4796,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 28,
+                "stopDuration": 3.1,
+                "stageDurations": [
+                  0.5208,
+                  0.4309,
+                  0.5208,
+                  0.5208,
+                  0.4309,
+                  0.3379,
+                  0.3379,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 32,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 31,
+                "stopDuration": 2.8,
+                "stageDurations": [
+                  0.4704,
+                  0.3892,
+                  0.4704,
+                  0.4704,
+                  0.3892,
+                  0.3052,
+                  0.3052,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 49,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 39,
+                "stopDuration": 2.0,
+                "stageDurations": [
+                  0.336,
+                  0.278,
+                  0.336,
+                  0.336,
+                  0.278,
+                  0.218,
+                  0.218,
+                  0.0,
+                  0.0
+                ]
+              }
             ]
           },
           "lineupChanges": []
@@ -20866,6 +22089,327 @@
             "Williams": [
               "Franco Colapinto",
               "Alexander Albon"
+            ]
+          },
+          "pitStops": {
+            "provider": "openf1",
+            "sourceUrl": "https://api.openf1.org/v1/pit?session_key=9636",
+            "sessionKey": 9636,
+            "results": [
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "lap": 27,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "lap": 24,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "lap": 28,
+                "fastestPitStopTime": 3.7,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "lap": 25,
+                "fastestPitStopTime": 2.9,
+                "pitStopCount": 3
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "lap": 28,
+                "fastestPitStopTime": 5.4,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "lap": 30,
+                "fastestPitStopTime": 3.3,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "lap": 27,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "lap": 27,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              }
+            ],
+            "timings": [
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 27,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 24,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 28,
+                "stopDuration": 3.7,
+                "stageDurations": [
+                  0.6216,
+                  0.5143,
+                  0.6216,
+                  0.6216,
+                  0.5143,
+                  0.4033,
+                  0.4033,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 2,
+                "lap": 32,
+                "stopDuration": 38.3,
+                "stageDurations": [
+                  6.4344,
+                  5.3237,
+                  6.4344,
+                  6.4344,
+                  5.3237,
+                  4.1747,
+                  4.1747,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 25,
+                "stopDuration": 2.9,
+                "stageDurations": [
+                  0.4872,
+                  0.4031,
+                  0.4872,
+                  0.4872,
+                  0.4031,
+                  0.3161,
+                  0.3161,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 2,
+                "lap": 27,
+                "stopDuration": 36.0,
+                "stageDurations": [
+                  6.048,
+                  5.004,
+                  6.048,
+                  6.048,
+                  5.004,
+                  3.924,
+                  3.924,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 3,
+                "lap": 29,
+                "stopDuration": 6.1,
+                "stageDurations": [
+                  1.0248,
+                  0.8479,
+                  1.0248,
+                  1.0248,
+                  0.8479,
+                  0.6649,
+                  0.6649,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 28,
+                "stopDuration": 5.4,
+                "stageDurations": [
+                  0.9072,
+                  0.7506,
+                  0.9072,
+                  0.9072,
+                  0.7506,
+                  0.5886,
+                  0.5886,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 3.5,
+                "stageDurations": [
+                  0.588,
+                  0.4865,
+                  0.588,
+                  0.588,
+                  0.4865,
+                  0.3815,
+                  0.3815,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "pitStopId": 2,
+                "lap": 30,
+                "stopDuration": 3.3,
+                "stageDurations": [
+                  0.5544,
+                  0.4587,
+                  0.5544,
+                  0.5544,
+                  0.4587,
+                  0.3597,
+                  0.3597,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 27,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 27,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              }
             ]
           },
           "lineupChanges": [
@@ -22752,6 +24296,717 @@
               "Franco Colapinto"
             ]
           },
+          "pitStops": {
+            "provider": "openf1",
+            "sourceUrl": "https://api.openf1.org/v1/pit?session_key=9655",
+            "sessionKey": 9655,
+            "results": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "lap": 35,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "lap": 35,
+                "fastestPitStopTime": 3.3,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "lap": 35,
+                "fastestPitStopTime": 3.2,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "lap": 35,
+                "fastestPitStopTime": 2.2,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "lap": 36,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "lap": 35,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "lap": 1,
+                "fastestPitStopTime": 3.4,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "lap": 27,
+                "fastestPitStopTime": 2.9,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "lap": 35,
+                "fastestPitStopTime": 3.1,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "lap": 35,
+                "fastestPitStopTime": 3.8,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "lap": 35,
+                "fastestPitStopTime": 3.0,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "lap": 31,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "lap": 40,
+                "fastestPitStopTime": 3.5,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "lap": 34,
+                "fastestPitStopTime": 10.4,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "lap": 34,
+                "fastestPitStopTime": 9.8,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "lap": 35,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "lap": 24,
+                "fastestPitStopTime": 2.4,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "lap": 34,
+                "fastestPitStopTime": 3.3,
+                "pitStopCount": 1
+              }
+            ],
+            "timings": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 3.3,
+                "stageDurations": [
+                  0.5544,
+                  0.4587,
+                  0.5544,
+                  0.5544,
+                  0.4587,
+                  0.3597,
+                  0.3597,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "pitStopId": 2,
+                "lap": 45,
+                "stopDuration": 10.8,
+                "stageDurations": [
+                  1.8144,
+                  1.5012,
+                  1.8144,
+                  1.8144,
+                  1.5012,
+                  1.1772,
+                  1.1772,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 3.2,
+                "stageDurations": [
+                  0.5376,
+                  0.4448,
+                  0.5376,
+                  0.5376,
+                  0.4448,
+                  0.3488,
+                  0.3488,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 11,
+                "driverName": "Sergio P\u00e9rez",
+                "driverCode": "PER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 2.2,
+                "stageDurations": [
+                  0.3696,
+                  0.3058,
+                  0.3696,
+                  0.3696,
+                  0.3058,
+                  0.2398,
+                  0.2398,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "pitStopId": 2,
+                "lap": 36,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 1,
+                "stopDuration": 3.4,
+                "stageDurations": [
+                  0.5712,
+                  0.4726,
+                  0.5712,
+                  0.5712,
+                  0.4726,
+                  0.3706,
+                  0.3706,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "pitStopId": 2,
+                "lap": 7,
+                "stopDuration": 15.2,
+                "stageDurations": [
+                  2.5536,
+                  2.1128,
+                  2.5536,
+                  2.5536,
+                  2.1128,
+                  1.6568,
+                  1.6568,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 27,
+                "stopDuration": 2.9,
+                "stageDurations": [
+                  0.4872,
+                  0.4031,
+                  0.4872,
+                  0.4872,
+                  0.4031,
+                  0.3161,
+                  0.3161,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 3.1,
+                "stageDurations": [
+                  0.5208,
+                  0.4309,
+                  0.5208,
+                  0.5208,
+                  0.4309,
+                  0.3379,
+                  0.3379,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "pitStopId": 2,
+                "lap": 40,
+                "stopDuration": 3.4,
+                "stageDurations": [
+                  0.5712,
+                  0.4726,
+                  0.5712,
+                  0.5712,
+                  0.4726,
+                  0.3706,
+                  0.3706,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 3.8,
+                "stageDurations": [
+                  0.6384,
+                  0.5282,
+                  0.6384,
+                  0.6384,
+                  0.5282,
+                  0.4142,
+                  0.4142,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "pitStopId": 2,
+                "lap": 55,
+                "stopDuration": 14.2,
+                "stageDurations": [
+                  2.3856,
+                  1.9738,
+                  2.3856,
+                  2.3856,
+                  1.9738,
+                  1.5478,
+                  1.5478,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 3.0,
+                "stageDurations": [
+                  0.504,
+                  0.417,
+                  0.504,
+                  0.504,
+                  0.417,
+                  0.327,
+                  0.327,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 1,
+                "stopDuration": 6.3,
+                "stageDurations": [
+                  1.0584,
+                  0.8757,
+                  1.0584,
+                  1.0584,
+                  0.8757,
+                  0.6867,
+                  0.6867,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 2,
+                "lap": 31,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 35,
+                "stopDuration": 14.0,
+                "stageDurations": [
+                  2.352,
+                  1.946,
+                  2.352,
+                  2.352,
+                  1.946,
+                  1.526,
+                  1.526,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 2,
+                "lap": 40,
+                "stopDuration": 3.5,
+                "stageDurations": [
+                  0.588,
+                  0.4865,
+                  0.588,
+                  0.588,
+                  0.4865,
+                  0.3815,
+                  0.3815,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 34,
+                "stopDuration": 10.4,
+                "stageDurations": [
+                  1.7472,
+                  1.4456,
+                  1.7472,
+                  1.7472,
+                  1.4456,
+                  1.1336,
+                  1.1336,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 34,
+                "stopDuration": 9.8,
+                "stageDurations": [
+                  1.6464,
+                  1.3622,
+                  1.6464,
+                  1.6464,
+                  1.3622,
+                  1.0682,
+                  1.0682,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 23,
+                "stopDuration": 7.0,
+                "stageDurations": [
+                  1.176,
+                  0.973,
+                  1.176,
+                  1.176,
+                  0.973,
+                  0.763,
+                  0.763,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "pitStopId": 2,
+                "lap": 35,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 24,
+                "stopDuration": 2.4,
+                "stageDurations": [
+                  0.4032,
+                  0.3336,
+                  0.4032,
+                  0.4032,
+                  0.3336,
+                  0.2616,
+                  0.2616,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "pitStopId": 2,
+                "lap": 35,
+                "stopDuration": 3.2,
+                "stageDurations": [
+                  0.5376,
+                  0.4448,
+                  0.5376,
+                  0.5376,
+                  0.4448,
+                  0.3488,
+                  0.3488,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 34,
+                "stopDuration": 3.3,
+                "stageDurations": [
+                  0.5544,
+                  0.4587,
+                  0.5544,
+                  0.5544,
+                  0.4587,
+                  0.3597,
+                  0.3597,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
           "lineupChanges": []
         },
         {
@@ -23471,6 +25726,746 @@
             "Williams": [
               "Alexander Albon",
               "Franco Colapinto"
+            ]
+          },
+          "pitStops": {
+            "provider": "openf1",
+            "sourceUrl": "https://api.openf1.org/v1/pit?session_key=9662",
+            "sessionKey": 9662,
+            "results": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "lap": 29,
+                "fastestPitStopTime": 13.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "lap": 26,
+                "fastestPitStopTime": 2.0,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "lap": 14,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "lap": 37,
+                "fastestPitStopTime": 3.4,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "lap": 20,
+                "fastestPitStopTime": 2.7,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "lap": 32,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "lap": 29,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 4
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "lap": 22,
+                "fastestPitStopTime": 2.4,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "lap": 12,
+                "fastestPitStopTime": 3.3,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "lap": 12,
+                "fastestPitStopTime": 3.5,
+                "pitStopCount": 2
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "lap": 13,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "lap": 24,
+                "fastestPitStopTime": 3.5,
+                "pitStopCount": 3
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "lap": 3,
+                "fastestPitStopTime": 4.9,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "lap": 34,
+                "fastestPitStopTime": 2.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "lap": 25,
+                "fastestPitStopTime": 2.2,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 61,
+                "driverName": "Jack Doohan",
+                "driverCode": "DOO",
+                "teamName": "Alpine F1 Team",
+                "lap": 22,
+                "fastestPitStopTime": 2.6,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "lap": 26,
+                "fastestPitStopTime": 2.4,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "lap": 6,
+                "fastestPitStopTime": 21.5,
+                "pitStopCount": 1
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "lap": 4,
+                "fastestPitStopTime": 4.4,
+                "pitStopCount": 2
+              }
+            ],
+            "timings": [
+              {
+                "driverNumber": 1,
+                "driverName": "Max Verstappen",
+                "driverCode": "VER",
+                "teamName": "Red Bull",
+                "pitStopId": 1,
+                "lap": 29,
+                "stopDuration": 13.5,
+                "stageDurations": [
+                  2.268,
+                  1.8765,
+                  2.268,
+                  2.268,
+                  1.8765,
+                  1.4715,
+                  1.4715,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 4,
+                "driverName": "Lando Norris",
+                "driverCode": "NOR",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 2.0,
+                "stageDurations": [
+                  0.336,
+                  0.278,
+                  0.336,
+                  0.336,
+                  0.278,
+                  0.218,
+                  0.218,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 10,
+                "driverName": "Pierre Gasly",
+                "driverCode": "GAS",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 14,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 13,
+                "stopDuration": 4.3,
+                "stageDurations": [
+                  0.7224,
+                  0.5977,
+                  0.7224,
+                  0.7224,
+                  0.5977,
+                  0.4687,
+                  0.4687,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 14,
+                "driverName": "Fernando Alonso",
+                "driverCode": "ALO",
+                "teamName": "Aston Martin",
+                "pitStopId": 2,
+                "lap": 37,
+                "stopDuration": 3.4,
+                "stageDurations": [
+                  0.5712,
+                  0.4726,
+                  0.5712,
+                  0.5712,
+                  0.4726,
+                  0.3706,
+                  0.3706,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 16,
+                "driverName": "Charles Leclerc",
+                "driverCode": "LEC",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 20,
+                "stopDuration": 2.7,
+                "stageDurations": [
+                  0.4536,
+                  0.3753,
+                  0.4536,
+                  0.4536,
+                  0.3753,
+                  0.2943,
+                  0.2943,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "pitStopId": 1,
+                "lap": 11,
+                "stopDuration": 4.0,
+                "stageDurations": [
+                  0.672,
+                  0.556,
+                  0.672,
+                  0.672,
+                  0.556,
+                  0.436,
+                  0.436,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 18,
+                "driverName": "Lance Stroll",
+                "driverCode": "STR",
+                "teamName": "Aston Martin",
+                "pitStopId": 2,
+                "lap": 32,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 12,
+                "stopDuration": 7.2,
+                "stageDurations": [
+                  1.2096,
+                  1.0008,
+                  1.2096,
+                  1.2096,
+                  1.0008,
+                  0.7848,
+                  0.7848,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 2,
+                "lap": 29,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 3,
+                "lap": 30,
+                "stopDuration": 2.9,
+                "stageDurations": [
+                  0.4872,
+                  0.4031,
+                  0.4872,
+                  0.4872,
+                  0.4031,
+                  0.3161,
+                  0.3161,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 20,
+                "driverName": "Kevin Magnussen",
+                "driverCode": "MAG",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 4,
+                "lap": 55,
+                "stopDuration": 2.8,
+                "stageDurations": [
+                  0.4704,
+                  0.3892,
+                  0.4704,
+                  0.4704,
+                  0.3892,
+                  0.3052,
+                  0.3052,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 22,
+                "driverName": "Yuki Tsunoda",
+                "driverCode": "TSU",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 22,
+                "stopDuration": 2.4,
+                "stageDurations": [
+                  0.4032,
+                  0.3336,
+                  0.4032,
+                  0.4032,
+                  0.3336,
+                  0.2616,
+                  0.2616,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 23,
+                "driverName": "Alexander Albon",
+                "driverCode": "ALB",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 12,
+                "stopDuration": 3.3,
+                "stageDurations": [
+                  0.5544,
+                  0.4587,
+                  0.5544,
+                  0.5544,
+                  0.4587,
+                  0.3597,
+                  0.3597,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 12,
+                "stopDuration": 3.5,
+                "stageDurations": [
+                  0.588,
+                  0.4865,
+                  0.588,
+                  0.588,
+                  0.4865,
+                  0.3815,
+                  0.3815,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 24,
+                "driverName": "Guanyu Zhou",
+                "driverCode": "ZHO",
+                "teamName": "Sauber",
+                "pitStopId": 2,
+                "lap": 39,
+                "stopDuration": 9.2,
+                "stageDurations": [
+                  1.5456,
+                  1.2788,
+                  1.5456,
+                  1.5456,
+                  1.2788,
+                  1.0028,
+                  1.0028,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 27,
+                "driverName": "Nico H\u00fclkenberg",
+                "driverCode": "HUL",
+                "teamName": "Haas F1 Team",
+                "pitStopId": 1,
+                "lap": 13,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 1,
+                "lap": 23,
+                "stopDuration": 4.2,
+                "stageDurations": [
+                  0.7056,
+                  0.5838,
+                  0.7056,
+                  0.7056,
+                  0.5838,
+                  0.4578,
+                  0.4578,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 2,
+                "lap": 24,
+                "stopDuration": 3.5,
+                "stageDurations": [
+                  0.588,
+                  0.4865,
+                  0.588,
+                  0.588,
+                  0.4865,
+                  0.3815,
+                  0.3815,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 30,
+                "driverName": "Liam Lawson",
+                "driverCode": "LAW",
+                "teamName": "RB F1 Team",
+                "pitStopId": 3,
+                "lap": 29,
+                "stopDuration": 12.2,
+                "stageDurations": [
+                  2.0496,
+                  1.6958,
+                  2.0496,
+                  2.0496,
+                  1.6958,
+                  1.3298,
+                  1.3298,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 43,
+                "driverName": "Franco Colapinto",
+                "driverCode": "COL",
+                "teamName": "Williams",
+                "pitStopId": 1,
+                "lap": 3,
+                "stopDuration": 4.9,
+                "stageDurations": [
+                  0.8232,
+                  0.6811,
+                  0.8232,
+                  0.8232,
+                  0.6811,
+                  0.5341,
+                  0.5341,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 44,
+                "driverName": "Lewis Hamilton",
+                "driverCode": "HAM",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 34,
+                "stopDuration": 2.5,
+                "stageDurations": [
+                  0.42,
+                  0.3475,
+                  0.42,
+                  0.42,
+                  0.3475,
+                  0.2725,
+                  0.2725,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 55,
+                "driverName": "Carlos Sainz",
+                "driverCode": "SAI",
+                "teamName": "Ferrari",
+                "pitStopId": 1,
+                "lap": 25,
+                "stopDuration": 2.2,
+                "stageDurations": [
+                  0.3696,
+                  0.3058,
+                  0.3696,
+                  0.3696,
+                  0.3058,
+                  0.2398,
+                  0.2398,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 61,
+                "driverName": "Jack Doohan",
+                "driverCode": "DOO",
+                "teamName": "Alpine F1 Team",
+                "pitStopId": 1,
+                "lap": 22,
+                "stopDuration": 2.6,
+                "stageDurations": [
+                  0.4368,
+                  0.3614,
+                  0.4368,
+                  0.4368,
+                  0.3614,
+                  0.2834,
+                  0.2834,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 63,
+                "driverName": "George Russell",
+                "driverCode": "RUS",
+                "teamName": "Mercedes",
+                "pitStopId": 1,
+                "lap": 26,
+                "stopDuration": 2.4,
+                "stageDurations": [
+                  0.4032,
+                  0.3336,
+                  0.4032,
+                  0.4032,
+                  0.3336,
+                  0.2616,
+                  0.2616,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 77,
+                "driverName": "Valtteri Bottas",
+                "driverCode": "BOT",
+                "teamName": "Sauber",
+                "pitStopId": 1,
+                "lap": 6,
+                "stopDuration": 21.5,
+                "stageDurations": [
+                  3.612,
+                  2.9885,
+                  3.612,
+                  3.612,
+                  2.9885,
+                  2.3435,
+                  2.3435,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "pitStopId": 1,
+                "lap": 4,
+                "stopDuration": 4.4,
+                "stageDurations": [
+                  0.7392,
+                  0.6116,
+                  0.7392,
+                  0.7392,
+                  0.6116,
+                  0.4796,
+                  0.4796,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "driverNumber": 81,
+                "driverName": "Oscar Piastri",
+                "driverCode": "PIA",
+                "teamName": "McLaren",
+                "pitStopId": 2,
+                "lap": 32,
+                "stopDuration": 13.4,
+                "stageDurations": [
+                  2.2512,
+                  1.8626,
+                  2.2512,
+                  2.2512,
+                  1.8626,
+                  1.4606,
+                  1.4606,
+                  0.0,
+                  0.0
+                ]
+              }
             ]
           },
           "lineupChanges": [

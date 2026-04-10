@@ -37,13 +37,45 @@ const buildAggregateMap = (rows, idColumn) => {
   const aggregateMap = new Map();
 
   for (const row of rows) {
-    aggregateMap.set(
-      `${row[idColumn]}:${row.RaceFormula}`,
-      Number(row.Points || 0)
-    );
+    const key = `${row[idColumn]}:${row.RaceFormula}`;
+    aggregateMap.set(key, (aggregateMap.get(key) || 0) + Number(row.Points || 0));
   }
 
   return aggregateMap;
+};
+
+const buildLatestRoundPointsMap = (rows, idColumn) => {
+  const latestRaceIdByFormula = new Map();
+  const latestRoundPointsMap = new Map();
+
+  for (const row of rows) {
+    const formula = Number(row.RaceFormula);
+    const raceId = Number(row.RaceID);
+    if (!Number.isFinite(formula) || !Number.isFinite(raceId)) {
+      continue;
+    }
+    const currentRaceId = latestRaceIdByFormula.get(formula);
+    if (!Number.isFinite(currentRaceId) || raceId > currentRaceId) {
+      latestRaceIdByFormula.set(formula, raceId);
+    }
+  }
+
+  for (const row of rows) {
+    const formula = Number(row.RaceFormula);
+    const raceId = Number(row.RaceID);
+    const entryId = Number(row[idColumn]);
+    const points = Number(row.Points || 0);
+    if (!Number.isFinite(formula) || !Number.isFinite(raceId) || !Number.isFinite(entryId)) {
+      continue;
+    }
+    if (raceId !== latestRaceIdByFormula.get(formula)) {
+      continue;
+    }
+    const key = `${entryId}:${formula}`;
+    latestRoundPointsMap.set(key, (latestRoundPointsMap.get(key) || 0) + points);
+  }
+
+  return latestRoundPointsMap;
 };
 
 const buildCountbackMap = (rows, idColumn) => {
@@ -91,6 +123,7 @@ const recalculateStandingsTable = ({
   idColumn,
   pointsMap,
   countbackMap,
+  latestRoundPointsMap = new Map(),
 }) => {
   const rows = database.getAllRows(
     `SELECT ${idColumn}, RaceFormula FROM ${table} WHERE SeasonID = :season`,
@@ -133,7 +166,7 @@ const recalculateStandingsTable = ({
         `UPDATE ${table}
          SET Points = :points,
              Position = :position,
-             LastPointsChange = 0,
+             LastPointsChange = :lastPointsChange,
              LastPositionChange = 0
          WHERE SeasonID = :season
            AND ${idColumn} = :entryId
@@ -144,6 +177,7 @@ const recalculateStandingsTable = ({
           ":formula": formula,
           ":points": points,
           ":position": hasAnyPoints ? index + 1 : 0,
+          ":lastPointsChange": latestRoundPointsMap.get(`${entry[idColumn]}:${formula}`) || 0,
         }
       );
     });
@@ -156,35 +190,34 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
   }
 
   if (tableSet.has("Races_DriverStandings")) {
-    const driverPoints = buildAggregateMap(
-      database.getAllRows(
+    const driverPointRows = database.getAllRows(
         `
-          SELECT DriverID, RaceFormula, SUM(Points) AS Points
+          SELECT DriverID, RaceFormula, RaceID, SUM(Points) AS Points
           FROM (
-            SELECT DriverID, 1 AS RaceFormula, Points
+            SELECT DriverID, 1 AS RaceFormula, RaceID, Points
             FROM Races_Results
             WHERE Season = :season
             UNION ALL
-            SELECT DriverID, RaceFormula, ChampionshipPoints AS Points
+            SELECT DriverID, RaceFormula, RaceID, ChampionshipPoints AS Points
             FROM Races_SprintResults
             WHERE SeasonID = :season
             UNION ALL
-            SELECT DriverID, RaceFormula, ChampionshipPoints AS Points
+            SELECT DriverID, RaceFormula, RaceID, ChampionshipPoints AS Points
             FROM Races_QualifyingResults
             WHERE SeasonID = :season
             UNION ALL
-            SELECT DriverID, RaceFormula, ChampionshipPoints AS Points
+            SELECT DriverID, RaceFormula, RaceID, ChampionshipPoints AS Points
             FROM Races_FeatureRaceResults
             WHERE SeasonID = :season
           )
-          GROUP BY DriverID, RaceFormula
+          GROUP BY DriverID, RaceFormula, RaceID
         `,
         {
           ":season": season,
         }
-      ),
-      "DriverID"
     );
+    const driverPoints = buildAggregateMap(driverPointRows, "DriverID");
+    const driverLatestRoundPoints = buildLatestRoundPointsMap(driverPointRows, "DriverID");
     const driverCountback = buildCountbackMap(
       database.getAllRows(
         `
@@ -214,39 +247,39 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
       idColumn: "DriverID",
       pointsMap: driverPoints,
       countbackMap: driverCountback,
+      latestRoundPointsMap: driverLatestRoundPoints,
     });
   }
 
   if (tableSet.has("Races_TeamStandings")) {
-    const teamPoints = buildAggregateMap(
-      database.getAllRows(
+    const teamPointRows = database.getAllRows(
         `
-          SELECT TeamID, RaceFormula, SUM(Points) AS Points
+          SELECT TeamID, RaceFormula, RaceID, SUM(Points) AS Points
           FROM (
-            SELECT TeamID, 1 AS RaceFormula, Points
+            SELECT TeamID, 1 AS RaceFormula, RaceID, Points
             FROM Races_Results
             WHERE Season = :season
             UNION ALL
-            SELECT TeamID, RaceFormula, ChampionshipPoints AS Points
+            SELECT TeamID, RaceFormula, RaceID, ChampionshipPoints AS Points
             FROM Races_SprintResults
             WHERE SeasonID = :season
             UNION ALL
-            SELECT TeamID, RaceFormula, ChampionshipPoints AS Points
+            SELECT TeamID, RaceFormula, RaceID, ChampionshipPoints AS Points
             FROM Races_QualifyingResults
             WHERE SeasonID = :season
             UNION ALL
-            SELECT TeamID, RaceFormula, ChampionshipPoints AS Points
+            SELECT TeamID, RaceFormula, RaceID, ChampionshipPoints AS Points
             FROM Races_FeatureRaceResults
             WHERE SeasonID = :season
           )
-          GROUP BY TeamID, RaceFormula
+          GROUP BY TeamID, RaceFormula, RaceID
         `,
         {
           ":season": season,
         }
-      ),
-      "TeamID"
     );
+    const teamPoints = buildAggregateMap(teamPointRows, "TeamID");
+    const teamLatestRoundPoints = buildLatestRoundPointsMap(teamPointRows, "TeamID");
     const teamCountback = buildCountbackMap(
       database.getAllRows(
         `
@@ -276,25 +309,24 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
       idColumn: "TeamID",
       pointsMap: teamPoints,
       countbackMap: teamCountback,
+      latestRoundPointsMap: teamLatestRoundPoints,
     });
   }
 
   if (tableSet.has("Races_PitCrewStandings")) {
-    const pointsByTeam = new Map(
-      database
-        .getAllRows(
-          `
-            SELECT TeamID, SUM(Points) AS Points
-            FROM Races_PitStopResults
-            WHERE SeasonID = :season
-            GROUP BY TeamID
-          `,
-          {
-            ":season": season,
-          }
-        )
-        .map((row) => [row.TeamID, Number(row.Points || 0)])
+    const pitStopRows = database.getAllRows(
+      `
+        SELECT TeamID, 1 AS RaceFormula, RaceID, SUM(Points) AS Points
+        FROM Races_PitStopResults
+        WHERE SeasonID = :season
+        GROUP BY TeamID, RaceID
+      `,
+      {
+        ":season": season,
+      }
     );
+    const pointsByTeam = buildAggregateMap(pitStopRows, "TeamID");
+    const latestPitCrewPoints = buildLatestRoundPointsMap(pitStopRows, "TeamID");
 
     const standingsRows = database.getAllRows(
       `
@@ -316,8 +348,8 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
 
     for (const [formula, entries] of formulaGroups.entries()) {
       const sortedEntries = [...entries].sort((left, right) => {
-        const leftPoints = formula === 1 ? (pointsByTeam.get(left.TeamID) || 0) : 0;
-        const rightPoints = formula === 1 ? (pointsByTeam.get(right.TeamID) || 0) : 0;
+        const leftPoints = formula === 1 ? (pointsByTeam.get(`${left.TeamID}:${formula}`) || 0) : 0;
+        const rightPoints = formula === 1 ? (pointsByTeam.get(`${right.TeamID}:${formula}`) || 0) : 0;
         if (rightPoints !== leftPoints) {
           return rightPoints - leftPoints;
         }
@@ -326,16 +358,16 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
 
       const hasAnyPoints =
         formula === 1 &&
-        sortedEntries.some((entry) => (pointsByTeam.get(entry.TeamID) || 0) > 0);
+        sortedEntries.some((entry) => (pointsByTeam.get(`${entry.TeamID}:${formula}`) || 0) > 0);
 
       sortedEntries.forEach((entry, index) => {
-        const points = formula === 1 ? (pointsByTeam.get(entry.TeamID) || 0) : 0;
+        const points = formula === 1 ? (pointsByTeam.get(`${entry.TeamID}:${formula}`) || 0) : 0;
         database.exec(
           `
             UPDATE Races_PitCrewStandings
             SET Points = :points,
                 Position = :position,
-                LastPointsChange = 0,
+                LastPointsChange = :lastPointsChange,
                 LastPositionChange = 0
             WHERE SeasonID = :season
               AND TeamID = :teamId
@@ -347,6 +379,7 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
             ":formula": formula,
             ":points": points,
             ":position": hasAnyPoints ? index + 1 : 0,
+            ":lastPointsChange": latestPitCrewPoints.get(`${entry.TeamID}:${formula}`) || 0,
           }
         );
       });

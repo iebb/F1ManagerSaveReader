@@ -119,6 +119,18 @@ const COMPONENT_WEAR_BY_PART_TYPE = {
   8: 0.045,
 };
 
+const PART_TYPE_TOKEN_BY_ID = {
+  0: "Part_Type_Chassis",
+  1: "Part_Type_FrontWing",
+  2: "Part_Type_RearWing",
+  3: "Part_Type_Body",
+  4: "Part_Type_SidePods",
+  5: "Part_Type_Floor",
+  6: "Part_Type_Suspension",
+  7: "Part_Type_Gearbox",
+  8: "Part_Type_Engine",
+};
+
 const F1_DRIVER_DIRECTORY = {
   "alexander albon": { firstName: "Alexander", lastName: "Albon", code: "ALB", countryCandidates: ["Thailand", "UnitedKingdom"], dob: "1996-03-23" },
   "carlos sainz": { firstName: "Carlos", lastName: "Sainz", code: "SAI", countryCandidates: ["Spain"], dob: "1994-09-01" },
@@ -443,8 +455,8 @@ function applySingleSeasonImport({
   }
 
   finalizeDriverContracts({ database, importState, seasonId: targetYear, raceShells });
-  applyComponentUsageLedger({ database, tableSet, importState, raceShells, seasonId: targetYear, season: f1Season });
-  updatePlayerProgress({ database, metadata, importState, raceShells, season: f1Season });
+  applyComponentInspectionState({ database, tableSet, importState, raceShells, seasonId: targetYear });
+  updatePlayerProgress({ database, metadata, tableSet, importState, raceShells, season: f1Season });
 
   for (const _seriesKey of importState.appliedSeries) {
     recalculateRaceStandings({
@@ -453,6 +465,8 @@ function applySingleSeasonImport({
       tableSet,
     });
   }
+
+  rebuildPostRaceDerivedTables({ database, tableSet, importState, raceShells });
 
   return {
     createdDrivers: importState.createdDrivers,
@@ -618,6 +632,19 @@ function applySeriesSeason({ database, tableSet, importState, seriesKey, season,
         raceId: raceShell.RaceID,
       });
     }
+
+    if (seriesKey === "f1") {
+      applyF1PitStopImport({
+        database,
+        tableSet,
+        importState,
+        event,
+        raceShell,
+        raceRows: getSessionRows("race", "race"),
+        teamMapping,
+        config,
+      });
+    }
   });
 }
 
@@ -708,6 +735,200 @@ function buildSessionImportRows({ importState, seriesKey, season, event, session
     explicitFastestLapDriver,
     fastestLapPointAwarded: season?.rules?.fastestLapPointAwarded !== false,
   }));
+}
+
+function applyF1PitStopImport({ database, tableSet, importState, event, raceShell, raceRows, teamMapping, config }) {
+  if (!tableSet.has("Races_PitStopResults") || !raceShell || !raceRows?.length) {
+    return;
+  }
+
+  const raceEntries = raceRows
+    .map((row, index) => {
+      const driverId = Number(row.driverId) || ensureDriverExists({
+        database,
+        importState,
+        driverName: row.driverName,
+        driverCode: row.driverCode,
+      });
+      const teamId = resolveSeriesTeamId({
+        config,
+        resultRow: row,
+        event,
+        teamMapping,
+      });
+      return {
+        row,
+        index,
+        driverId,
+        teamId,
+        driverKey: normalizeName(row.driverName),
+      };
+    })
+    .filter((entry) => entry.driverId && entry.teamId);
+
+  if (!raceEntries.length) {
+    return;
+  }
+
+  const raceEntryByDriverKey = Object.fromEntries(raceEntries.map((entry) => [entry.driverKey, entry]));
+  const fetchedPayload = event?.pitStops || null;
+  const fetchedResults = (fetchedPayload?.results || [])
+    .map((row) => {
+      const driverKey = normalizeName(row.driverName);
+      const raceEntry = raceEntryByDriverKey[driverKey];
+      return raceEntry ? {
+        ...row,
+        driverKey,
+        driverId: raceEntry.driverId,
+        teamId: raceEntry.teamId,
+      } : null;
+    })
+    .filter(Boolean);
+
+  const fetchedTimings = (fetchedPayload?.timings || [])
+    .map((row) => {
+      const driverKey = normalizeName(row.driverName);
+      const raceEntry = raceEntryByDriverKey[driverKey];
+      return raceEntry ? {
+        ...row,
+        driverKey,
+        driverId: raceEntry.driverId,
+        teamId: raceEntry.teamId,
+      } : null;
+    })
+    .filter(Boolean);
+
+  const generatedRows = buildMockPitStopRows({
+    importState,
+    event,
+    raceEntries,
+    existingDriverKeys: new Set(fetchedResults.map((row) => row.driverKey)),
+    seedSuffix: fetchedResults.length ? "pit-missing" : "pit-full",
+    slowerThan: fetchedResults.length
+      ? Math.max(...fetchedResults.map((row) => Number(row.fastestPitStopTime || 0)).filter((value) => Number.isFinite(value)))
+      : null,
+  });
+  const mergedResults = [...fetchedResults, ...generatedRows]
+    .sort((left, right) => Number(left.fastestPitStopTime) - Number(right.fastestPitStopTime) || left.driverId - right.driverId)
+    .map((row, index) => ({
+      ...row,
+      finishPosition: index + 1,
+      points: F1_RACE_POINTS[index] || 0,
+    }));
+
+  const timingRows = [
+    ...fetchedTimings,
+    ...mergedResults
+      .filter((row) => !fetchedTimings.some((timing) => Number(timing.driverId) === Number(row.driverId)))
+      .map((row) => ({
+      driverId: row.driverId,
+      teamId: row.teamId,
+      pitStopId: 1,
+      lap: Number(row.lap) || 18,
+      stopDuration: Number(row.fastestPitStopTime),
+      stageDurations: buildPitStopStageDurations(Number(row.fastestPitStopTime)),
+      })),
+  ];
+
+  insertPitStopResults({
+    database,
+    seasonId: importState.targetYear,
+    raceId: raceShell.RaceID,
+    results: mergedResults,
+  });
+  insertPitStopTimings({
+    database,
+    tableSet,
+    seasonId: importState.targetYear,
+    raceId: raceShell.RaceID,
+    timingRows,
+  });
+}
+
+function buildMockPitStopRows({ importState, event, raceEntries, existingDriverKeys, seedSuffix, slowerThan = null }) {
+  const occupiedKeys = existingDriverKeys || new Set();
+  const baseFloor = Number.isFinite(Number(slowerThan)) ? Number(slowerThan) + 0.015 : 2.42;
+  return raceEntries
+    .filter((entry) => !occupiedKeys.has(entry.driverKey))
+    .map((entry) => {
+      const rng = createSeededRng([
+        importState.targetYear,
+        event.round,
+        seedSuffix,
+        entry.teamId,
+        entry.driverId,
+      ].join(":"));
+      const stopDuration = roundToThreeDecimals(baseFloor + (entry.index * 0.018) + (rng() * 0.09));
+      const totalLaps = Number(entry.row?.laps || raceEntries[0]?.row?.laps || 57);
+      const lap = Math.max(1, Math.min(totalLaps, Math.round((totalLaps * (0.28 + (rng() * 0.38))))));
+      return {
+        driverId: entry.driverId,
+        teamId: entry.teamId,
+        driverKey: entry.driverKey,
+        fastestPitStopTime: stopDuration,
+        lap,
+      };
+    });
+}
+
+function insertPitStopResults({ database, seasonId, raceId, results }) {
+  const templateRow = getTemplateRow(database, "Races_PitStopResults");
+  results.forEach((row) => {
+    insertTableRow(database, "Races_PitStopResults", templateRow, sanitizeRowObject({
+      SeasonID: seasonId,
+      RaceID: raceId,
+      TeamID: row.teamId,
+      FinishPosition: row.finishPosition,
+      FastestPitStopID: 1,
+      FastestPitStopTime: row.fastestPitStopTime,
+      DriverID: row.driverId,
+      Points: row.points,
+    }), {
+      table: "Races_PitStopResults",
+      seasonId,
+      raceId,
+      teamId: row.teamId,
+      driverId: row.driverId,
+    });
+  });
+}
+
+function insertPitStopTimings({ database, tableSet, seasonId, raceId, timingRows }) {
+  if (!tableSet.has("Races_PitStopTimings")) {
+    return;
+  }
+  const templateRow = getTemplateRow(database, "Races_PitStopTimings");
+  timingRows.forEach((row) => {
+    const stageDurations = Array.isArray(row.stageDurations) && row.stageDurations.length
+      ? row.stageDurations
+      : buildPitStopStageDurations(Number(row.stopDuration));
+    stageDurations.forEach((duration, stageIndex) => {
+      insertTableRow(database, "Races_PitStopTimings", templateRow, sanitizeRowObject({
+        SeasonID: seasonId,
+        RaceID: raceId,
+        TeamID: row.teamId,
+        DriverID: row.driverId,
+        PitStopID: Number(row.pitStopId) || 1,
+        PitStopStage: stageIndex,
+        Duration: duration,
+        IncidentDelay: 0,
+        Lap: Number(row.lap) || 0,
+      }));
+    });
+  });
+}
+
+function buildPitStopStageDurations(totalDuration) {
+  const weights = [0.168, 0.139, 0.168, 0.168, 0.139, 0.109, 0.109, 0, 0];
+  return weights.map((weight) => roundToSixDecimals((Number(totalDuration) || 0) * weight));
+}
+
+function roundToThreeDecimals(value) {
+  return Math.round((Number(value) || 0) * 1000) / 1000;
+}
+
+function roundToSixDecimals(value) {
+  return Math.round((Number(value) || 0) * 1000000) / 1000000;
 }
 
 function retargetSaveToImportedSeason({ database, metadata, basicInfo, tableSet, targetYear }) {
@@ -1758,6 +1979,7 @@ function extendCurrentContractsToSeason(database, seasonId) {
 function ensureCurrentSeatContract({ database, seasonId, teamId, posInTeam, driverId, startDay }) {
   const contractColumns = new Set(getTableColumns(database, "Staff_Contracts"));
   const formulaClause = contractColumns.has("Formula") ? "AND Formula = 1" : "";
+  clearCurrentDriverSeatContracts({ database, contractColumns, driverId, keepTeamId: teamId });
   const currentRows = readRows(
     database,
     `SELECT * FROM Staff_Contracts
@@ -1842,8 +2064,56 @@ function ensureCurrentSeatContract({ database, seasonId, teamId, posInTeam, driv
     });
 }
 
-function applyComponentUsageLedger({ database, tableSet, importState, raceShells, seasonId, season }) {
-  if (!tableSet.has("Parts_CarLoadout") || !tableSet.has("Parts_Items")) {
+function clearCurrentDriverSeatContracts({ database, contractColumns, driverId, keepTeamId }) {
+  const teamRows = readRows(
+    database,
+    `SELECT TeamID FROM Teams
+     WHERE Formula = 1`
+  );
+  const activeF1Teams = new Set(teamRows.map((row) => Number(row.TeamID)).filter(Number.isFinite));
+  const currentContracts = readRows(
+    database,
+    `SELECT TeamID, PosInTeam
+     FROM Staff_Contracts
+     WHERE StaffID = :driverId
+       AND ContractType = 0`,
+    { ":driverId": driverId }
+  );
+  currentContracts
+    .filter((row) => activeF1Teams.has(Number(row.TeamID)) && Number(row.TeamID) !== Number(keepTeamId))
+    .forEach((row) => {
+      const whereClauses = [
+        "StaffID = :driverId",
+        "TeamID = :teamId",
+        "PosInTeam = :posInTeam",
+        "ContractType = 0",
+      ];
+      if (contractColumns.has("Formula")) {
+        whereClauses.push("Formula = 1");
+      }
+      database.exec(
+        `DELETE FROM Staff_Contracts
+         WHERE ${whereClauses.join("\n           AND ")}`,
+        {
+          ":driverId": driverId,
+          ":teamId": Number(row.TeamID),
+          ":posInTeam": Number(row.PosInTeam),
+        }
+      );
+    });
+}
+
+function applyComponentInspectionState({ database, tableSet, importState, raceShells, seasonId }) {
+  if (!tableSet.has("Parts_CarLoadout") || !tableSet.has("Parts_Items") || !tableSet.has("Parts_InspectionResults")) {
+    return;
+  }
+
+  const playerTeamId = resolvePlayerTeamId({
+    database,
+    importState,
+    day: Number(raceShells[Math.max(importState.lastRound - 1, 0)]?.Day || dateToDay(new Date(`${seasonId}-01-01`))),
+  });
+  if (!Number.isFinite(playerTeamId) || playerTeamId <= 0) {
     return;
   }
 
@@ -1853,85 +2123,67 @@ function applyComponentUsageLedger({ database, tableSet, importState, raceShells
             Parts_CarLoadout.LoadoutID,
             Parts_CarLoadout.PartType,
             Parts_CarLoadout.ItemID,
-            Parts_Items.Condition
+            Parts_Items.DesignID,
+            Parts_Items.ManufactureNumber,
+            Parts_Designs.DesignNumber,
+            Parts_Designs.TeamID AS DesignTeamID
      FROM Parts_CarLoadout
      JOIN Parts_Items ON Parts_Items.ItemID = Parts_CarLoadout.ItemID
-     WHERE Parts_CarLoadout.TeamID BETWEEN 1 AND 10`
+     LEFT JOIN Parts_Designs ON Parts_Designs.DesignID = Parts_Items.DesignID
+     WHERE Parts_CarLoadout.TeamID = :teamId
+       AND Parts_CarLoadout.PartType IN (1, 2, 3, 4, 5, 6)`,
+    {
+      ":teamId": playerTeamId,
+    }
   );
 
-  const loadoutState = {};
+  const inspectionRowsByLoadout = {};
   loadoutRows.forEach((row) => {
-    const key = `${row.TeamID}:${row.LoadoutID}:${row.PartType}`;
-    loadoutState[key] = {
+    const loadoutId = Number(row.LoadoutID || 0);
+    inspectionRowsByLoadout[loadoutId] = inspectionRowsByLoadout[loadoutId] || [];
+    inspectionRowsByLoadout[loadoutId].push({
       itemId: row.ItemID,
-      condition: Number(row.Condition ?? 1),
-    };
+      designId: row.DesignID,
+      manufactureNumber: Number(row.ManufactureNumber || 0),
+      designNumber: Number(row.DesignNumber || 0),
+      designTeamId: Number(row.DesignTeamID || row.TeamID || 0),
+      partType: Number(row.PartType || 0),
+    });
   });
 
-  const wearSeatState = JSON.parse(JSON.stringify(importState.initialTeamSeatState));
-  season.events.slice(importState.importStartRound, importState.lastRound).forEach((event, eventIndex) => {
-    const raceIndex = importState.importStartRound + eventIndex;
-    const raceShell = raceShells[raceIndex];
-    const seatAssignments = ensureEventSeatAssignments({ ...importState, teamSeatState: wearSeatState }, event);
-    Object.entries(seatAssignments).forEach(([teamIdValue, driversByName]) => {
-      const teamId = Number(teamIdValue);
-      Object.entries(driversByName).forEach(([driverKey, assignment]) => {
-        const driverId = importState.driverIdsByName[driverKey];
-        Object.entries(COMPONENT_WEAR_BY_PART_TYPE).forEach(([partTypeValue, wearAmount]) => {
-          const partType = Number(partTypeValue);
-          const stateKey = `${teamId}:${assignment.loadoutId}:${partType}`;
-          const loadout = loadoutState[stateKey];
-          if (!loadout) {
-            return;
-          }
-          const before = loadout.condition;
-          const after = Math.max(0.12, before - wearAmount);
-          loadout.condition = after;
-          database.exec(`UPDATE Parts_Items SET Condition = :condition WHERE ItemID = :itemId`, {
-            ":condition": after,
-            ":itemId": loadout.itemId,
-          });
-          database.exec(
-            `INSERT INTO Modding_RealWorldImport_ComponentLedger
-             (SeasonID, RaceID, Series, TeamID, LoadoutID, DriverID, PartType, ItemID, ConditionBefore, ConditionAfter, SimulatedWear)
-             VALUES (:seasonId, :raceId, 'f1', :teamId, :loadoutId, :driverId, :partType, :itemId, :before, :after, :wear)`,
-            {
-              ":seasonId": seasonId,
-              ":raceId": raceShell.RaceID,
-              ":teamId": teamId,
-              ":loadoutId": assignment.loadoutId,
-              ":driverId": driverId,
-              ":partType": partType,
-              ":itemId": loadout.itemId,
-              ":before": before,
-              ":after": after,
-              ":wear": wearAmount,
-            }
-          );
-
-          if (tableSet.has("Parts_InspectionResults")) {
-            const templateRow = getTemplateRow(database, "Parts_InspectionResults");
-            insertTableRow(database, "Parts_InspectionResults", templateRow, sanitizeRowObject({
-              ItemID: loadout.itemId,
-              RaceID: raceShell.RaceID,
-              LoadoutID: assignment.loadoutId,
-              Result: after < 0.2 ? 2 : 0,
-            }));
-          }
+  const templateRow = getTemplateRow(database, "Parts_InspectionResults");
+  raceShells.slice(importState.importStartRound, importState.lastRound).forEach((raceShell) => {
+    Object.entries(inspectionRowsByLoadout).forEach(([loadoutId, partRows]) => {
+      partRows.forEach((loadout) => {
+        const itemName = buildInspectionItemName({
+          teamId: loadout.designTeamId || playerTeamId,
+          partType: loadout.partType,
+          seasonId,
+          designNumber: loadout.designNumber,
+          manufactureNumber: loadout.manufactureNumber,
+          itemId: loadout.itemId,
         });
+        insertTableRow(database, "Parts_InspectionResults", templateRow, sanitizeRowObject({
+          ItemID: loadout.itemId,
+          RaceID: raceShell.RaceID,
+          DesignID: loadout.designId,
+          LoadoutID: Number(loadoutId),
+          ItemName: itemName,
+          Result: 0,
+        }));
       });
     });
   });
 }
 
-function updatePlayerProgress({ database, metadata, importState, raceShells, season }) {
+function updatePlayerProgress({ database, metadata, tableSet, importState, raceShells, season }) {
   const seasonStartDay = dateToDay(new Date(`${importState.targetYear}-01-01`));
+  const lastRace = importState.lastRound > 0 ? raceShells[importState.lastRound - 1] : null;
   const nextRaceIndex = Math.min(importState.lastRound, raceShells.length - 1);
   const nextRace = importState.lastRound < raceShells.length ? raceShells[nextRaceIndex] : null;
-  const lastRace = importState.lastRound > 0 ? raceShells[importState.lastRound - 1] : null;
-  const newDay = nextRace
-    ? Math.max(seasonStartDay, Number(nextRace.Day) - 4)
-    : Math.max(seasonStartDay, Number(lastRace?.Day || seasonStartDay));
+  const newDay = lastRace
+    ? Math.max(seasonStartDay, Number(lastRace.Day || seasonStartDay) + 1)
+    : seasonStartDay;
 
   database.exec(`UPDATE Player_State SET Day = :day`, { ":day": newDay });
   database.exec(
@@ -1943,6 +2195,7 @@ function updatePlayerProgress({ database, metadata, importState, raceShells, sea
      WHERE SeasonID = :seasonId`,
     { ":seasonId": importState.targetYear }
   );
+  updatePlayerRecord({ database, tableSet, importState, raceShells, newDay });
 
   setCareerSaveMetadataFields(metadata, {
     CurrentSeason: importState.targetYear,
@@ -1956,6 +2209,700 @@ function updatePlayerProgress({ database, metadata, importState, raceShells, sea
     LapCount: 0,
     TimeRemaining: 0,
   });
+}
+
+function updatePlayerRecord({ database, tableSet, importState, raceShells, newDay }) {
+  if (!tableSet.has("Player_Record") || importState.lastRound <= 0) {
+    return;
+  }
+
+  const playerTeamId = resolvePlayerTeamId({ database, importState, day: newDay });
+  if (!Number.isFinite(playerTeamId) || playerTeamId <= 0) {
+    return;
+  }
+
+  const completedRaceIds = raceShells.slice(0, importState.lastRound).map((race) => race.RaceID);
+  if (!completedRaceIds.length) {
+    return;
+  }
+  const raceIdList = completedRaceIds.join(",");
+  const completedResults = readRows(
+    database,
+    `
+      SELECT Results.RaceID,
+             Races.TrackID,
+             Races.Day,
+             Results.TeamID,
+             Results.DriverID,
+             Results.FinishingPos,
+             Results.StartingPos,
+             Results.Points,
+             Results.FastestLap,
+             Results.DNF
+      FROM Races_Results AS Results
+      JOIN Races ON Races.RaceID = Results.RaceID
+      WHERE Results.Season = :seasonId
+        AND Results.TeamID = :teamId
+        AND Results.RaceID IN (${raceIdList})
+      ORDER BY Races.Day ASC, Results.RaceID ASC, Results.DriverID ASC
+    `,
+    {
+      ":seasonId": importState.targetYear,
+      ":teamId": playerTeamId,
+    }
+  );
+  if (!completedResults.length) {
+    return;
+  }
+
+  const positiveStarts = completedResults.filter((row) => Number(row.StartingPos || 0) > 0);
+  const finishedRows = completedResults.filter((row) => Number(row.DNF || 0) === 0);
+  const pointRows = completedResults.filter((row) => Number(row.Points || 0) > 0);
+  const podiumRows = completedResults.filter((row) => {
+    const finish = Number(row.FinishingPos || 0);
+    return finish > 0 && finish <= 3;
+  });
+  const winRows = completedResults.filter((row) => Number(row.FinishingPos || 0) === 1);
+  const distinctStartedRaceIds = new Set(positiveStarts.map((row) => row.RaceID));
+  const distinctFinishedRaceIds = new Set(finishedRows.map((row) => row.RaceID));
+  const distinctPodiumRaceIds = new Set(podiumRows.map((row) => row.RaceID));
+  const firstRaceRow = positiveStarts[0] || completedResults[0];
+  const lastRaceRow = completedResults[completedResults.length - 1];
+  const firstPointsRow = pointRows[0] || null;
+  const firstPodiumRow = podiumRows[0] || null;
+  const firstWinRow = winRows[0] || null;
+  const lastWinRow = winRows[winRows.length - 1] || null;
+  const bestQualifyingRow = positiveStarts.reduce((best, row) => {
+    if (!best) {
+      return row;
+    }
+    const currentPos = Number(row.StartingPos || 0);
+    const bestPos = Number(best.StartingPos || 0);
+    if (currentPos > 0 && (bestPos <= 0 || currentPos < bestPos)) {
+      return row;
+    }
+    return best;
+  }, null);
+  const bestFinishRow = completedResults.reduce((best, row) => {
+    const currentPos = Number(row.FinishingPos || 0);
+    if (currentPos <= 0) {
+      return best;
+    }
+    if (!best) {
+      return row;
+    }
+    const bestPos = Number(best.FinishingPos || 0);
+    return currentPos < bestPos ? row : best;
+  }, null);
+
+  const updates = sanitizeRowObject({
+    FirstRace: firstRaceRow ? importState.targetYear : undefined,
+    FirstRaceTrackID: firstRaceRow?.TrackID,
+    FirstRaceTeamID: playerTeamId,
+    LastRace: lastRaceRow ? importState.targetYear : undefined,
+    LastRaceTrackID: lastRaceRow?.TrackID,
+    LastRaceTeamID: playerTeamId,
+    FirstWin: firstWinRow ? importState.targetYear : null,
+    FirstWinTrackID: firstWinRow?.TrackID ?? null,
+    FirstWinTeamID: firstWinRow ? playerTeamId : null,
+    LastWin: lastWinRow ? importState.targetYear : null,
+    LastWinTrackID: lastWinRow?.TrackID ?? null,
+    LastWinTeamID: lastWinRow ? playerTeamId : null,
+    FirstPodium: firstPodiumRow ? importState.targetYear : null,
+    FirstPodiumTrackID: firstPodiumRow?.TrackID ?? null,
+    FirstPodiumTeamID: firstPodiumRow ? playerTeamId : null,
+    FirstPoints: firstPointsRow ? importState.targetYear : null,
+    FirstPointsTrackID: firstPointsRow?.TrackID ?? null,
+    FirstPointsTeamID: firstPointsRow ? playerTeamId : null,
+    TotalDriverStarts: completedResults.length,
+    TotalDriverFinishes: finishedRows.length,
+    BestQualifying: bestQualifyingRow ? Number(bestQualifyingRow.StartingPos || 0) : null,
+    BestQualifyingYear: bestQualifyingRow ? importState.targetYear : null,
+    BestQualifyingTrackID: bestQualifyingRow?.TrackID ?? null,
+    BestQualifyingTeamID: bestQualifyingRow ? playerTeamId : null,
+    BestFinish: bestFinishRow ? Number(bestFinishRow.FinishingPos || 0) : null,
+    BestFinishYear: bestFinishRow ? importState.targetYear : null,
+    BestFinishTrackID: bestFinishRow?.TrackID ?? null,
+    BestFinishTeamID: bestFinishRow ? playerTeamId : null,
+    TotalDriverPoles: positiveStarts.filter((row) => Number(row.StartingPos || 0) === 1).length,
+    TotalDriverWins: winRows.length,
+    TotalDriverPodiums: podiumRows.length,
+    TotalDriverPointsScoringFinishes: pointRows.length,
+    TotalDriverPoints: completedResults.reduce((sum, row) => sum + Number(row.Points || 0), 0),
+    TotalDriverFastestLaps: completedResults.filter((row) => Number(row.FastestLap || 0) > 0).length,
+    TotalUniqueStarts: distinctStartedRaceIds.size,
+    TotalUniqueFinishes: distinctFinishedRaceIds.size,
+    TotalUniquePodiums: distinctPodiumRaceIds.size,
+  });
+
+  if (Object.keys(updates).length) {
+    database.exec(
+      `UPDATE Player_Record
+       SET ${Object.keys(updates).map((column) => `${column} = :${column}`).join(", ")}`,
+      Object.fromEntries(Object.entries(updates).map(([key, value]) => [`:${key}`, value]))
+    );
+  }
+}
+
+function resolvePlayerTeamId({ database, importState, day }) {
+  const currentTeamId = readRows(
+    database,
+    `
+      SELECT TeamID
+      FROM Player_History
+      WHERE StartDay <= :day
+        AND (EndDay IS NULL OR EndDay >= :day)
+      ORDER BY StartDay DESC
+      LIMIT 1
+    `,
+    { ":day": day }
+  )[0]?.TeamID;
+  if (Number.isFinite(Number(currentTeamId))) {
+    return Number(currentTeamId);
+  }
+
+  const fallbackTeamId = readRows(
+    database,
+    `
+      SELECT TeamID
+      FROM Player_History
+      ORDER BY COALESCE(EndDay, 999999999) DESC, StartDay DESC
+      LIMIT 1
+    `
+  )[0]?.TeamID;
+  if (Number.isFinite(Number(fallbackTeamId))) {
+    return Number(fallbackTeamId);
+  }
+
+  return Number(importState.customTeamRandomization?.teamId || 0);
+}
+
+function buildInspectionItemName({ teamId, partType, seasonId, designNumber, manufactureNumber, itemId }) {
+  const safeTeamId = Number.isFinite(teamId) && teamId > 0 ? teamId : 0;
+  const safeSeasonSuffix = String(seasonId || "").slice(-2) || "00";
+  const safeDesignNumber = Math.max(1, Number(designNumber || 1));
+  const safeManufactureNumber = Math.max(1, Number(manufactureNumber || 1));
+  const partTypeToken = PART_TYPE_TOKEN_BY_ID[partType] || "Part_Type_Body";
+  return `Imported ${partTypeToken} T${safeTeamId} (${safeSeasonSuffix}) D${safeDesignNumber} I${safeManufactureNumber} #${itemId}`;
+}
+
+function rebuildPostRaceDerivedTables({ database, tableSet, importState, raceShells }) {
+  rebuildPowertrainRaceHistory({ database, tableSet, importState, raceShells });
+  rebuildBoardConfidenceHistory({ database, tableSet, importState, raceShells });
+  rebuildSponsorshipRaceBonuses({ database, tableSet, importState, raceShells });
+  rebuildRaceRecordTables({ database, tableSet, importState });
+  rebuildPitCrewRecordTables({ database, tableSet, importState });
+}
+
+function rebuildPowertrainRaceHistory({ database, tableSet, importState, raceShells }) {
+  if (!tableSet.has("Parts_PowertrainRaceHistoryData")) {
+    return;
+  }
+
+  const completedRaceIds = raceShells.slice(importState.importStartRound, importState.lastRound).map((race) => race.RaceID);
+  if (!completedRaceIds.length) {
+    return;
+  }
+  const raceIdList = completedRaceIds.join(",");
+  database.exec(`DELETE FROM Parts_PowertrainRaceHistoryData WHERE TrackID IN (
+    SELECT DISTINCT TrackID FROM Races WHERE RaceID IN (${raceIdList})
+  )`);
+
+  const contractType = readRows(
+    database,
+    `SELECT Value FROM Staff_Enum_ContractType WHERE Name = 'Current' LIMIT 1`
+  )[0]?.Value ?? 0;
+  const loadoutMap = new Map(
+    readRows(
+      database,
+      `SELECT StaffID, TeamID, PosInTeam
+       FROM Staff_Contracts
+       WHERE ContractType = :contractType`,
+      { ":contractType": contractType }
+    ).map((row) => [`${row.StaffID}:${row.TeamID}`, Number(row.PosInTeam || 0)])
+  );
+
+  const templateRow = getTemplateRow(database, "Parts_PowertrainRaceHistoryData");
+  const completedRows = readRows(
+    database,
+    `
+      SELECT Results.RaceID, Races.TrackID, Results.TeamID, Results.DriverID
+      FROM Races_Results AS Results
+      JOIN Races ON Races.RaceID = Results.RaceID
+      WHERE Results.Season = :seasonId
+        AND Results.RaceID IN (${raceIdList})
+      ORDER BY Results.RaceID ASC, Results.TeamID ASC, Results.DriverID ASC
+    `,
+    { ":seasonId": importState.targetYear }
+  );
+
+  const inserted = new Set();
+  completedRows.forEach((row) => {
+    const associatedCar = loadoutMap.get(`${row.DriverID}:${row.TeamID}`);
+    if (!Number.isFinite(associatedCar) || associatedCar <= 0) {
+      return;
+    }
+    const key = `${row.TrackID}:${row.TeamID}:${associatedCar}`;
+    if (inserted.has(key)) {
+      return;
+    }
+    inserted.add(key);
+    insertTableRow(database, "Parts_PowertrainRaceHistoryData", templateRow, sanitizeRowObject({
+      TrackID: row.TrackID,
+      TeamID: row.TeamID,
+      AssociatedCar: associatedCar,
+      EnginePartsUsed: 1,
+      ERSPartsUsed: 1,
+      GearboxPartsUsed: 1,
+    }));
+  });
+}
+
+function rebuildBoardConfidenceHistory({ database, tableSet, importState, raceShells }) {
+  if (!tableSet.has("Board_Confidence_RaceHistory")) {
+    return;
+  }
+  const completedRaces = raceShells.slice(importState.importStartRound, importState.lastRound);
+  if (!completedRaces.length) {
+    return;
+  }
+
+  const playerTeamId = resolvePlayerTeamId({
+    database,
+    importState,
+    day: Number(completedRaces[completedRaces.length - 1]?.Day || 0),
+  });
+  database.exec(
+    `DELETE FROM Board_Confidence_RaceHistory
+     WHERE TrackID IN (${completedRaces.map((race) => race.TrackID).join(",")})`
+  );
+  const templateRow = getTemplateRow(database, "Board_Confidence_RaceHistory");
+  completedRaces.forEach((race) => {
+    insertTableRow(database, "Board_Confidence_RaceHistory", templateRow, sanitizeRowObject({
+      Day: race.Day,
+      TrackID: race.TrackID,
+      Performance: 3,
+    }));
+  });
+}
+
+function rebuildSponsorshipRaceBonuses({ database, tableSet, importState, raceShells }) {
+  if (!tableSet.has("Sponsorship_RaceBonuses")) {
+    return;
+  }
+  const completedRaceIds = raceShells.slice(importState.importStartRound, importState.lastRound).map((race) => race.RaceID);
+  if (!completedRaceIds.length) {
+    return;
+  }
+  database.exec(`DELETE FROM Sponsorship_RaceBonuses WHERE RaceID IN (${completedRaceIds.join(",")})`);
+  const templateRow = getTemplateRow(database, "Sponsorship_RaceBonuses");
+  const rows = readRows(
+    database,
+    `
+      SELECT DriverID, RaceID, FinishingPos
+      FROM Races_Results
+      WHERE Season = :seasonId
+        AND RaceID IN (${completedRaceIds.join(",")})
+      ORDER BY RaceID ASC, DriverID ASC
+    `,
+    { ":seasonId": importState.targetYear }
+  );
+  rows.forEach((row) => {
+    const finish = Math.max(1, Number(row.FinishingPos || 20));
+    [0, 1, 2].forEach((difficulty) => {
+      const targetPosition = Math.min(21, finish + (difficulty * 2));
+      insertTableRow(database, "Sponsorship_RaceBonuses", templateRow, sanitizeRowObject({
+        DriverID: row.DriverID,
+        RaceID: row.RaceID,
+        Difficulty: difficulty,
+        Position: targetPosition,
+        Selected: difficulty === 1 ? 1 : 0,
+        Achieved: 0,
+      }));
+    });
+  });
+}
+
+function rebuildRaceRecordTables({ database, tableSet, importState }) {
+  const stats = collectCompletedRaceRecordStats(database);
+  rebuildDriverRaceRecordTables({ database, tableSet, stats, importState });
+  rebuildTeamRaceRecordTables({ database, tableSet, stats, importState });
+}
+
+function collectCompletedRaceRecordStats(database) {
+  const mainRows = [
+    ...readRows(
+      database,
+      `
+        SELECT Results.Season AS SeasonID,
+               Results.RaceID,
+               Races.Day,
+               Races.TrackID,
+               1 AS Formula,
+               Results.DriverID,
+               Results.TeamID,
+               Results.FinishingPos,
+               Results.StartingPos,
+               Results.Points,
+               CASE WHEN COALESCE(Results.FastestLap, 0) > 0 THEN 1 ELSE 0 END AS FastestLapAward,
+               COALESCE(Results.DNF, 0) AS DNF
+        FROM Races_Results AS Results
+        JOIN Races ON Races.RaceID = Results.RaceID
+        WHERE Races.State = 2
+      `
+    ),
+    ...readRows(
+      database,
+      `
+        SELECT Results.SeasonID,
+               Results.RaceID,
+               Races.Day,
+               Races.TrackID,
+               Results.RaceFormula AS Formula,
+               Results.DriverID,
+               Results.TeamID,
+               Results.FinishingPos,
+               NULL AS StartingPos,
+               COALESCE(Results.ChampionshipPoints, 0) AS Points,
+               0 AS FastestLapAward,
+               0 AS DNF
+        FROM Races_FeatureRaceResults AS Results
+        JOIN Races ON Races.RaceID = Results.RaceID
+        WHERE Races.State = 2
+      `
+    ),
+  ];
+
+  const qualifyingRows = [
+    ...readRows(
+      database,
+      `
+        SELECT Season AS SeasonID,
+               Results.RaceID,
+               1 AS Formula,
+               DriverID,
+               TeamID,
+               StartingPos AS FinishingPos
+        FROM Races_Results AS Results
+        JOIN Races ON Races.RaceID = Results.RaceID
+        WHERE StartingPos > 0
+          AND Races.State = 2
+      `
+    ),
+    ...readRows(
+      database,
+      `
+        SELECT SeasonID,
+               RaceID,
+               RaceFormula AS Formula,
+               DriverID,
+               TeamID,
+               FinishingPos
+        FROM Races_QualifyingResults
+        WHERE FinishingPos > 0
+      `
+    ),
+  ];
+
+  const sprintRows = readRows(
+    database,
+    `
+      SELECT SeasonID,
+             RaceID,
+             RaceFormula AS Formula,
+             DriverID,
+             TeamID,
+             FinishingPos
+      FROM Races_SprintResults
+      WHERE FinishingPos > 0
+    `
+  );
+
+  return { mainRows, qualifyingRows, sprintRows };
+}
+
+function buildRaceRecordPayload({ mainRows, qualifyingRows, sprintRows, seasonId, teamId = null }) {
+  const sortedMainRows = [...mainRows].sort((left, right) => left.Day - right.Day || left.RaceID - right.RaceID || left.DriverID - right.DriverID);
+  if (!sortedMainRows.length) {
+    return null;
+  }
+  const positiveStarts = qualifyingRows.filter((row) => Number(row.FinishingPos || 0) > 0);
+  const finishedRows = sortedMainRows.filter((row) => Number(row.DNF || 0) === 0);
+  const pointRows = sortedMainRows.filter((row) => Number(row.Points || 0) > 0);
+  const podiumRows = sortedMainRows.filter((row) => {
+    const finish = Number(row.FinishingPos || 0);
+    return finish > 0 && finish <= 3;
+  });
+  const winRows = sortedMainRows.filter((row) => Number(row.FinishingPos || 0) === 1);
+  const firstRaceRow = positiveStarts[0] || sortedMainRows[0];
+  const lastRaceRow = sortedMainRows[sortedMainRows.length - 1];
+  const firstPointsRow = pointRows[0] || null;
+  const firstPodiumRow = podiumRows[0] || null;
+  const firstWinRow = winRows[0] || null;
+  const lastWinRow = winRows[winRows.length - 1] || null;
+  const bestQualifyingRow = positiveStarts.reduce((best, row) => {
+    if (!best) {
+      return row;
+    }
+    return Number(row.FinishingPos || 999) < Number(best.FinishingPos || 999) ? row : best;
+  }, null);
+  const bestFinishRow = sortedMainRows.reduce((best, row) => {
+    const finish = Number(row.FinishingPos || 0);
+    if (finish <= 0) {
+      return best;
+    }
+    if (!best) {
+      return row;
+    }
+    return finish < Number(best.FinishingPos || 999) ? row : best;
+  }, null);
+  const bestSprintRow = sprintRows.reduce((best, row) => {
+    if (!best) {
+      return row;
+    }
+    return Number(row.FinishingPos || 999) < Number(best.FinishingPos || 999) ? row : best;
+  }, null);
+
+  return sanitizeRowObject({
+    ...(seasonId !== null ? { SeasonID: seasonId } : {}),
+    ...(teamId !== null ? { TeamID: teamId } : {}),
+    FirstRace: firstRaceRow?.SeasonID ?? seasonId,
+    FirstRaceTrackID: firstRaceRow?.TrackID,
+    LastRace: lastRaceRow?.SeasonID ?? seasonId,
+    LastRaceTrackID: lastRaceRow?.TrackID,
+    FirstWin: firstWinRow?.SeasonID ?? null,
+    FirstWinTrackID: firstWinRow?.TrackID ?? null,
+    LastWin: lastWinRow?.SeasonID ?? null,
+    LastWinTrackID: lastWinRow?.TrackID ?? null,
+    FirstPodium: firstPodiumRow?.SeasonID ?? null,
+    FirstPodiumTrackID: firstPodiumRow?.TrackID ?? null,
+    FirstPoints: firstPointsRow?.SeasonID ?? null,
+    FirstPointsTrackID: firstPointsRow?.TrackID ?? null,
+    TotalDriverStarts: sortedMainRows.length,
+    TotalStarts: sortedMainRows.length,
+    TotalDriverFinishes: finishedRows.length,
+    TotalFinishes: finishedRows.length,
+    TotalDriverQualifying: 0,
+    BestQualifyingYear: bestQualifyingRow?.SeasonID ?? null,
+    BestQualifying: bestQualifyingRow ? Number(bestQualifyingRow.FinishingPos || 0) : null,
+    BestQualifyingTrackID: bestQualifyingRow?.TrackID ?? null,
+    BestFinish: bestFinishRow ? Number(bestFinishRow.FinishingPos || 0) : null,
+    BestFinishYear: bestFinishRow?.SeasonID ?? null,
+    BestFinishTrackID: bestFinishRow?.TrackID ?? null,
+    TotalDriverSprintWins: sprintRows.filter((row) => Number(row.FinishingPos || 0) === 1).length,
+    TotalSprintWins: sprintRows.filter((row) => Number(row.FinishingPos || 0) === 1).length,
+    TotalDriverPoles: positiveStarts.filter((row) => Number(row.FinishingPos || 0) === 1).length,
+    TotalPoles: positiveStarts.filter((row) => Number(row.FinishingPos || 0) === 1).length,
+    TotalDriverWins: winRows.length,
+    TotalWins: winRows.length,
+    TotalDriverPodiums: podiumRows.length,
+    TotalPodiums: podiumRows.length,
+    TotalDriverPointsScoringFinishes: pointRows.length,
+    TotalPointsScoringFinishes: pointRows.length,
+    TotalDriverPoints: sortedMainRows.reduce((sum, row) => sum + Number(row.Points || 0), 0),
+    TotalPointsScored: sortedMainRows.reduce((sum, row) => sum + Number(row.Points || 0), 0),
+    TotalDriverFastestLaps: sortedMainRows.reduce((sum, row) => sum + Number(row.FastestLapAward || 0), 0),
+    TotalFastestLaps: sortedMainRows.reduce((sum, row) => sum + Number(row.FastestLapAward || 0), 0),
+    BestDriverFinishes: 0,
+    TotalUniqueStarts: new Set(sortedMainRows.map((row) => row.RaceID)).size,
+    TotalUniqueFinishes: new Set(finishedRows.map((row) => row.RaceID)).size,
+    TotalUniquePodiums: new Set(podiumRows.map((row) => row.RaceID)).size,
+    BestSprintFinish: bestSprintRow ? Number(bestSprintRow.FinishingPos || 0) : null,
+    BestSprintFinishYear: bestSprintRow?.SeasonID ?? null,
+    BestSprintFinishTrackID: bestSprintRow?.TrackID ?? null,
+  });
+}
+
+function rebuildDriverRaceRecordTables({ database, tableSet, stats, importState }) {
+  const { mainRows, qualifyingRows, sprintRows } = stats;
+  const seasonRows = mainRows.filter((row) => Number(row.SeasonID) === importState.targetYear);
+  const seasonQualRows = qualifyingRows.filter((row) => Number(row.SeasonID) === importState.targetYear);
+  const seasonSprintRows = sprintRows.filter((row) => Number(row.SeasonID) === importState.targetYear);
+  const previousSinceRows = tableSet.has("Staff_Driver_RaceRecordSinceGameStart")
+    ? readRows(database, `SELECT * FROM Staff_Driver_RaceRecordSinceGameStart`)
+    : [];
+
+  if (tableSet.has("Staff_Driver_RaceRecordPerSeason")) {
+    database.exec(`DELETE FROM Staff_Driver_RaceRecordPerSeason WHERE SeasonID = :seasonId`, { ":seasonId": importState.targetYear });
+    const templateRow = getTemplateRow(database, "Staff_Driver_RaceRecordPerSeason");
+    const groupKeys = new Set(seasonRows.map((row) => `${row.DriverID}:${row.Formula}:${row.TeamID}`));
+    for (const key of groupKeys) {
+      const [driverId, formula, teamId] = key.split(":").map(Number);
+      const payload = buildRaceRecordPayload({
+        mainRows: seasonRows.filter((row) => row.DriverID === driverId && row.Formula === formula && row.TeamID === teamId),
+        qualifyingRows: seasonQualRows.filter((row) => row.DriverID === driverId && row.Formula === formula && row.TeamID === teamId),
+        sprintRows: seasonSprintRows.filter((row) => row.DriverID === driverId && row.Formula === formula && row.TeamID === teamId),
+        seasonId: importState.targetYear,
+        teamId,
+      });
+      if (!payload) {
+        continue;
+      }
+      insertTableRow(database, "Staff_Driver_RaceRecordPerSeason", templateRow, sanitizeRowObject({
+        StaffID: driverId,
+        SeasonID: importState.targetYear,
+        TeamID: teamId,
+        ...payload,
+      }));
+    }
+  }
+
+  if (tableSet.has("Staff_Driver_RaceRecordSinceGameStart")) {
+    database.exec(`DELETE FROM Staff_Driver_RaceRecordSinceGameStart`);
+    const templateRow = getTemplateRow(database, "Staff_Driver_RaceRecordSinceGameStart");
+    const groupKeys = new Set(mainRows.map((row) => `${row.DriverID}:${row.Formula}`));
+    for (const key of groupKeys) {
+      const [driverId, formula] = key.split(":").map(Number);
+      const driverRows = mainRows.filter((row) => row.DriverID === driverId && row.Formula === formula);
+      const payload = buildRaceRecordPayload({
+        mainRows: driverRows,
+        qualifyingRows: qualifyingRows.filter((row) => row.DriverID === driverId && row.Formula === formula),
+        sprintRows: sprintRows.filter((row) => row.DriverID === driverId && row.Formula === formula),
+        seasonId: Number(driverRows[0]?.SeasonID || importState.targetYear),
+      });
+      if (!payload) {
+        continue;
+      }
+      insertTableRow(database, "Staff_Driver_RaceRecordSinceGameStart", templateRow, sanitizeRowObject({
+        StaffID: driverId,
+        Formula: formula,
+        ...payload,
+      }));
+    }
+  }
+
+  if (tableSet.has("Staff_RaceRecord")) {
+    const previousSinceMap = new Map(previousSinceRows.map((row) => [`${row.StaffID}:${row.Formula}`, row]));
+    const currentRows = readRows(database, `SELECT * FROM Staff_RaceRecord`);
+    const templateRow = getTemplateRow(database, "Staff_RaceRecord");
+    const currentMap = new Map(currentRows.map((row) => [`${row.StaffID}:${row.Formula}`, row]));
+    const nextSinceRows = readRows(database, `SELECT * FROM Staff_Driver_RaceRecordSinceGameStart`);
+    const nextKeys = new Set(nextSinceRows.map((row) => `${row.StaffID}:${row.Formula}`));
+    nextKeys.forEach((key) => {
+      const [staffId, formula] = key.split(":").map(Number);
+      const previous = previousSinceMap.get(key) || {};
+      const current = currentMap.get(key) || {};
+      const next = nextSinceRows.find((row) => `${row.StaffID}:${row.Formula}` === key) || {};
+      const baselineStarts = Math.max(0, Number(current.TotalStarts || 0) - Number(previous.TotalStarts || 0));
+      const baselinePodiums = Math.max(0, Number(current.TotalPodiums || 0) - Number(previous.TotalPodiums || 0));
+      const baselineWins = Math.max(0, Number(current.TotalWins || 0) - Number(previous.TotalWins || 0));
+      database.exec(`DELETE FROM Staff_RaceRecord WHERE StaffID = :staffId AND Formula = :formula`, {
+        ":staffId": staffId,
+        ":formula": formula,
+      });
+      insertTableRow(database, "Staff_RaceRecord", templateRow, sanitizeRowObject({
+        StaffID: staffId,
+        Formula: formula,
+        TotalStarts: baselineStarts + Number(next.TotalStarts || 0),
+        TotalPodiums: baselinePodiums + Number(next.TotalPodiums || 0),
+        TotalWins: baselineWins + Number(next.TotalWins || 0),
+        TotalConstructorChampionships: Number(current.TotalConstructorChampionships || 0),
+      }));
+    });
+  }
+}
+
+function rebuildTeamRaceRecordTables({ database, tableSet, stats, importState }) {
+  const { mainRows, qualifyingRows, sprintRows } = stats;
+  const seasonRows = mainRows.filter((row) => Number(row.SeasonID) === importState.targetYear);
+  const seasonQualRows = qualifyingRows.filter((row) => Number(row.SeasonID) === importState.targetYear);
+  const seasonSprintRows = sprintRows.filter((row) => Number(row.SeasonID) === importState.targetYear);
+
+  if (tableSet.has("Teams_RaceRecordPerSeason")) {
+    database.exec(`DELETE FROM Teams_RaceRecordPerSeason WHERE SeasonID = :seasonId`, { ":seasonId": importState.targetYear });
+    const templateRow = getTemplateRow(database, "Teams_RaceRecordPerSeason");
+    const groupKeys = new Set(seasonRows.map((row) => `${row.TeamID}:${row.Formula}`));
+    for (const key of groupKeys) {
+      const [teamId, formula] = key.split(":").map(Number);
+      const teamRows = seasonRows.filter((row) => row.TeamID === teamId && row.Formula === formula);
+      const payload = buildRaceRecordPayload({
+        mainRows: teamRows,
+        qualifyingRows: seasonQualRows.filter((row) => row.TeamID === teamId && row.Formula === formula),
+        sprintRows: seasonSprintRows.filter((row) => row.TeamID === teamId && row.Formula === formula),
+        seasonId: importState.targetYear,
+      });
+      if (!payload) {
+        continue;
+      }
+      insertTableRow(database, "Teams_RaceRecordPerSeason", templateRow, sanitizeRowObject({
+        TeamID: teamId,
+        SeasonID: importState.targetYear,
+        ...payload,
+      }));
+    }
+  }
+
+  if (tableSet.has("Teams_RaceRecordSinceGameStart")) {
+    database.exec(`DELETE FROM Teams_RaceRecordSinceGameStart`);
+    const templateRow = getTemplateRow(database, "Teams_RaceRecordSinceGameStart");
+    const groupKeys = new Set(mainRows.map((row) => `${row.TeamID}:${row.Formula}`));
+    for (const key of groupKeys) {
+      const [teamId, formula] = key.split(":").map(Number);
+      if (formula !== 1) {
+        continue;
+      }
+      const teamRows = mainRows.filter((row) => row.TeamID === teamId && row.Formula === formula);
+      const payload = buildRaceRecordPayload({
+        mainRows: teamRows,
+        qualifyingRows: qualifyingRows.filter((row) => row.TeamID === teamId && row.Formula === formula),
+        sprintRows: sprintRows.filter((row) => row.TeamID === teamId && row.Formula === formula),
+        seasonId: Number(teamRows[0]?.SeasonID || importState.targetYear),
+      });
+      if (!payload) {
+        continue;
+      }
+      insertTableRow(database, "Teams_RaceRecordSinceGameStart", templateRow, sanitizeRowObject({
+        TeamID: teamId,
+        ...payload,
+      }));
+    }
+  }
+}
+
+function rebuildPitCrewRecordTables({ database, tableSet, importState }) {
+  const pitRows = readRows(
+    database,
+    `
+      SELECT SeasonID, RaceID, TeamID, DriverID, FinishPosition, FastestPitStopTime, Points
+      FROM Races_PitStopResults
+    `
+  );
+  if (tableSet.has("Teams_PitCrewRecordPerSeason")) {
+    database.exec(`DELETE FROM Teams_PitCrewRecordPerSeason WHERE SeasonID = :seasonId`, { ":seasonId": importState.targetYear });
+    const templateRow = getTemplateRow(database, "Teams_PitCrewRecordPerSeason");
+    const groupKeys = new Set(pitRows.filter((row) => Number(row.SeasonID) === importState.targetYear).map((row) => row.TeamID));
+    for (const teamId of groupKeys) {
+      const rows = pitRows.filter((row) => Number(row.SeasonID) === importState.targetYear && Number(row.TeamID) === Number(teamId));
+      const fastest = rows.reduce((best, row) => (!best || Number(row.FastestPitStopTime || 999) < Number(best.FastestPitStopTime || 999)) ? row : best, null);
+      insertTableRow(database, "Teams_PitCrewRecordPerSeason", templateRow, sanitizeRowObject({
+        TeamID: Number(teamId),
+        SeasonID: importState.targetYear,
+        CompetitionWins: rows.filter((row) => Number(row.FinishPosition || 0) === 1).length,
+        FastestPitStopsTotal: rows.filter((row) => Number(row.FinishPosition || 0) === 1).length,
+        FastestPitStopTime: Number(fastest?.FastestPitStopTime || 0),
+        TotalPointsScored: rows.reduce((sum, row) => sum + Number(row.Points || 0), 0),
+        DriverID: Number(fastest?.DriverID || rows[0]?.DriverID || 0),
+      }));
+    }
+  }
+
+  if (tableSet.has("Teams_PitCrewRecordSinceGameStart")) {
+    database.exec(`DELETE FROM Teams_PitCrewRecordSinceGameStart`);
+    const templateRow = getTemplateRow(database, "Teams_PitCrewRecordSinceGameStart");
+    const groupKeys = new Set(pitRows.map((row) => row.TeamID));
+    for (const teamId of groupKeys) {
+      const rows = pitRows.filter((row) => Number(row.TeamID) === Number(teamId));
+      const fastest = rows.reduce((best, row) => (!best || Number(row.FastestPitStopTime || 999) < Number(best.FastestPitStopTime || 999)) ? row : best, null);
+      insertTableRow(database, "Teams_PitCrewRecordSinceGameStart", templateRow, sanitizeRowObject({
+        TeamID: Number(teamId),
+        CompetitionWins: rows.filter((row) => Number(row.FinishPosition || 0) === 1).length,
+        FastestPitStopsTotal: rows.filter((row) => Number(row.FinishPosition || 0) === 1).length,
+        FastestPitStopTime: Number(fastest?.FastestPitStopTime || 0),
+        TotalPointsScored: rows.reduce((sum, row) => sum + Number(row.Points || 0), 0),
+        DriverID: Number(fastest?.DriverID || rows[0]?.DriverID || 0),
+      }));
+    }
+  }
 }
 
 function isRaceWeekendInProgress(basicInfo) {

@@ -20,6 +20,7 @@ import requests
 USER_AGENT = "Mozilla/5.0 (compatible; F1ManagerSaveReader/1.0; +https://github.com/)"
 REQUEST_DELAY_SECONDS = 0.25
 JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1"
+OPENF1_BASE = "https://api.openf1.org/v1"
 
 BENCHMARK_DRIVERS = {
     "lewis hamilton": "hamilton",
@@ -107,6 +108,7 @@ class JolpicaF1Exporter:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": USER_AGENT, "Accept": "application/json"})
         self.page_cache: dict[str, Any] = {}
+        self.openf1_cache: dict[str, Any] = {}
         self.db = sqlite3.connect(str(db_path))
         self.db.row_factory = sqlite3.Row
         self.staff_lookup_by_name, self.staff_lookup_by_code, self.country_lookup = self.load_staff_lookup()
@@ -118,6 +120,7 @@ class JolpicaF1Exporter:
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "sourceSummary": {
                 "results": "Jolpica F1 / Ergast-compatible API",
+                "pitStops": "OpenF1 pit endpoint when stationary stop-duration data exists",
                 "driverProfiles": str(self.db_path),
                 "estimationBenchmarks": list(BENCHMARK_DRIVERS.values()),
             },
@@ -242,6 +245,11 @@ class JolpicaF1Exporter:
                 "results": race_results,
             }
             self.update_season_summary_from_race(race_results, season_summaries)
+        pit_stop_payload = self.build_pit_stop_payload(
+            year=int(race_meta["season"]),
+            race_meta=race_meta,
+            race_results=sessions.get("race", {}).get("results", []),
+        )
 
         race_date = race_meta.get("date")
         race_time = race_meta.get("time")
@@ -253,7 +261,7 @@ class JolpicaF1Exporter:
             or sessions.get("qualifying", {}).get("results")
             or []
         )
-        return {
+        event_payload = {
             "round": int(race_meta["round"]),
             "eventName": race_meta["raceName"],
             "eventDate": race_date,
@@ -268,6 +276,96 @@ class JolpicaF1Exporter:
             "circuit": race_meta.get("Circuit", {}),
             "sessions": sessions,
             "lineup": self.build_lineup_map(lineup_source),
+        }
+        if pit_stop_payload:
+            event_payload["pitStops"] = pit_stop_payload
+        return event_payload
+
+    def build_pit_stop_payload(
+        self,
+        *,
+        year: int,
+        race_meta: dict[str, Any],
+        race_results: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        race_date = str(race_meta.get("date") or "")
+        if year < 2024 or not race_results:
+            return None
+        if race_date and race_date < "2024-10-20":
+            return None
+        session = self.find_openf1_race_session(year=year, race_meta=race_meta)
+        if not session:
+            return None
+        pit_rows = self.fetch_openf1_json(f"{OPENF1_BASE}/pit?session_key={session['session_key']}")
+        if not isinstance(pit_rows, list) or not pit_rows:
+            return None
+        rows_with_stationary_duration = [row for row in pit_rows if self.safe_float(row.get("stop_duration"))]
+        if not rows_with_stationary_duration:
+            return None
+
+        race_lookup = {}
+        for row in race_results:
+            driver_number = self.safe_int(row.get("driverNumber"))
+            if driver_number is not None:
+                race_lookup[driver_number] = row
+
+        by_driver_number: dict[int, list[dict[str, Any]]] = defaultdict(list)
+        for row in rows_with_stationary_duration:
+            driver_number = self.safe_int(row.get("driver_number"))
+            if driver_number is None:
+                continue
+            by_driver_number[driver_number].append(row)
+
+        results: list[dict[str, Any]] = []
+        timings: list[dict[str, Any]] = []
+        for driver_number, driver_rows in sorted(by_driver_number.items()):
+            race_row = race_lookup.get(driver_number)
+            if not race_row:
+                continue
+            sorted_rows = sorted(
+                driver_rows,
+                key=lambda entry: (
+                    self.safe_float(entry.get("stop_duration")) or 999.0,
+                    entry.get("date") or "",
+                ),
+            )
+            fastest_row = sorted_rows[0]
+            results.append({
+                "driverNumber": driver_number,
+                "driverName": race_row.get("driverName"),
+                "driverCode": race_row.get("driverCode"),
+                "teamName": race_row.get("teamName"),
+                "lap": self.safe_int(fastest_row.get("lap_number")),
+                "fastestPitStopTime": self.safe_float(fastest_row.get("stop_duration")),
+                "pitStopCount": len(sorted_rows),
+            })
+            driver_stop_rows = sorted(
+                driver_rows,
+                key=lambda entry: (entry.get("date") or "", self.safe_int(entry.get("lap_number")) or 0),
+            )
+            for stop_index, stop_row in enumerate(driver_stop_rows, start=1):
+                stop_duration = self.safe_float(stop_row.get("stop_duration"))
+                if stop_duration is None:
+                    continue
+                timings.append({
+                    "driverNumber": driver_number,
+                    "driverName": race_row.get("driverName"),
+                    "driverCode": race_row.get("driverCode"),
+                    "teamName": race_row.get("teamName"),
+                    "pitStopId": stop_index,
+                    "lap": self.safe_int(stop_row.get("lap_number")),
+                    "stopDuration": stop_duration,
+                    "stageDurations": self.build_pit_stop_stage_durations(stop_duration),
+                })
+
+        if not results:
+            return None
+        return {
+            "provider": "openf1",
+            "sourceUrl": f"{OPENF1_BASE}/pit?session_key={session['session_key']}",
+            "sessionKey": session["session_key"],
+            "results": results,
+            "timings": timings,
         }
 
     def build_driver_profiles(
@@ -762,6 +860,68 @@ class JolpicaF1Exporter:
         if last_error is not None:
             raise last_error
         raise RuntimeError(f"Failed to fetch {url}")
+
+    def fetch_openf1_json(self, url: str) -> Any:
+        if url in self.openf1_cache:
+            return self.openf1_cache[url]
+        last_error: Exception | None = None
+        for attempt in range(5):
+            response = self.session.get(url, timeout=30)
+            if response.status_code == 404:
+                self.openf1_cache[url] = None
+                time.sleep(REQUEST_DELAY_SECONDS)
+                return None
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+                try:
+                    wait_seconds = float(retry_after) if retry_after is not None else (2 ** attempt)
+                except ValueError:
+                    wait_seconds = float(2 ** attempt)
+                time.sleep(max(wait_seconds, REQUEST_DELAY_SECONDS))
+                continue
+            try:
+                response.raise_for_status()
+                payload = response.json()
+                self.openf1_cache[url] = payload
+                time.sleep(REQUEST_DELAY_SECONDS)
+                return payload
+            except Exception as exc:
+                last_error = exc
+                time.sleep(max(REQUEST_DELAY_SECONDS, 0.5 * (attempt + 1)))
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError(f"Failed to fetch {url}")
+
+    def find_openf1_race_session(self, *, year: int, race_meta: dict[str, Any]) -> dict[str, Any] | None:
+        sessions = self.fetch_openf1_json(f"{OPENF1_BASE}/sessions?year={year}&session_name=Race")
+        if not isinstance(sessions, list):
+            return None
+        race_date = race_meta.get("date")
+        if not race_date:
+            return None
+        circuit = race_meta.get("Circuit", {}) or {}
+        location = circuit.get("Location", {}) or {}
+        race_country = self.normalize_country_name(location.get("country"))
+        race_slug = CIRCUIT_ID_TO_SLUG.get((circuit.get("circuitId") or "").strip().lower(), "")
+        candidates: list[tuple[int, dict[str, Any]]] = []
+        for session in sessions:
+            session_date = str(session.get("date_start") or session.get("date_end") or "")[:10]
+            score = 0
+            if session_date == race_date:
+                score += 10
+            session_country = self.normalize_country_name(session.get("country_name"))
+            if race_country and session_country == race_country:
+                score += 4
+            session_circuit = re.sub(r"[^a-z0-9]+", "-", str(session.get("circuit_short_name") or "").lower()).strip("-")
+            if race_slug and race_slug in session_circuit:
+                score += 2
+            candidates.append((score, session))
+        candidates.sort(key=lambda item: (item[0], str(item[1].get("date_start") or "")), reverse=True)
+        return candidates[0][1] if candidates and candidates[0][0] >= 4 else None
+
+    def build_pit_stop_stage_durations(self, total_duration: float) -> list[float]:
+        weights = (0.168, 0.139, 0.168, 0.168, 0.139, 0.109, 0.109, 0.0, 0.0)
+        return [round(total_duration * weight, 6) for weight in weights]
 
     def fetch_paginated_race_table(self, base_url: str) -> dict[str, Any]:
         limit = 100

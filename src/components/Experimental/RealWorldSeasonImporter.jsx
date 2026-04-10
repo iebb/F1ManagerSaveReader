@@ -51,25 +51,26 @@ export default function RealWorldSeasonImporter() {
     () => getSeasonImportPreview({ dataset: datasets.f1, basicInfo, targetYear, lastCompletedRound: lastRound }),
     [basicInfo, datasets.f1, lastRound, targetYear]
   );
-  const driverOptions = useMemo(() => (
-    Object.values(basicInfo?.driverMap || {})
-      .map((driver) => ({
-        staffId: Number(driver.StaffID),
-        label: [resolveName(`${driver.FirstName || ""}`), resolveName(`${driver.LastName || ""}`)]
-          .filter(Boolean)
-          .join(" ")
-          .trim(),
-      }))
-      .map((driver) => ({
-        ...driver,
-        label: driver.label || `Driver ${driver.staffId}`,
-      }))
-      .filter((driver) => Number.isFinite(driver.staffId))
-      .sort((left, right) => left.label.localeCompare(right.label))
-  ), [basicInfo]);
+  const driverOptions = useMemo(() => buildDriverReplacementOptions({ database, basicInfo }), [basicInfo, database]);
   const unresolvedDriverConflicts = useMemo(() => (
     (preview?.driverConflicts || []).filter((conflict) => !driverReplacementSelections[conflict.importedDriverName])
   ), [driverReplacementSelections, preview?.driverConflicts]);
+  const duplicateReplacementSelections = useMemo(() => {
+    const usage = {};
+    Object.entries(driverReplacementSelections).forEach(([driverName, value]) => {
+      if (!value || value === "__create__") {
+        return;
+      }
+      const key = `${value}`;
+      if (!usage[key]) {
+        usage[key] = [];
+      }
+      usage[key].push(driverName);
+    });
+    return Object.fromEntries(
+      Object.entries(usage).filter(([, driverNames]) => driverNames.length > 1)
+    );
+  }, [driverReplacementSelections]);
 
   useEffect(() => {
     const activeConflicts = new Set((preview?.driverConflicts || []).map((conflict) => conflict.importedDriverName));
@@ -364,31 +365,6 @@ export default function RealWorldSeasonImporter() {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <div className="min-w-[260px] text-sm text-slate-300">
-            {targetYear ? (
-              <>
-                Import target: <span className="font-semibold text-white">{targetYear}</span>, through round <span className="font-semibold text-white">{lastRound}</span>.
-              </>
-            ) : "No import target selected."}
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="contained"
-              color="warning"
-              disabled={isApplying || !datasets.f1 || !targetYear || unresolvedDriverConflicts.length > 0}
-              onClick={handleApply}
-            >
-              {isApplying ? "Importing..." : "Apply Import"}
-            </Button>
-          </div>
-        </div>
-        {unresolvedDriverConflicts.length ? (
-          <div className="mt-3 text-sm text-amber-300">
-            Resolve all driver conflicts below before applying the import.
-          </div>
-        ) : null}
-
         {customF1Team ? (
           <div className="mt-4 overflow-hidden border border-amber-300/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.14),rgba(15,23,42,0.18)_45%,rgba(15,23,42,0.58))]">
             <div className="grid gap-0 md:grid-cols-[1.2fr_0.8fr]">
@@ -445,6 +421,110 @@ export default function RealWorldSeasonImporter() {
             </div>
           </div>
         ) : null}
+
+        {preview?.driverConflicts?.length ? (
+          <div className="mt-4 overflow-hidden border border-sky-300/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.12),rgba(15,23,42,0.18)_42%,rgba(15,23,42,0.58))]">
+            <div className="border-b border-white/10 px-4 py-4 md:px-5">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-100/80">Driver Replacements</div>
+              <div className="mt-2 text-sm text-slate-200">
+                Imported lineup changes need a save driver selection before import. Replacements are sorted by rating, and occupied drivers are labeled with their current seat.
+              </div>
+            </div>
+            <div className="grid gap-px bg-white/10">
+              {preview.driverConflicts.map((conflict) => {
+                const selectedValue = driverReplacementSelections[conflict.importedDriverName] || "";
+                const selectedConflictGroup = selectedValue && duplicateReplacementSelections[selectedValue] ? duplicateReplacementSelections[selectedValue] : null;
+                return (
+                  <div key={`${conflict.teamId}-${conflict.posInTeam}-${conflict.importedDriverName}`} className="grid gap-4 bg-slate-950/70 px-4 py-4 md:grid-cols-[1.2fr_1fr] md:px-5">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-200/75">{conflict.teamName} Seat {conflict.posInTeam}</div>
+                      <div className="mt-1 text-base font-semibold text-white">{conflict.importedDriverName}</div>
+                      <div className="mt-1 text-sm text-slate-300">
+                        Current save occupant: {conflict.conflictingDriverName || "empty"}.
+                      </div>
+                      {selectedConflictGroup ? (
+                        <div className="mt-2 text-xs text-rose-300">
+                          This replacement is already assigned to {selectedConflictGroup.filter((driverName) => driverName !== conflict.importedDriverName).join(", ")}.
+                        </div>
+                      ) : null}
+                    </div>
+                    <label className="grid gap-2 text-sm text-slate-200">
+                      <span className="font-medium text-white">Select Replacement</span>
+                      <select
+                        value={selectedValue}
+                        onChange={(event) => {
+                          const nextValue = event.target.value;
+                          setDriverReplacementSelections((current) => ({
+                            ...current,
+                            [conflict.importedDriverName]: nextValue,
+                          }));
+                        }}
+                        className="border border-white/10 bg-black/30 px-3 py-3 text-white outline-none"
+                      >
+                        <option value="">Choose driver</option>
+                        <option value="__create__">Create generated driver</option>
+                        {driverOptions.map((driver) => {
+                          const isSelectedElsewhere = Object.entries(driverReplacementSelections).some(([driverName, value]) => (
+                            driverName !== conflict.importedDriverName && `${value}` === `${driver.staffId}`
+                          ));
+                          const isOccupiedElsewhere = Boolean(
+                            driver.occupiedLabel && Number(driver.staffId) !== Number(conflict.conflictingDriverId)
+                          );
+                          return (
+                            <option
+                              key={driver.staffId}
+                              value={String(driver.staffId)}
+                              disabled={isSelectedElsewhere || isOccupiedElsewhere}
+                            >
+                              {driver.label}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="text-xs text-slate-400">
+                        Selecting an existing driver moves them onto this imported seat and extends their current contract through {targetYear || currentSeason}.
+                      </div>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex flex-col gap-3 border-t border-white/10 pt-4 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-[260px] text-sm text-slate-300">
+            {targetYear ? (
+              <>
+                Import target: <span className="font-semibold text-white">{targetYear}</span>, through round <span className="font-semibold text-white">{lastRound}</span>.
+              </>
+            ) : "No import target selected."}
+            {unresolvedDriverConflicts.length ? (
+              <div className="mt-2 text-amber-300">Resolve all replacement selections before importing.</div>
+            ) : null}
+            {Object.keys(duplicateReplacementSelections).length ? (
+              <div className="mt-2 text-rose-300">A replacement driver can only be assigned once.</div>
+            ) : null}
+          </div>
+          <div className="md:ml-auto">
+            <Button
+              variant="contained"
+              color="warning"
+              size="large"
+              disabled={isApplying || !datasets.f1 || !targetYear || unresolvedDriverConflicts.length > 0 || Object.keys(duplicateReplacementSelections).length > 0}
+              onClick={handleApply}
+              sx={{
+                minWidth: 220,
+                minHeight: 52,
+                fontSize: 16,
+                fontWeight: 700,
+                alignSelf: "flex-end",
+              }}
+            >
+              {isApplying ? "Importing..." : "Apply Import"}
+            </Button>
+          </div>
+        </div>
       </section>
 
       {preview ? (
@@ -473,54 +553,6 @@ export default function RealWorldSeasonImporter() {
           The bundled F1 dataset is still loading, or it could not be fetched from `/real-world/f1/&lt;year&gt;.json`.
         </Alert>
       )}
-
-      {preview?.driverConflicts?.length ? (
-        <section className="border border-amber-400/20 bg-amber-500/[0.06] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-200/80">Driver Conflicts</div>
-          <div className="mt-2 text-sm text-slate-200">
-            These imported drivers do not exist in the save. Pick a replacement driver, or explicitly keep driver generation.
-          </div>
-          <div className="mt-4 grid gap-3">
-            {preview.driverConflicts.map((conflict) => (
-              <div key={`${conflict.teamId}-${conflict.posInTeam}-${conflict.importedDriverName}`} className="border border-white/10 bg-black/20 p-3">
-                <div className="text-sm font-semibold text-white">{conflict.importedDriverName}</div>
-                <div className="mt-1 text-xs text-slate-300">
-                  {conflict.teamName}, seat {conflict.posInTeam}. Current save occupant: {conflict.conflictingDriverName || "empty"}.
-                </div>
-                <label className="mt-3 grid gap-1 text-sm text-slate-300">
-                  <span>Replacement</span>
-                  <select
-                    value={driverReplacementSelections[conflict.importedDriverName] || ""}
-                    onChange={(event) => {
-                      const nextValue = event.target.value;
-                      setDriverReplacementSelections((current) => ({
-                        ...current,
-                        [conflict.importedDriverName]: nextValue,
-                      }));
-                    }}
-                    className="border border-white/10 bg-black/30 px-3 py-2 text-white outline-none"
-                  >
-                    <option value="">Select replacement</option>
-                    <option value="__create__">Create generated driver</option>
-                    {conflict.conflictingDriverId ? (
-                      <option value={String(conflict.conflictingDriverId)}>
-                        {conflict.conflictingDriverName} (current occupant)
-                      </option>
-                    ) : null}
-                    {driverOptions
-                      .filter((driver) => driver.staffId !== conflict.conflictingDriverId)
-                      .map((driver) => (
-                        <option key={driver.staffId} value={String(driver.staffId)}>
-                          {driver.label}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <Alert severity="warning">
         <AlertTitle>Current Scope</AlertTitle>
@@ -599,6 +631,99 @@ function getRoundAbbrev(event) {
     qatar: "QAT",
   };
   return abbreviations[slug] || `${event?.eventName || "RND"}`.slice(0, 3).toUpperCase();
+}
+
+const DRIVER_RATING_FACTORS = [0, 0, 20, 15, 15, 10, 5, 5, 5, 10, 15];
+
+function buildDriverReplacementOptions({ database, basicInfo }) {
+  if (!database || !basicInfo?.driverMap) {
+    return [];
+  }
+
+  const driverIds = Object.keys(basicInfo.driverMap).map((value) => Number(value)).filter(Number.isFinite);
+  if (!driverIds.length) {
+    return [];
+  }
+
+  const statTypeRows = database.getAllRows?.(
+    "SELECT PerformanceStatType FROM Staff_StaffTypePerformanceStatsTemplate WHERE StaffType = 0"
+  ) || [];
+  const statIds = statTypeRows.map((row) => Number(row.PerformanceStatType)).filter(Number.isFinite);
+  const performanceRows = statIds.length
+    ? (database.getAllRows?.(
+      `SELECT StaffID, StatID, Value
+       FROM Staff_PerformanceStats
+       WHERE StatID IN (${statIds.join(",")})`
+    ) || [])
+    : [];
+  const performanceByStaff = {};
+  performanceRows.forEach((row) => {
+    const staffId = Number(row.StaffID);
+    const statId = Number(row.StatID);
+    if (!Number.isFinite(staffId) || !Number.isFinite(statId)) {
+      return;
+    }
+    if (!performanceByStaff[staffId]) {
+      performanceByStaff[staffId] = {};
+    }
+    performanceByStaff[staffId][statId] = Number(row.Value) || 0;
+  });
+
+  const occupancyByDriver = {};
+  Object.values(basicInfo.teamMap || {})
+    .filter((team) => Number(team?.Formula) === 1)
+    .forEach((team) => {
+      [1, 2].forEach((seat) => {
+        const staffId = Number(team?.[`Driver${seat}ID`] || 0);
+        if (!Number.isFinite(staffId) || staffId <= 0) {
+          return;
+        }
+        occupancyByDriver[staffId] = {
+          teamId: Number(team.TeamID),
+          seat,
+          teamName: resolveLiteral(team.TeamNameLocKey || team.TeamName || "") || team.TeamName || `Team ${team.TeamID}`,
+        };
+      });
+    });
+
+  return driverIds
+    .map((staffId) => {
+      const driver = basicInfo.driverMap[staffId];
+      const rating = computeDriverRating(performanceByStaff[staffId] || {});
+      const name = [resolveName(`${driver.FirstName || ""}`), resolveName(`${driver.LastName || ""}`)]
+        .filter(Boolean)
+        .join(" ")
+        .trim() || `Driver ${staffId}`;
+      const occupied = occupancyByDriver[staffId];
+      const occupiedLabel = occupied ? `${occupied.teamName} S${occupied.seat}` : null;
+      const ratingLabel = Number.isFinite(rating) ? rating.toFixed(1) : "N/A";
+      return {
+        staffId,
+        name,
+        rating,
+        occupiedLabel,
+        label: occupiedLabel ? `${name} • ${ratingLabel} • ${occupiedLabel}` : `${name} • ${ratingLabel}`,
+      };
+    })
+    .sort((left, right) => {
+      const ratingDiff = (Number.isFinite(right.rating) ? right.rating : -Infinity) - (Number.isFinite(left.rating) ? left.rating : -Infinity);
+      if (ratingDiff !== 0) {
+        return ratingDiff;
+      }
+      return left.name.localeCompare(right.name);
+    });
+}
+
+function computeDriverRating(stats) {
+  let total = 0;
+  let factorTotal = 0;
+  Object.entries(stats).forEach(([statIdValue, statValue]) => {
+    const statId = Number(statIdValue);
+    const factor = DRIVER_RATING_FACTORS[statId] || 1;
+    total += Number(statValue || 0) * factor;
+    factorTotal += factor;
+  });
+  return factorTotal > 0 ? total / factorTotal : null;
 }
 
 function getRoundFlag(event) {
