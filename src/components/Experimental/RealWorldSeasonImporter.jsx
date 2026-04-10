@@ -2,7 +2,6 @@ import {
   Alert,
   AlertTitle,
   Button,
-  CircularProgress,
 } from "@mui/material";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useState } from "react";
@@ -15,7 +14,7 @@ import {
   getLockedCompletedRounds,
   getSeasonImportPreview,
 } from "@/components/Experimental/realWorldSeasonImportUtils";
-import { raceAbbrevs, raceFlags } from "@/js/localization";
+import { raceAbbrevs, raceFlags, resolveLiteral, resolveName } from "@/js/localization";
 
 export default function RealWorldSeasonImporter() {
   const database = useContext(DatabaseContext);
@@ -31,8 +30,18 @@ export default function RealWorldSeasonImporter() {
   const [targetYear, setTargetYear] = useState("");
   const [lastRound, setLastRound] = useState(0);
   const [isApplying, setIsApplying] = useState(false);
+  const [customTeamBaselinePosition, setCustomTeamBaselinePosition] = useState(18);
+  const [customTeamDerivation, setCustomTeamDerivation] = useState(3);
+  const [driverReplacementSelections, setDriverReplacementSelections] = useState({});
   const currentSeason = Number(basicInfo?.player?.CurrentSeason || 0);
   const lockedCompletedRounds = useMemo(() => getLockedCompletedRounds(basicInfo), [basicInfo]);
+  const customF1Team = useMemo(() => {
+    if (!basicInfo?.player?.CustomTeamEnabled) {
+      return null;
+    }
+    const team = basicInfo?.teamMap?.[32];
+    return Number(team?.Formula) === 1 ? team : null;
+  }, [basicInfo]);
 
   const availableYears = useMemo(() => (
     getAvailableImportYears(datasets.f1).filter((year) => year >= currentSeason)
@@ -42,6 +51,32 @@ export default function RealWorldSeasonImporter() {
     () => getSeasonImportPreview({ dataset: datasets.f1, basicInfo, targetYear, lastCompletedRound: lastRound }),
     [basicInfo, datasets.f1, lastRound, targetYear]
   );
+  const driverOptions = useMemo(() => (
+    Object.values(basicInfo?.driverMap || {})
+      .map((driver) => ({
+        staffId: Number(driver.StaffID),
+        label: [resolveName(`${driver.FirstName || ""}`), resolveName(`${driver.LastName || ""}`)]
+          .filter(Boolean)
+          .join(" ")
+          .trim(),
+      }))
+      .map((driver) => ({
+        ...driver,
+        label: driver.label || `Driver ${driver.staffId}`,
+      }))
+      .filter((driver) => Number.isFinite(driver.staffId))
+      .sort((left, right) => left.label.localeCompare(right.label))
+  ), [basicInfo]);
+  const unresolvedDriverConflicts = useMemo(() => (
+    (preview?.driverConflicts || []).filter((conflict) => !driverReplacementSelections[conflict.importedDriverName])
+  ), [driverReplacementSelections, preview?.driverConflicts]);
+
+  useEffect(() => {
+    const activeConflicts = new Set((preview?.driverConflicts || []).map((conflict) => conflict.importedDriverName));
+    setDriverReplacementSelections((current) => Object.fromEntries(
+      Object.entries(current).filter(([driverName]) => activeConflicts.has(driverName))
+    ));
+  }, [preview?.driverConflicts]);
 
   const gridRows = useMemo(() => {
     return availableYears.map((year) => {
@@ -211,6 +246,15 @@ export default function RealWorldSeasonImporter() {
         datasets: nextDatasets,
         targetYear: Number(targetYear),
         lastCompletedRound: Number(lastRound),
+        customTeamRandomization: customF1Team ? {
+          baselinePosition: Number(customTeamBaselinePosition),
+          derivation: Number(customTeamDerivation),
+        } : null,
+        driverReplacements: Object.fromEntries(
+          Object.entries(driverReplacementSelections)
+            .filter(([, value]) => value && value !== "__create__")
+            .map(([driverName, value]) => [driverName, Number(value)])
+        ),
       });
       enqueueSnackbar(
         `Imported ${targetYear} through round ${lastRound}. Created ${result.createdDrivers.length} driver(s).`,
@@ -231,39 +275,13 @@ export default function RealWorldSeasonImporter() {
         <h2 className="mt-2 text-lg font-bold text-white">Real-World Season Importer</h2>
         <p className="mt-2 max-w-[900px] text-sm text-slate-200/90">
           This rewrites the active save into a selected real-world season shell, applies race weekend results through a chosen round,
-          creates missing drivers when needed, remaps the ten F1 teams onto the in-game teams, and simulates component wear on the live car loadouts.
+          creates missing drivers when needed, remaps the real-world F1 teams onto the in-game teams, and simulates component wear on the live car loadouts.
         </p>
         <p className="mt-2 max-w-[900px] text-sm text-slate-300">
           Bundled F1, F2 and F3 datasets are loaded from the app’s included `/public/real-world` files. The importer fetches feeder datasets when needed,
           one season file per year, so you do not need to browse for JSON files manually.
         </p>
       </section>
-
-      <section className="border border-white/10 bg-white/[0.015] p-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          {["f1", "f2", "f3"].map((seriesKey) => (
-            <div key={seriesKey} className="border border-white/10 bg-black/20 p-3 text-sm text-slate-200">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{seriesKey.toUpperCase()}</div>
-              {datasetStatus[seriesKey] !== "ready" ? (
-                <div className="mt-2 flex items-center gap-2">
-                  {datasetStatus[seriesKey] === "loading" ? <CircularProgress size={14} color="inherit" /> : null}
-                  <span>
-                    {datasetStatus[seriesKey] === "error" ? "Dataset unavailable" :
-                      datasetStatus[seriesKey] === "loading" ? "Loading dataset..." : "Waiting to load"}
-                  </span>
-                </div>
-              ) : null}
-              {datasetErrors[seriesKey] ? (
-                <div className="mt-2 text-xs text-rose-300">{datasetErrors[seriesKey]}</div>
-              ) : null}
-              {seriesKey === "f1" && datasetStatus[seriesKey] === "ready" ? (
-                <div className="mt-2 text-xs text-slate-400">Using bundled Jolpica-backed F1 data.</div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="border border-white/10 bg-white/[0.015] p-5">
         <div className="mb-4 text-sm text-slate-300">
           Pick a year and race cell. The current-season row follows the save’s remaining in-game calendar; future-season rows use the bundled real-world calendars.
@@ -358,13 +376,75 @@ export default function RealWorldSeasonImporter() {
             <Button
               variant="contained"
               color="warning"
-              disabled={isApplying || !datasets.f1 || !targetYear}
+              disabled={isApplying || !datasets.f1 || !targetYear || unresolvedDriverConflicts.length > 0}
               onClick={handleApply}
             >
               {isApplying ? "Importing..." : "Apply Import"}
             </Button>
           </div>
         </div>
+        {unresolvedDriverConflicts.length ? (
+          <div className="mt-3 text-sm text-amber-300">
+            Resolve all driver conflicts below before applying the import.
+          </div>
+        ) : null}
+
+        {customF1Team ? (
+          <div className="mt-4 overflow-hidden border border-amber-300/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.14),rgba(15,23,42,0.18)_45%,rgba(15,23,42,0.58))]">
+            <div className="grid gap-0 md:grid-cols-[1.2fr_0.8fr]">
+              <div className="p-4 md:p-5">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-100/80">Custom Team</div>
+                <div className="mt-2 text-lg font-bold text-white">
+                  Eleventh-team results will be synthesized for {customF1Team.TeamNameLocKey ? resolveLiteral(customF1Team.TeamNameLocKey) : "the player team"}.
+                </div>
+                <div className="mt-2 max-w-[560px] text-sm text-slate-200/90">
+                  The importer inserts generated qualifying, sprint, and race placements for the player team whenever this save carries 11 Formula 1 teams.
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                  <div className="border border-white/10 bg-black/20 px-2 py-1 text-slate-200">Applies to 2022-2025 imports</div>
+                  <div className="border border-white/10 bg-black/20 px-2 py-1 text-slate-200">Deterministic per event</div>
+                  <div className="border border-white/10 bg-black/20 px-2 py-1 text-slate-200">Uses team 32 seats</div>
+                </div>
+              </div>
+              <div className="border-t border-white/10 bg-black/20 p-4 md:border-l md:border-t-0 md:p-5">
+                <div className="grid gap-4">
+                  <label className="grid gap-2 text-sm text-slate-200">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-medium text-white">Baseline Finish</span>
+                      <span className="min-w-[52px] text-right font-semibold text-amber-200">P{customTeamBaselinePosition}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={20}
+                      step={1}
+                      value={customTeamBaselinePosition}
+                      onChange={(event) => setCustomTeamBaselinePosition(Number(event.target.value))}
+                      className="w-full accent-amber-400"
+                    />
+                    <div className="text-xs text-slate-400">Target finishing band before event variation.</div>
+                  </label>
+                  <label className="grid gap-2 text-sm text-slate-200">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-medium text-white">Variation</span>
+                      <span className="min-w-[52px] text-right font-semibold text-amber-200">{customTeamDerivation}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={customTeamDerivation}
+                      onChange={(event) => setCustomTeamDerivation(Number(event.target.value))}
+                      className="w-full accent-amber-400"
+                    />
+                    <div className="text-xs text-slate-400">How far results can swing around the baseline.</div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {preview ? (
@@ -375,11 +455,11 @@ export default function RealWorldSeasonImporter() {
           {Number(targetYear) === currentSeason
             ? `Current-season imports keep the save's existing remaining calendar and preserve ${lockedCompletedRounds} completed round(s).`
             : "Future-season imports first complete the remaining current season, then rebuild the next season shell from the bundled real-world calendar."}
-          {preview.missingDrivers.length ? (
-            <>
-              <br />
-              Missing drivers that will be generated if needed: {preview.missingDrivers.join(", ")}.
-            </>
+        {preview.missingDrivers.length ? (
+          <>
+            <br />
+            Missing drivers that will be generated if needed: {preview.missingDrivers.join(", ")}.
+          </>
           ) : (
             <>
               <br />
@@ -393,6 +473,54 @@ export default function RealWorldSeasonImporter() {
           The bundled F1 dataset is still loading, or it could not be fetched from `/real-world/f1/&lt;year&gt;.json`.
         </Alert>
       )}
+
+      {preview?.driverConflicts?.length ? (
+        <section className="border border-amber-400/20 bg-amber-500/[0.06] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-200/80">Driver Conflicts</div>
+          <div className="mt-2 text-sm text-slate-200">
+            These imported drivers do not exist in the save. Pick a replacement driver, or explicitly keep driver generation.
+          </div>
+          <div className="mt-4 grid gap-3">
+            {preview.driverConflicts.map((conflict) => (
+              <div key={`${conflict.teamId}-${conflict.posInTeam}-${conflict.importedDriverName}`} className="border border-white/10 bg-black/20 p-3">
+                <div className="text-sm font-semibold text-white">{conflict.importedDriverName}</div>
+                <div className="mt-1 text-xs text-slate-300">
+                  {conflict.teamName}, seat {conflict.posInTeam}. Current save occupant: {conflict.conflictingDriverName || "empty"}.
+                </div>
+                <label className="mt-3 grid gap-1 text-sm text-slate-300">
+                  <span>Replacement</span>
+                  <select
+                    value={driverReplacementSelections[conflict.importedDriverName] || ""}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setDriverReplacementSelections((current) => ({
+                        ...current,
+                        [conflict.importedDriverName]: nextValue,
+                      }));
+                    }}
+                    className="border border-white/10 bg-black/30 px-3 py-2 text-white outline-none"
+                  >
+                    <option value="">Select replacement</option>
+                    <option value="__create__">Create generated driver</option>
+                    {conflict.conflictingDriverId ? (
+                      <option value={String(conflict.conflictingDriverId)}>
+                        {conflict.conflictingDriverName} (current occupant)
+                      </option>
+                    ) : null}
+                    {driverOptions
+                      .filter((driver) => driver.staffId !== conflict.conflictingDriverId)
+                      .map((driver) => (
+                        <option key={driver.staffId} value={String(driver.staffId)}>
+                          {driver.label}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <Alert severity="warning">
         <AlertTitle>Current Scope</AlertTitle>

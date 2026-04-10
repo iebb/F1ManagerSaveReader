@@ -4,7 +4,7 @@ import {
   setCareerSaveMetadataFields,
 } from "@/components/Customize/Player/timeMachineUtils";
 import { parseBasicInfo } from "@/js/BasicInfo";
-import { dateToDay, resolveLiteral, resolveName, unresolveDriverCode, unresolveName } from "@/js/localization";
+import { dateToDay, resolveDriverCode, resolveLiteral, resolveName, unresolveDriverCode, unresolveName } from "@/js/localization";
 
 const SEASON_RACE_DELETE_TABLES = [
   { table: "Races_Results", seasonColumn: "Season" },
@@ -189,6 +189,13 @@ const DEFAULT_SERIES_CONFIG = {
   },
 };
 
+const F1_RACE_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+const F1_SPRINT_POINTS = [8, 7, 6, 5, 4, 3, 2, 1];
+const DEFAULT_CUSTOM_TEAM_RANDOMIZATION = {
+  baselinePosition: 18,
+  derivation: 3,
+};
+
 export async function readRealWorldDatasetFile(file) {
   const raw = await file.text();
   return JSON.parse(raw);
@@ -272,6 +279,7 @@ export function getSeasonImportPreview({ dataset, basicInfo, targetYear, lastCom
     eventCount,
     importedDriverCount: importedDrivers.length,
     missingDrivers: importedDrivers.filter((name) => !existingDrivers.has(normalizeName(name))),
+    driverConflicts: getImportDriverConflicts({ dataset, basicInfo, targetYear, lastCompletedRound }),
   };
 }
 
@@ -287,6 +295,8 @@ export function applyRealWorldSeasonImport({
   datasets,
   targetYear,
   lastCompletedRound,
+  customTeamRandomization,
+  driverReplacements,
 }) {
   if ((metadata?.version || 0) < 4) {
     throw new Error("This experimental importer currently targets F1 Manager 2024 saves only.");
@@ -330,6 +340,8 @@ export function applyRealWorldSeasonImport({
           targetYear: year,
           lastCompletedRound: requestedLastRound,
           allowCarryForwardFromPriorSeason: year > startingSeason,
+          customTeamRandomization,
+          driverReplacements,
         });
         result.createdDrivers.forEach((name) => createdDrivers.push(name));
         result.appliedSeries.forEach((seriesKey) => appliedSeries.add(seriesKey));
@@ -363,6 +375,8 @@ function applySingleSeasonImport({
   targetYear,
   lastCompletedRound,
   allowCarryForwardFromPriorSeason = false,
+  customTeamRandomization,
+  driverReplacements,
 }) {
   let tableSet = getExistingTableSet(database);
   const f1Season = datasets?.f1?.seasons?.[`${targetYear}`];
@@ -399,10 +413,14 @@ function applySingleSeasonImport({
     currentSeason,
     currentSeasonRaces: [...(basicInfo.currentSeasonRaces || [])].sort((left, right) => left.Day - right.Day || left.RaceID - right.RaceID),
     teamMap: basicInfo.teamMap || {},
+    driverMap: basicInfo.driverMap || {},
+    database,
     feederTeamMappings: {},
     createdDrivers: [],
     appliedSeries: [],
     metadata,
+    customTeamRandomization: normalizeCustomTeamRandomization({ basicInfo, customTeamRandomization }),
+    driverReplacements: normalizeDriverReplacements({ basicInfo, driverReplacements }),
   };
 
   ensureExperimentalTables(database);
@@ -477,10 +495,33 @@ function applySeriesSeason({ database, tableSet, importState, seriesKey, season,
       return;
     }
     const seatAssignments = ensureEventSeatAssignments(importState, event);
+    const sessionRowCache = new Map();
+    const getSessionRows = (sessionKey, sessionType) => {
+      const cacheKey = `${sessionKey}:${sessionType}`;
+      if (sessionRowCache.has(cacheKey)) {
+        return sessionRowCache.get(cacheKey);
+      }
+      const nextRows = buildSessionImportRows({
+        importState,
+        seriesKey,
+        season,
+        event,
+        session: event.sessions?.[sessionKey],
+        plan: { sessionType },
+      });
+      sessionRowCache.set(cacheKey, nextRows);
+      return nextRows;
+    };
     const raceGridByDriver = buildGridPositionMap(
-      event.sessions?.startingGrid?.results || event.sessions?.qualifying?.results
+      event.sessions?.startingGrid?.results?.length
+        ? getSessionRows("startingGrid", "qualifying")
+        : getSessionRows("qualifying", "qualifying")
     );
-    const sprintGridByDriver = buildGridPositionMap(event.sessions?.sprintGrid?.results);
+    const sprintGridByDriver = buildGridPositionMap(
+      event.sessions?.sprintGrid?.results?.length
+        ? getSessionRows("sprintGrid", "qualifying")
+        : []
+    );
 
     for (const plan of config.resultPlan) {
       const session = event.sessions?.[plan.sessionKey];
@@ -506,12 +547,13 @@ function applySeriesSeason({ database, tableSet, importState, seriesKey, season,
         resultCount: session.results.length,
         raceId: raceShell.RaceID,
       });
-      const sessionLapFallback = getSessionLapFallback(session.results);
-      const sessionFinishingPositions = getSessionFinishingPositions(session.results);
-      const sessionTimeContext = buildSessionTimeContext(plan.sessionType, session.results);
+      const sessionRows = getSessionRows(plan.sessionKey, plan.sessionType);
+      const sessionLapFallback = getSessionLapFallback(sessionRows);
+      const sessionFinishingPositions = getSessionFinishingPositions(sessionRows);
+      const sessionTimeContext = buildSessionTimeContext(plan.sessionType, sessionRows);
       let insertedCount = 0;
-      session.results.forEach((resultRow, resultIndex) => {
-        const driverId = ensureDriverExists({
+      sessionRows.forEach((resultRow, resultIndex) => {
+        const driverId = Number(resultRow.driverId) || ensureDriverExists({
           database,
           importState,
           driverName: resultRow.driverName,
@@ -577,6 +619,95 @@ function applySeriesSeason({ database, tableSet, importState, seriesKey, season,
       });
     }
   });
+}
+
+function buildSessionImportRows({ importState, seriesKey, season, event, session, plan }) {
+  const sessionRows = (session?.results || []).map((row) => ({ ...row }));
+  if (seriesKey !== "f1" || !["qualifying", "race", "sprint"].includes(plan.sessionType)) {
+    return sessionRows;
+  }
+
+  const customTeamDrivers = getCustomTeamDriverEntries(importState);
+  if (!customTeamDrivers.length) {
+    return sessionRows;
+  }
+
+  const rng = createSeededRng([
+    importState.targetYear,
+    event.round,
+    plan.sessionType,
+    importState.customTeamRandomization?.teamId,
+    importState.customTeamRandomization?.baselinePosition,
+    importState.customTeamRandomization?.derivation,
+  ].join(":"));
+  const baselinePosition = Number(importState.customTeamRandomization?.baselinePosition || DEFAULT_CUSTOM_TEAM_RANDOMIZATION.baselinePosition);
+  const derivation = Number(importState.customTeamRandomization?.derivation || DEFAULT_CUSTOM_TEAM_RANDOMIZATION.derivation);
+  const explicitFastestLapDriver = plan.sessionType === "race"
+    ? findExplicitFastestLapDriverKey(sessionRows)
+    : null;
+
+  const rankedRows = sessionRows.map((row, index) => ({
+    ...row,
+    __sortRank: index + 1,
+    __source: "imported",
+    __originalIndex: index,
+    __originalPoints: Number(row?.points ?? row?.pts ?? 0),
+  }));
+  const rankedRowByDriver = new Map();
+  rankedRows.forEach((row) => {
+    rankedRowByDriver.set(normalizeName(row.driverName), row);
+    if (row.driverCode) {
+      rankedRowByDriver.set(`code:${normalizeDriverCode(row.driverCode)}`, row);
+    }
+  });
+  let customDriverChanges = 0;
+
+  customTeamDrivers.forEach((driver, index) => {
+    const teammateOffset = index === 0 ? -0.35 - (rng() * 0.35) : 0.35 + (rng() * 0.35);
+    const randomOffset = derivation > 0 ? (((rng() * 2) - 1) * derivation) : 0;
+    const sortRank = Math.max(1, baselinePosition + randomOffset + teammateOffset);
+    const existingRow = rankedRowByDriver.get(normalizeName(driver.driverName))
+      || rankedRowByDriver.get(`code:${normalizeDriverCode(driver.driverCode)}`);
+    if (existingRow) {
+      existingRow.driverId = driver.driverId;
+      existingRow.teamName = driver.teamName;
+      existingRow.teamId = driver.teamId;
+      existingRow.driverNumber = driver.driverNumber ?? existingRow.driverNumber;
+      existingRow.__sortRank = sortRank;
+      existingRow.__source = "custom-team-reassigned";
+      customDriverChanges += 1;
+      return;
+    }
+    rankedRows.push(buildSyntheticCustomTeamRow({
+      driver,
+      sessionType: plan.sessionType,
+      sortRank,
+      lapFallback: getSessionLapFallback(sessionRows),
+    }));
+    customDriverChanges += 1;
+  });
+  if (!customDriverChanges) {
+    return sessionRows;
+  }
+
+  rankedRows.sort((left, right) => {
+    if (left.__sortRank !== right.__sortRank) {
+      return left.__sortRank - right.__sortRank;
+    }
+    if (left.__source !== right.__source) {
+      return left.__source === "imported" ? -1 : 1;
+    }
+    return (left.__originalIndex ?? 0) - (right.__originalIndex ?? 0);
+  });
+
+  return rankedRows.map((row, index, allRows) => finalizeSyntheticSessionRow({
+    row,
+    index,
+    allRows,
+    sessionType: plan.sessionType,
+    explicitFastestLapDriver,
+    fastestLapPointAwarded: season?.rules?.fastestLapPointAwarded !== false,
+  }));
 }
 
 function retargetSaveToImportedSeason({ database, metadata, basicInfo, tableSet, targetYear }) {
@@ -797,7 +928,9 @@ function rebuildSeasonCalendar({ database, tableSet, importState, season }) {
 function ensureStandingsRows({ database, tableSet, seasonId, formula, season, importState, teamMapping, config }) {
   if (tableSet.has("Races_DriverStandings")) {
     const templateRow = getTemplateRow(database, "Races_DriverStandings");
-    const driverNames = collectSeasonDriverNames(season);
+    const driverNames = formula === 1
+      ? [...new Set([...collectSeasonDriverNames(season), ...getCustomTeamDriverEntries(importState).map((driver) => driver.driverName)])]
+      : collectSeasonDriverNames(season);
     driverNames.forEach((driverName, index) => {
       const driverId = ensureDriverExists({
         database,
@@ -822,7 +955,7 @@ function ensureStandingsRows({ database, tableSet, seasonId, formula, season, im
   if (tableSet.has("Races_TeamStandings")) {
     const templateRow = getTemplateRow(database, "Races_TeamStandings");
     const teamIds = formula === 1
-      ? Array.from({ length: 10 }, (_, index) => index + 1)
+      ? getActiveF1TeamIds(importState)
       : Array.from(new Set(collectSeasonTeamNames(season)
         .map((teamName) => config.teamMapper(teamName, teamMapping))
         .filter(Boolean)));
@@ -841,7 +974,7 @@ function ensureStandingsRows({ database, tableSet, seasonId, formula, season, im
 
   if (formula === 1 && tableSet.has("Races_PitCrewStandings")) {
     const templateRow = getTemplateRow(database, "Races_PitCrewStandings");
-    Array.from({ length: 10 }, (_, index) => index + 1).forEach((teamId, index) => {
+    getActiveF1TeamIds(importState).forEach((teamId, index) => {
       insertTableRow(database, "Races_PitCrewStandings", templateRow, sanitizeRowObject({
         SeasonID: seasonId,
         TeamID: teamId,
@@ -858,42 +991,31 @@ function ensureStandingsRows({ database, tableSet, seasonId, formula, season, im
 function ensureEventSeatAssignments(importState, event) {
   const seatAssignmentsByTeam = {};
   const lineup = event.lineup || {};
-
-  Object.entries(lineup).forEach(([teamName, driverNames]) => {
+  applyLineupToSeatState(importState.teamSeatState, lineup);
+  Object.entries(lineup).forEach(([teamName]) => {
     const teamId = mapF1TeamNameToId(teamName);
     if (!teamId) {
       return;
     }
-    const state = importState.teamSeatState[teamId] || { 1: null, 2: null };
-    const incoming = driverNames.map((name) => normalizeName(name));
-    const nextState = { ...state };
-    const preserved = new Set();
-
-    [1, 2].forEach((loadoutId) => {
-      if (nextState[loadoutId] && incoming.includes(nextState[loadoutId])) {
-        preserved.add(nextState[loadoutId]);
-      } else {
-        nextState[loadoutId] = null;
-      }
-    });
-
-    incoming.forEach((driverKey) => {
-      if (preserved.has(driverKey)) {
-        return;
-      }
-      const openSeat = [1, 2].find((loadoutId) => !nextState[loadoutId]);
-      if (openSeat) {
-        nextState[openSeat] = driverKey;
-      }
-    });
-
-    importState.teamSeatState[teamId] = nextState;
+    const nextState = importState.teamSeatState[teamId] || { 1: null, 2: null };
     seatAssignmentsByTeam[teamId] = Object.fromEntries(
       Object.entries(nextState)
         .filter(([, driverKey]) => driverKey)
         .map(([loadoutId, driverKey]) => [driverKey, { loadoutId: Number(loadoutId) }])
     );
   });
+
+  const customTeamDrivers = getCustomTeamDriverEntries(importState);
+  if (customTeamDrivers.length) {
+    const teamId = Number(importState.customTeamRandomization?.teamId);
+    const teamState = importState.teamSeatState[teamId] || { 1: null, 2: null };
+    seatAssignmentsByTeam[teamId] = Object.fromEntries(
+      customTeamDrivers.map((driver, index) => {
+        const loadoutId = Number(Object.entries(teamState).find(([, driverKey]) => driverKey === normalizeName(driver.driverName))?.[0] || index + 1);
+        return [normalizeName(driver.driverName), { loadoutId }];
+      })
+    );
+  }
 
   return seatAssignmentsByTeam;
 }
@@ -1078,6 +1200,246 @@ function buildGridPositionMap(gridResults = []) {
     positions[key] = Number.isFinite(numericPosition) && numericPosition > 0 ? numericPosition : index + 1;
   });
   return positions;
+}
+
+function getActiveF1TeamIds(importState) {
+  const extraTeamId = Number(importState?.customTeamRandomization?.teamId);
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    .concat(Number.isFinite(extraTeamId) ? [extraTeamId] : [])
+    .filter((value, index, array) => array.indexOf(value) === index);
+}
+
+function getCustomTeamDriverEntries(importState) {
+  const teamId = Number(importState?.customTeamRandomization?.teamId);
+  if (!Number.isFinite(teamId)) {
+    return [];
+  }
+  const team = importState?.teamMap?.[teamId];
+  if (!team) {
+    return [];
+  }
+  const teamName = resolveLiteral(team.TeamNameLocKey || team.TeamName || "") || team.TeamName || "Custom Team";
+  return [team.Driver1ID, team.Driver2ID]
+    .map((driverId) => importState?.driverMap?.[driverId] || readCustomTeamDriverRow(importState?.database, driverId))
+    .filter(Boolean)
+    .map((driver) => ({
+      teamId,
+      teamName,
+      driverId: Number(driver.StaffID),
+      driverName: resolveDriverName(driver),
+      driverCode: normalizeDriverCode(resolveDriverCode(driver.DriverCode || "") || driver.LastName || driver.StaffID),
+      driverNumber: Number(driver.PernamentNumber || driver.LastKnownDriverNumber || driver.Number || 0) || null,
+    }))
+    .filter((driver) => driver.driverName);
+}
+
+function readCustomTeamDriverRow(database, driverId) {
+  if (!database || !driverId) {
+    return null;
+  }
+  const row = readRows(
+    database,
+    `SELECT sb.StaffID, sb.FirstName, sb.LastName, sd.DriverCode, sd.LastKnownDriverNumber, sd.AssignedCarNumber
+     FROM Staff_BasicData sb
+     JOIN Staff_DriverData sd ON sd.StaffID = sb.StaffID
+     WHERE sb.StaffID = :staffId`,
+    { ":staffId": driverId }
+  )[0];
+  if (!row) {
+    return null;
+  }
+  return {
+    ...row,
+    PernamentNumber: row.AssignedCarNumber || row.LastKnownDriverNumber || null,
+  };
+}
+
+function buildSyntheticCustomTeamRow({ driver, sessionType, sortRank, lapFallback }) {
+  const baseRow = {
+    driverId: driver.driverId,
+    driverName: driver.driverName,
+    driverCode: driver.driverCode,
+    driverNumber: driver.driverNumber,
+    teamName: driver.teamName,
+    teamId: driver.teamId,
+    __sortRank: sortRank,
+    __source: "synthetic-custom-team",
+  };
+  if (sessionType === "qualifying") {
+    return {
+      ...baseRow,
+      q1: null,
+      q2: null,
+      q3: null,
+      points: 0,
+    };
+  }
+  return {
+    ...baseRow,
+    grid: null,
+    laps: Number.isFinite(Number(lapFallback)) ? Number(lapFallback) : 0,
+    status: "Finished",
+    classificationStatus: "Finished",
+    points: 0,
+    time: null,
+    timeMillis: null,
+    fastestLap: null,
+  };
+}
+
+function finalizeSyntheticSessionRow({ row, index, allRows, sessionType, explicitFastestLapDriver, fastestLapPointAwarded }) {
+  const finishingPos = index + 1;
+  const finalized = {
+    ...row,
+    position: finishingPos,
+    positionText: `${finishingPos}`,
+  };
+
+  if (sessionType === "qualifying") {
+    finalized.points = 0;
+    return finalized;
+  }
+
+  const pointsTable = sessionType === "sprint" ? F1_SPRINT_POINTS : F1_RACE_POINTS;
+  const basePoints = pointsTable[finishingPos - 1] || 0;
+  const bonusPoint = sessionType === "race"
+    && fastestLapPointAwarded
+    && explicitFastestLapDriver
+    && normalizeName(finalized.driverName) === explicitFastestLapDriver
+    && finishingPos <= 10
+      ? 1
+      : 0;
+  finalized.points = basePoints + bonusPoint;
+
+  if (row.__source === "synthetic-custom-team") {
+    if (sessionType === "race" || sessionType === "sprint") {
+      const timeSeconds = inferSyntheticRaceTimeSeconds(allRows, index);
+      if (Number.isFinite(timeSeconds)) {
+        finalized.timeMillis = Math.max(0, Math.round(timeSeconds * 1000));
+        finalized.time = formatSyntheticRaceTime({
+          timeSeconds,
+          finishingPos,
+          winnerSeconds: inferSyntheticRaceTimeSeconds(allRows, 0),
+        });
+      }
+    }
+  }
+
+  return finalized;
+}
+
+function inferSyntheticRaceTimeSeconds(rows, index) {
+  const previous = [...rows.slice(0, index)].reverse().find((row) => Number.isFinite(extractRaceTimeSeconds(row)));
+  const next = rows.slice(index + 1).find((row) => Number.isFinite(extractRaceTimeSeconds(row)));
+  const previousSeconds = extractRaceTimeSeconds(previous);
+  const nextSeconds = extractRaceTimeSeconds(next);
+  if (Number.isFinite(previousSeconds) && Number.isFinite(nextSeconds) && nextSeconds > previousSeconds) {
+    return previousSeconds + ((nextSeconds - previousSeconds) / 2);
+  }
+  if (Number.isFinite(previousSeconds)) {
+    return previousSeconds + 0.75;
+  }
+  if (Number.isFinite(nextSeconds)) {
+    return Math.max(1, nextSeconds - 0.75);
+  }
+  return null;
+}
+
+function extractRaceTimeSeconds(row) {
+  if (!row) {
+    return null;
+  }
+  const explicitMillis = Number(row.timeMillis);
+  if (Number.isFinite(explicitMillis)) {
+    return explicitMillis / 1000;
+  }
+  const direct = parseAbsoluteTimeToSeconds(row.time ?? row.time_or_retired);
+  if (Number.isFinite(direct)) {
+    return direct;
+  }
+  return null;
+}
+
+function formatSyntheticRaceTime({ timeSeconds, finishingPos, winnerSeconds }) {
+  if (!Number.isFinite(timeSeconds)) {
+    return null;
+  }
+  if (finishingPos === 1) {
+    const hours = Math.floor(timeSeconds / 3600);
+    const minutes = Math.floor((timeSeconds % 3600) / 60);
+    const seconds = (timeSeconds % 60).toFixed(3).padStart(6, "0");
+    return `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`;
+  }
+  const winnerTime = Number.isFinite(winnerSeconds) ? winnerSeconds : 0;
+  return `+${Math.max(0, timeSeconds - winnerTime).toFixed(3)}`;
+}
+
+function findExplicitFastestLapDriverKey(rows) {
+  const fastestLapRows = rows
+    .map((row, index) => ({ row, index, lapSeconds: parseLapTimeToSeconds(row?.fastestLap) }))
+    .filter((entry) => Number.isFinite(entry.lapSeconds));
+  if (!fastestLapRows.length) {
+    return null;
+  }
+  fastestLapRows.sort((left, right) => left.lapSeconds - right.lapSeconds || left.index - right.index);
+  return normalizeName(fastestLapRows[0].row.driverName);
+}
+
+function normalizeCustomTeamRandomization({ basicInfo, customTeamRandomization }) {
+  const teamId = getCustomTeamF1TeamId(basicInfo);
+  if (!Number.isFinite(teamId)) {
+    return null;
+  }
+  const baselinePosition = clampNumericValue(
+    customTeamRandomization?.baselinePosition,
+    DEFAULT_CUSTOM_TEAM_RANDOMIZATION.baselinePosition,
+    1,
+    20
+  );
+  const derivation = clampNumericValue(
+    customTeamRandomization?.derivation,
+    DEFAULT_CUSTOM_TEAM_RANDOMIZATION.derivation,
+    0,
+    10
+  );
+  return {
+    teamId,
+    baselinePosition,
+    derivation,
+  };
+}
+
+function getCustomTeamF1TeamId(basicInfo) {
+  const preferredTeamId = Number(basicInfo?.player?.CustomTeamEnabled ? 32 : NaN);
+  if (Number.isFinite(preferredTeamId) && Number(basicInfo?.teamMap?.[preferredTeamId]?.Formula) === 1) {
+    return preferredTeamId;
+  }
+  return Object.entries(basicInfo?.teamMap || {})
+    .map(([teamId, team]) => ({ teamId: Number(teamId), formula: Number(team?.Formula) }))
+    .find((entry) => Number.isFinite(entry.teamId) && entry.teamId > 10 && entry.formula === 1)?.teamId ?? null;
+}
+
+function clampNumericValue(value, fallback, min, max) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, Math.round(numeric)));
+}
+
+function createSeededRng(seedInput) {
+  let hash = 2166136261;
+  `${seedInput || ""}`.split("").forEach((char) => {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  });
+  return () => {
+    hash += 0x6D2B79F5;
+    let t = hash;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 function buildSessionTimeContext(sessionType, results = []) {
@@ -1357,6 +1719,7 @@ function finalizeDriverContracts({ database, importState, seasonId, raceShells }
   const lastAppliedRace = raceShells[Math.max(0, importState.lastRound - 1)] || raceShells[0];
   const seasonStartDay = dateToDay(new Date(`${seasonId}-01-01`));
   const startDay = lastAppliedRace?.Day || seasonStartDay;
+  extendCurrentContractsToSeason(database, seasonId);
 
   Object.entries(importState.teamSeatState).forEach(([teamIdValue, seatState]) => {
     const teamId = Number(teamIdValue);
@@ -1376,6 +1739,20 @@ function finalizeDriverContracts({ database, importState, seasonId, raceShells }
       });
     });
   });
+}
+
+function extendCurrentContractsToSeason(database, seasonId) {
+  const contractColumns = new Set(getTableColumns(database, "Staff_Contracts"));
+  const whereClauses = ["ContractType = 0", "EndSeason < :seasonId"];
+  if (contractColumns.has("Formula")) {
+    whereClauses.push("Formula = 1");
+  }
+  database.exec(
+    `UPDATE Staff_Contracts
+     SET EndSeason = :seasonId
+     WHERE ${whereClauses.join("\n       AND ")}`,
+    { ":seasonId": seasonId }
+  );
 }
 
 function ensureCurrentSeatContract({ database, seasonId, teamId, posInTeam, driverId, startDay }) {
@@ -1611,6 +1988,11 @@ function ensureDriverExists({ database, importState, driverName, driverCode = nu
   if (importState.driverIdsByName[key]) {
     return importState.driverIdsByName[key];
   }
+  if (Number.isFinite(Number(importState.driverReplacements?.[key]))) {
+    const replacementId = Number(importState.driverReplacements[key]);
+    importState.driverIdsByName[key] = replacementId;
+    return replacementId;
+  }
 
   const templateId = readRows(database, "SELECT StaffID FROM Staff_DriverData ORDER BY StaffID DESC LIMIT 1")[0]?.StaffID;
   if (!templateId) {
@@ -1699,13 +2081,13 @@ function ensureExperimentalTables(database) {
 
 function buildInitialSeatState(basicInfo) {
   const seatState = {};
-  for (let teamId = 1; teamId <= 10; teamId += 1) {
+  getActiveF1TeamIds({ customTeamRandomization: { teamId: getCustomTeamF1TeamId(basicInfo) } }).forEach((teamId) => {
     const team = basicInfo?.teamMap?.[teamId] || {};
     seatState[teamId] = {
       1: normalizeName(resolveDriverName(basicInfo?.driverMap?.[team.Driver1ID])),
       2: normalizeName(resolveDriverName(basicInfo?.driverMap?.[team.Driver2ID])),
     };
-  }
+  });
   return seatState;
 }
 
@@ -1719,7 +2101,7 @@ function buildExistingDriverLookup(basicInfo) {
 
 function resolveSeriesTeamId({ config, resultRow, event, teamMapping }) {
   if (config.formula === 1) {
-    return mapF1TeamNameToId(resultRow.teamName);
+    return Number(resultRow.teamId) || mapF1TeamNameToId(resultRow.teamName);
   }
   return config.teamMapper(resultRow.teamName, teamMapping);
 }
@@ -2008,6 +2390,111 @@ function resolveImportedDriverProfile(importState, driverName, driverCode) {
     countryCandidates: profile.countryCandidates || [],
     dob: profile.dob || null,
   };
+}
+
+function getImportDriverConflicts({ dataset, basicInfo, targetYear, lastCompletedRound = null }) {
+  const currentSeason = Number(basicInfo?.player?.CurrentSeason || 0);
+  if (!dataset?.seasons || !targetYear || Number(targetYear) < currentSeason) {
+    return [];
+  }
+
+  const existingDriverIdsByName = buildExistingDriverLookup(basicInfo);
+  const teamSeatState = buildInitialSeatState(basicInfo);
+  const driverDisplayNames = {};
+  const selectedEvents = [];
+
+  for (let year = currentSeason; year <= Number(targetYear); year += 1) {
+    const season = dataset.seasons?.[`${year}`];
+    if (!season) {
+      continue;
+    }
+    const maxRound = season.events?.length || 0;
+    const startRound = year === currentSeason ? getLockedCompletedRounds(basicInfo) : 0;
+    const endRound = year === Number(targetYear)
+      ? Math.max(0, Math.min(Number(lastCompletedRound ?? maxRound), maxRound))
+      : maxRound;
+    selectedEvents.push(...(season.events || []).slice(startRound, endRound));
+  }
+
+  selectedEvents.forEach((event) => {
+    Object.values(event?.lineup || {}).forEach((driverNames = []) => {
+      driverNames.forEach((driverName) => {
+        const key = normalizeName(driverName);
+        if (key && !driverDisplayNames[key]) {
+          driverDisplayNames[key] = driverName;
+        }
+      });
+    });
+    applyLineupToSeatState(teamSeatState, event?.lineup || {});
+  });
+
+  return Object.entries(teamSeatState)
+    .flatMap(([teamIdValue, seatState]) => [1, 2].map((posInTeam) => ({
+      teamId: Number(teamIdValue),
+      posInTeam,
+      driverKey: seatState?.[posInTeam] || "",
+    })))
+    .filter((entry) => entry.driverKey && !existingDriverIdsByName[entry.driverKey])
+    .map((entry) => {
+      const team = basicInfo?.teamMap?.[entry.teamId] || {};
+      const conflictingDriverId = Number(team?.[`Driver${entry.posInTeam}ID`] || 0) || null;
+      const conflictingDriver = conflictingDriverId ? basicInfo?.driverMap?.[conflictingDriverId] : null;
+      return {
+        importedDriverName: driverDisplayNames[entry.driverKey] || entry.driverKey,
+        teamId: entry.teamId,
+        teamName: resolveLiteral(team.TeamNameLocKey || team.TeamName || "") || team.TeamName || `Team ${entry.teamId}`,
+        posInTeam: entry.posInTeam,
+        conflictingDriverId,
+        conflictingDriverName: resolveDriverName(conflictingDriver) || null,
+      };
+    })
+    .sort((left, right) => left.teamId - right.teamId || left.posInTeam - right.posInTeam || left.importedDriverName.localeCompare(right.importedDriverName));
+}
+
+function applyLineupToSeatState(teamSeatState, lineup = {}) {
+  Object.entries(lineup).forEach(([teamName, driverNames]) => {
+    const teamId = mapF1TeamNameToId(teamName);
+    if (!teamId) {
+      return;
+    }
+    const state = teamSeatState[teamId] || { 1: null, 2: null };
+    const incoming = (driverNames || []).map((name) => normalizeName(name)).filter(Boolean);
+    const nextState = { ...state };
+    const preserved = new Set();
+
+    [1, 2].forEach((loadoutId) => {
+      if (nextState[loadoutId] && incoming.includes(nextState[loadoutId])) {
+        preserved.add(nextState[loadoutId]);
+      } else {
+        nextState[loadoutId] = null;
+      }
+    });
+
+    incoming.forEach((driverKey) => {
+      if (preserved.has(driverKey)) {
+        return;
+      }
+      const openSeat = [1, 2].find((loadoutId) => !nextState[loadoutId]);
+      if (openSeat) {
+        nextState[openSeat] = driverKey;
+      }
+    });
+
+    teamSeatState[teamId] = nextState;
+  });
+}
+
+function normalizeDriverReplacements({ basicInfo, driverReplacements }) {
+  const validDriverIds = new Set(
+    Object.keys(basicInfo?.driverMap || {})
+      .map((value) => Number(value))
+      .filter(Number.isFinite)
+  );
+  return Object.fromEntries(
+    Object.entries(driverReplacements || {})
+      .map(([driverName, staffId]) => [normalizeName(driverName), Number(staffId)])
+      .filter(([driverKey, staffId]) => driverKey && validDriverIds.has(staffId))
+  );
 }
 
 function inferProfileFromName(driverName, driverCode) {
