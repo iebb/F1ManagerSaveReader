@@ -649,9 +649,18 @@ function buildDriverReplacementOptions({ database, basicInfo }) {
     "SELECT PerformanceStatType FROM Staff_StaffTypePerformanceStatsTemplate WHERE StaffType = 0"
   ) || [];
   const statIds = statTypeRows.map((row) => Number(row.PerformanceStatType)).filter(Number.isFinite);
+  const performanceColumns = new Set(
+    (database.getAllRows?.("PRAGMA table_info('Staff_PerformanceStats')") || []).map((row) => row.name)
+  );
+  const statValueColumn = performanceColumns.has("Val")
+    ? "Val"
+    : performanceColumns.has("Value")
+      ? "Value"
+      : null;
   const performanceRows = statIds.length
+    && statValueColumn
     ? (database.getAllRows?.(
-      `SELECT StaffID, StatID, Value
+      `SELECT StaffID, StatID, ${statValueColumn} AS StatValue
        FROM Staff_PerformanceStats
        WHERE StatID IN (${statIds.join(",")})`
     ) || [])
@@ -666,7 +675,7 @@ function buildDriverReplacementOptions({ database, basicInfo }) {
     if (!performanceByStaff[staffId]) {
       performanceByStaff[staffId] = {};
     }
-    performanceByStaff[staffId][statId] = Number(row.Value) || 0;
+    performanceByStaff[staffId][statId] = Number(row.StatValue) || 0;
   });
 
   const occupancyByDriver = {};
