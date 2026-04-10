@@ -20,8 +20,10 @@ import {createTeamColorTheme} from "@/ui/Theme";
 import {
   Backdrop,
   Box,
+  Button,
   CircularProgress,
   CssBaseline,
+  LinearProgress,
   ThemeProvider,
   Typography
 } from "@mui/material";
@@ -34,6 +36,81 @@ import DragBox from "./components/UI/Blocks/DragBox";
 import Footer from "./components/UI/Footer";
 import Header from "./components/UI/Header";
 const defaultTheme = createTeamColorTheme(0);
+
+function ParserStartupScreen({
+  state,
+  progress,
+  statusText,
+  errorMessage,
+  onRetry,
+}) {
+  const isError = state === "error";
+
+  return (
+    <main className="app-startup">
+      <section className="app-startup__panel">
+        <div className="app-startup__eyebrow">Database Engine</div>
+        <Typography variant="h3" component="h1" sx={{ fontWeight: 800, letterSpacing: "-0.04em" }}>
+          {isError ? "Parser failed to initialize" : "Preparing the save workspace"}
+        </Typography>
+        <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 620 }}>
+          {isError
+            ? "The local SQL runtime could not be loaded, so the editor cannot open save data yet."
+            : "Loading the local SQLite runtime used to parse and edit save data directly in your browser."}
+        </Typography>
+
+        <div className="app-startup__meter">
+          <div className="app-startup__meter-head">
+            <span>{statusText}</span>
+            <span>{isError ? "Error" : `${Math.max(0, Math.min(100, Math.round(progress)))}%`}</span>
+          </div>
+          <LinearProgress
+            variant={isError ? "determinate" : "determinate"}
+            value={isError ? 100 : Math.max(6, Math.min(100, progress))}
+            color={isError ? "error" : "primary"}
+            sx={{
+              height: 8,
+              borderRadius: 0,
+              backgroundColor: "rgba(255,255,255,0.08)",
+              "& .MuiLinearProgress-bar": {
+                borderRadius: 0,
+                background: isError
+                  ? "linear-gradient(90deg, rgba(251,113,133,0.95), rgba(239,68,68,0.95))"
+                  : "linear-gradient(90deg, rgba(125,211,252,0.95), rgba(56,189,248,0.95))",
+              },
+            }}
+          />
+        </div>
+
+        {isError ? (
+          <div className="app-startup__error">
+            <div className="app-startup__error-label">Load Error</div>
+            <div className="app-startup__error-body">{errorMessage || "Unknown initialization error"}</div>
+          </div>
+        ) : (
+          <div className="app-startup__status-grid">
+            <div className="app-startup__status-card">
+              <div className="app-startup__status-label">Mode</div>
+              <div className="app-startup__status-value">Client-side SQLite</div>
+            </div>
+            <div className="app-startup__status-card">
+              <div className="app-startup__status-label">Source</div>
+              <div className="app-startup__status-value">SQL.js runtime</div>
+            </div>
+          </div>
+        )}
+
+        {isError ? (
+          <div className="app-startup__actions">
+            <Button variant="contained" color="error" onClick={onRetry} sx={{ borderRadius: 0, fontWeight: 700 }}>
+              Retry parser load
+            </Button>
+          </div>
+        ) : null}
+      </section>
+    </main>
+  );
+}
 
 export function DataView() {
   const {version, gameVersion} = useContext(MetadataContext)
@@ -267,6 +344,10 @@ export default function App() {
   const [theme, setTheme] = useState(defaultTheme);
   const [fullWidth, setFullWidth] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [parserState, setParserState] = useState(() => (typeof window !== "undefined" && window.SQL ? "ready" : "loading"));
+  const [parserProgress, setParserProgress] = useState(() => (typeof window !== "undefined" && window.SQL ? 100 : 12));
+  const [parserStatusText, setParserStatusText] = useState(() => (typeof window !== "undefined" && window.SQL ? "Database engine ready" : "Fetching SQL.js runtime"));
+  const [parserError, setParserError] = useState("");
   const [db, setDb] = useState(null);
   const [metadata, setMetadata] = useState({});
   const [inApp, setInApp] = useState(false);
@@ -275,20 +356,88 @@ export default function App() {
   const [basicInfo, setBasicInfo] = useState(null);
   const [uiSettings, setUiSettings] = useState(() => {
     if (typeof window === "undefined") {
-      return { logoStyle: "colored" };
+      return {
+        logoStyle: "normal",
+        useRealWorldTeamBrands: true,
+      };
     }
     const savedLogoStyle = window.localStorage.getItem("f1manager.logoStyle");
+    const savedRealWorldTeamBrands = window.localStorage.getItem("f1manager.useRealWorldTeamBrands");
+    if (savedLogoStyle === "colored") {
+      return {
+        logoStyle: "normal",
+        useRealWorldTeamBrands: savedRealWorldTeamBrands !== "false",
+      };
+    }
     return {
-      logoStyle: savedLogoStyle === "white" ? "white" : "colored",
+      logoStyle: ["normal", "white", "colored-white"].includes(savedLogoStyle) ? savedLogoStyle : "normal",
+      useRealWorldTeamBrands: savedRealWorldTeamBrands !== "false",
     };
   });
 
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
 
+  const loadSqlParser = useCallback(async () => {
+    if (window.SQL) {
+      setParserState("ready");
+      setParserProgress(100);
+      setParserStatusText("Database engine ready");
+      setParserError("");
+      setLoaded(true);
+      return;
+    }
+
+    setLoaded(false);
+    setParserState("loading");
+    setParserProgress(12);
+    setParserStatusText("Fetching SQL.js runtime");
+    setParserError("");
+
+    try {
+      const SQL = await require('sql.js')({
+        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+      });
+      setParserProgress(74);
+      setParserStatusText("Preparing database engine");
+      window.SQL = SQL;
+      if (!SQL.Database.prototype.getAllRows) {
+        SQL.Database.prototype.getAllRows = function(...params) {
+          let rows = [];
+          const result = this.exec(...params);
+          if (result.length) {
+            let [{ values, columns }] = result;
+            for (const r of values) {
+              let row = {};
+              r.map((x, _idx) => { row[columns[_idx]] = x });
+              rows.push(row);
+            }
+          }
+          return rows;
+        };
+      }
+      setParserProgress(100);
+      setParserStatusText("Database engine ready");
+      setParserState("ready");
+      setLoaded(true);
+    } catch (error) {
+      console.error(error);
+      setParserState("error");
+      setParserStatusText("Database engine failed to load");
+      setParserError(error?.message || String(error));
+      setLoaded(false);
+    }
+  }, []);
+
   useEffect(() => {
     setTheme(createTeamColorTheme(metadata.version));
   }, [metadata.version]);
+
+  window.__teamBrandingContext = {
+    useRealWorldTeamBrands: uiSettings.useRealWorldTeamBrands !== false,
+    currentSeason: basicInfo?.player?.CurrentSeason || metadata?.currentSeason || null,
+    startSeason: basicInfo?.player?.StartSeason || null,
+  };
 
   const updateBasicInfo = () => {
     try {
@@ -303,32 +452,34 @@ export default function App() {
 
 
   useEffect(() => {
+    if (parserState !== "loading") {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setParserProgress((current) => {
+        if (current >= 92) {
+          return current;
+        }
+        if (current < 38) {
+          return current + 7;
+        }
+        if (current < 68) {
+          return current + 4;
+        }
+        return current + 2;
+      });
+    }, 180);
+
+    return () => window.clearInterval(timer);
+  }, [parserState]);
+
+  useEffect(() => {
     if (window?.navigator?.userAgent?.includes("MRCHROME") && !inApp) {
       setInApp(true);
     }
-    if (!window.initialized) {
-      window.initialized = true;
-      require('sql.js')({
-        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
-      }).then(SQL => {
-        window.SQL = SQL;
-        SQL.Database.prototype.getAllRows = function(...params) {
-          let rows = [];
-          const result = this.exec(...params);
-          if (result.length) {
-            let [{ values, columns }] = result;
-            for (const r of values) {
-              let row = {};
-              r.map((x, _idx) => { row[columns[_idx]] = x })
-              rows.push(row);
-            }
-          }
-          return rows;
-        }
-        setLoaded(true);
-      });
-    }
-  }, []);
+    loadSqlParser();
+  }, [inApp, loadSqlParser]);
 
 
   return (
@@ -341,8 +492,16 @@ export default function App() {
                 const resolved = typeof nextSettings === "function"
                   ? nextSettings(current)
                   : { ...current, ...nextSettings };
-                window.localStorage.setItem("f1manager.logoStyle", resolved.logoStyle === "white" ? "white" : "colored");
-                return resolved;
+                const nextLogoStyle = ["normal", "white", "colored-white"].includes(resolved.logoStyle)
+                  ? resolved.logoStyle
+                  : "normal";
+                window.localStorage.setItem("f1manager.logoStyle", nextLogoStyle);
+                window.localStorage.setItem("f1manager.useRealWorldTeamBrands", resolved.useRealWorldTeamBrands === false ? "false" : "true");
+                return {
+                  ...resolved,
+                  logoStyle: nextLogoStyle,
+                  useRealWorldTeamBrands: resolved.useRealWorldTeamBrands !== false,
+                };
               });
             }}>
               <ThemeProvider theme={theme}>
@@ -357,8 +516,7 @@ export default function App() {
                   anchorOrigin={{vertical: 'top', horizontal: 'right'}}
                 >
                   <CssBaseline />
-                  {
-                    loaded ? (
+                  {loaded && parserState === "ready" ? (
                       <BasicInfoUpdaterContext.Provider value={({ metadata }) => {
                         if (metadata) {
                           metadata = {
@@ -388,11 +546,13 @@ export default function App() {
                         />
                       </BasicInfoUpdaterContext.Provider>
                     ) : (
-                      <main className="w-full px-4 md:px-6">
-                        <Typography variant="h5" component="h5">
-                          Loading Database parser. Please wait.
-                        </Typography>
-                      </main>
+                      <ParserStartupScreen
+                        state={parserState}
+                        progress={parserProgress}
+                        statusText={parserStatusText}
+                        errorMessage={parserError}
+                        onRetry={loadSqlParser}
+                      />
                     )
                   }
                 </SnackbarProvider>

@@ -1,5 +1,5 @@
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
-import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import {getDriverName, resolveLiteral, teamNames} from "@/js/localization";
 import {getCountryFlag} from "@/js/localization/ISOCountries";
 import {Autocomplete, Modal, TextField} from "@mui/material";
@@ -11,7 +11,7 @@ export default function ContractSwapper(props) {
   const { swapRow, setSwapRow, refresh } = props;
   const database = useContext(DatabaseContext);
   const {version, careerSaveMetadata} = useContext(MetadataContext)
-  const {logoStyle = "colored"} = useContext(UiSettingsContext);
+  const {logoStyle = "normal"} = useContext(UiSettingsContext);
   const basicInfo = useContext(BasicInfoContext);
   const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
   const { player, teamMap } = basicInfo;
@@ -49,15 +49,12 @@ export default function ContractSwapper(props) {
   });
   const getTeamSummary = (teamId) => {
     if (!teamId) {
-      return {name: "Currently unassigned", logo: null};
+      return {id: null, name: "Currently unassigned"};
     }
     const name = teamId >= 32 && teamMap?.[teamId]?.TeamNameLocKey
       ? resolveLiteral(teamMap[teamId].TeamNameLocKey)
       : teamNames(teamId, version);
-    const logo = teamId >= 32 && customTeamLogoBase64
-      ? `data:image/png;base64,${customTeamLogoBase64}`
-      : getOfficialTeamLogo(version, teamId, logoStyle);
-    return {name, logo};
+    return {id: teamId, name};
   };
   const currentTeam = getTeamSummary(currentContract?.TeamID);
   const targetTeam = getTeamSummary(targetContract?.TeamID);
@@ -363,7 +360,7 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
                   ) : null}
                 </div>
                 <div className="mt-2 flex items-center gap-3">
-                  {currentTeam.logo ? <img src={currentTeam.logo} alt={currentTeam.name} className="h-8 w-8 object-contain" /> : null}
+                  {currentTeam.id ? <TeamLogo TeamID={currentTeam.id} size="md" logoStyleOverride={logoStyle} alt={currentTeam.name} /> : null}
                   <div className="text-sm text-slate-300">{currentTeam.name}</div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -431,7 +428,7 @@ WHERE DriverID = ${A} AND Day >= ${seasonStart} AND Day <= ${seasonEnd} AND Race
                         ) : null}
                       </div>
                       <div className="mt-2 flex items-center gap-3">
-                        {targetTeam.logo ? <img src={targetTeam.logo} alt={targetTeam.name} className="h-8 w-8 object-contain" /> : null}
+                        {targetTeam.id ? <TeamLogo TeamID={targetTeam.id} size="md" logoStyleOverride={logoStyle} alt={targetTeam.name} /> : null}
                         <div className="text-sm text-slate-300">{targetTeam.name}</div>
                       </div>
                       <div className="mt-2 text-xs text-slate-500">

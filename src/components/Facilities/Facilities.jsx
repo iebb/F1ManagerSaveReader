@@ -1,5 +1,5 @@
 import { BasicInfoContext, DatabaseContext, MetadataContext, UiSettingsContext } from "@/js/Contexts";
-import { getOfficialTeamLogo } from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import { Edit, KeyboardDoubleArrowDown, KeyboardDoubleArrowUp, Refresh } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import { resolveLiteral, teamNames } from "@/js/localization";
@@ -166,7 +166,7 @@ export default function Facilities() {
 
   const database = useContext(DatabaseContext);
   const { version, careerSaveMetadata } = useContext(MetadataContext)
-  const { logoStyle = "colored" } = useContext(UiSettingsContext);
+  const { logoStyle = "normal" } = useContext(UiSettingsContext);
   const { teamIds, teamMap, player } = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const refresh = () => setUpdated(+new Date());
@@ -506,18 +506,9 @@ export default function Facilities() {
                   </div>
                 ),
                 renderCell: ({ value }) => {
-                  const logoSrc = value >= 32 && customTeamLogoBase64
-                    ? `data:image/png;base64,${customTeamLogoBase64}`
-                    : getOfficialTeamLogo(version, value, logoStyle);
-                return (
-                  <div className="flex h-full items-center gap-2 py-1.5">
-                    {logoSrc ? (
-                      <img
-                        src={logoSrc}
-                          alt=""
-                          className="h-6 w-6 shrink-0 object-contain opacity-95"
-                        />
-                      ) : null}
+                  return (
+                    <div className="flex h-full items-center gap-2 py-1.5">
+                      <TeamLogo TeamID={value} size="sm" logoStyleOverride={logoStyle} className="opacity-95" />
                       <div
                         className="min-w-0 truncate text-[13px] font-medium leading-5"
                         style={getTeamTextStyle(value)}

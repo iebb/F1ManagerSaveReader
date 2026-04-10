@@ -1,5 +1,5 @@
 import {BasicInfoContext, DatabaseContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
-import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import {countryNames, getDriverName, raceFlags, resolveLiteral, teamNames} from "@/js/localization";
 import {getCountryFlag} from "@/js/localization/ISOCountries";
 import * as React from "react";
@@ -93,24 +93,32 @@ function DriverInline({driver}) {
   );
 }
 
-function TeamInline({team}) {
+function TeamInline({team, logoStyle}) {
   if (!team) {
     return <span className="text-slate-600">-</span>;
   }
   return (
     <div className="flex items-center gap-2">
-      {team.logo ? <img src={team.logo} alt="" className="h-5 w-5 object-contain" /> : null}
+      <TeamLogo TeamID={team.id} size="sm" logoStyleOverride={logoStyle} alt={team.name} />
       <span className="truncate text-[15px] text-slate-100">{team.name}</span>
     </div>
   );
 }
 
 function getResultStatus(row) {
+  const importedClassificationStatus = `${row?.ImportedClassificationStatus || ""}`.trim().toUpperCase();
+  const importedPositionText = `${row?.ImportedPositionText || ""}`.trim().toUpperCase();
   const finishPos = getNumericValue(row, ["FinishingPos", "FinishPosition", "Position"]);
   const laps = getNumericValue(row, ["Laps", "LapCount", "CompletedLaps"]);
   const dnf = Boolean(getNumericValue(row, ["DNF", "DidNotFinish"]));
   const retiredReason = getRawValue(row, ["DNFReason", "RetirementReason", "Reason"]);
 
+  if (importedClassificationStatus.includes("DISQUALIFIED") || ["DQ", "DSQ", "D"].includes(importedPositionText)) {
+    return "DSQ";
+  }
+  if (importedClassificationStatus.includes("DID NOT START")) {
+    return "DNS";
+  }
   if (!dnf && Number.isFinite(finishPos) && finishPos > 0) {
     return `${finishPos}`;
   }
@@ -127,11 +135,18 @@ function getResultStatus(row) {
 }
 
 function getTimeOrRetired(row, winnerTime, winnerLaps) {
+  const importedClassificationStatus = `${row?.ImportedClassificationStatus || ""}`.trim().toUpperCase();
   const dnf = Boolean(getNumericValue(row, ["DNF", "DidNotFinish"]));
   const retiredReason = getRawValue(row, ["DNFReason", "RetirementReason", "Reason"]);
   const ownTime = getNumericValue(row, ["RaceTime", "TotalTime", "Time"]);
   const laps = getNumericValue(row, ["Laps", "LapCount", "CompletedLaps"]);
 
+  if (importedClassificationStatus.includes("DISQUALIFIED")) {
+    return "DSQ";
+  }
+  if (importedClassificationStatus.includes("DID NOT START")) {
+    return "DNS";
+  }
   if (dnf || retiredReason) {
     if (retiredReason) return `${retiredReason}`;
     return "Retired";
@@ -156,7 +171,7 @@ export default function SeasonResultsSummary() {
   const basicInfo = useContext(BasicInfoContext);
   const database = useContext(DatabaseContext);
   const {version, careerSaveMetadata} = useContext(MetadataContext);
-  const {logoStyle = "colored"} = useContext(UiSettingsContext);
+  const {logoStyle = "normal"} = useContext(UiSettingsContext);
   const {player, driverMap, teamMap} = basicInfo;
   const [season, setSeason] = useState(player.CurrentSeason);
   const [selectedRaceId, setSelectedRaceId] = useState(null);
@@ -185,9 +200,6 @@ export default function SeasonResultsSummary() {
       name: teamId >= 32 && teamMap?.[teamId]?.TeamNameLocKey
         ? resolveLiteral(teamMap[teamId].TeamNameLocKey)
         : teamNames(teamId, version),
-      logo: teamId >= 32 && customTeamLogoBase64
-        ? `data:image/png;base64,${customTeamLogoBase64}`
-        : getOfficialTeamLogo(version, teamId, logoStyle),
     };
   };
 
@@ -214,6 +226,10 @@ export default function SeasonResultsSummary() {
   useEffect(() => {
     const resultColumns = database.getAllRows(`PRAGMA table_info('Races_Results')`);
     const hasRaceFormula = resultColumns.some((column) => column.name === "RaceFormula");
+    const tableRows = database.getAllRows(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='Modding_RealWorldImport_ResultStatus'`
+    );
+    const hasImportedStatusTable = tableRows.length > 0;
     const seasonRaces = database.getAllRows(
       `SELECT Races.RaceID, Races.TrackID, Races.Day
        FROM Races
@@ -230,8 +246,27 @@ export default function SeasonResultsSummary() {
        ORDER BY RaceID ASC, FinishingPos ASC`,
       { ":season": season }
     );
+    const importedStatusRows = hasImportedStatusTable
+      ? database.getAllRows(
+        `SELECT *
+         FROM Modding_RealWorldImport_ResultStatus
+         WHERE SeasonID = :season
+           AND Series = 'f1'
+           AND SessionType = 'race'`,
+        { ":season": season }
+      )
+      : [];
+    const importedStatusByRaceDriver = importedStatusRows.reduce((acc, row) => {
+      acc[`${row.RaceID}:${row.DriverID}`] = row;
+      return acc;
+    }, {});
+    const mergedResultsRows = resultsRows.map((row) => ({
+      ...row,
+      ImportedClassificationStatus: importedStatusByRaceDriver[`${row.RaceID}:${row.DriverID}`]?.ClassificationStatus || null,
+      ImportedPositionText: importedStatusByRaceDriver[`${row.RaceID}:${row.DriverID}`]?.PositionText || null,
+    }));
 
-    const raceResultsByRace = resultsRows.reduce((acc, row) => {
+    const raceResultsByRace = mergedResultsRows.reduce((acc, row) => {
       if (!acc[row.RaceID]) {
         acc[row.RaceID] = [];
       }
@@ -345,7 +380,7 @@ export default function SeasonResultsSummary() {
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Race Results</div>
             <h2 className="mt-2 text-lg font-bold text-white">Season Summary & Race Report</h2>
             <p className="mt-2 max-w-[860px] text-sm text-slate-400">
-              Browse stored season summaries from `Races_Results`, then open a race-by-race classification report for any completed grand prix.
+              For Wikipedia fans.
             </p>
           </div>
           <label className="flex items-center gap-3">
@@ -392,7 +427,7 @@ export default function SeasonResultsSummary() {
                 <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.pole} /></td>
                 <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.fastest} /></td>
                 <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.winner} /></td>
-                <td className="border border-white/10 px-3 py-2"><TeamInline team={row.constructor} /></td>
+                <td className="border border-white/10 px-3 py-2"><TeamInline team={row.constructor} logoStyle={logoStyle} /></td>
                 <td className="border border-white/10 px-3 py-2 text-center">
                   {row.driverCount >= 10 ? (
                     <button
@@ -436,7 +471,7 @@ export default function SeasonResultsSummary() {
                   <td className="border border-white/10 px-3 py-2 text-center text-sm font-semibold text-slate-100">{row.pos}</td>
                   <td className="border border-white/10 px-3 py-2 text-center text-sm text-slate-200">{row.number}</td>
                   <td className="border border-white/10 px-3 py-2"><DriverInline driver={row.driver} /></td>
-                  <td className="border border-white/10 px-3 py-2"><TeamInline team={row.team} /></td>
+                  <td className="border border-white/10 px-3 py-2"><TeamInline team={row.team} logoStyle={logoStyle} /></td>
                   <td className="border border-white/10 px-3 py-2 text-center text-sm text-slate-200">{row.laps}</td>
                   <td className="border border-white/10 px-3 py-2 text-sm text-slate-100">{row.timeOrRetired}</td>
                   <td className="border border-white/10 px-3 py-2 text-center text-sm text-slate-200">{row.grid}</td>

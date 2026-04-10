@@ -1,102 +1,104 @@
-import {raceAbbrevs} from "@/js/localization";
-import {Alert, AlertTitle, Divider, FormControl, InputLabel, MenuItem, Select, Typography} from "@mui/material";
+import {currencyFormatter} from "@/components/Finance/utils";
+import WorkspaceShell from "@/components/Finance/WorkspaceShell";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {dayToDate, raceAbbrevs, teamNames} from "@/js/localization";
+import {defaultFontFamily} from "@/ui/Fonts";
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, teamNames} from "@/js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {defaultFontFamily} from "@/ui/Fonts";
 
+function formatMillions(value) {
+  return `${(value / 1000000).toFixed(1)}m`;
+}
 
 export default function CostCap() {
-
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext)
-  const basicInfo = useContext(BasicInfoContext);
-
-  const { player, teamIds } = basicInfo;
+  const {version} = useContext(MetadataContext);
+  const {player, teamIds} = useContext(BasicInfoContext);
 
   const [seriesList, setSeriesList] = useState([]);
   const [yMax, setYMax] = useState(0);
   const [xMax, setXMax] = useState(0);
-
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
+  const [overview, setOverview] = useState({
+    costCap: 0,
+    playerUsed: 0,
+    playerRemaining: 0,
+    leadingUsed: 0,
+  });
 
   useEffect(() => {
-    let seasonList = [];
-    for(let s = player.StartSeason; s <= player.CurrentSeason; s++) {
+    const seasonList = [];
+    for (let s = player.StartSeason; s <= player.CurrentSeason; s++) {
       seasonList.push(s);
     }
     setSeasons(seasonList);
   }, [player.CurrentSeason, player.StartSeason]);
 
-  // const [currentSeason, setCurrentSeason] = useState(2023);
-
-  const handleChange = (event) => {
-    setSeason(event.target.value);
-  };
-
-
-
-
   useEffect(() => {
-
-    // let season = player.CurrentSeason;
     try {
+      let columns;
+      let values;
 
-      let columns, values;
-
-      [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
+      [{values}] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
       const [seasonStart, seasonEnd] = values[0];
       setXMax(dayToDate(seasonEnd));
 
-      [{ values }] = database.exec(`SELECT CurrentValue FROM 'Regulations_Enum_Changes' WHERE Name = 'SpendingCap'`);
+      [{values}] = database.exec(`SELECT CurrentValue FROM 'Regulations_Enum_Changes' WHERE Name = 'SpendingCap'`);
       const [costCap] = values[0];
 
-      let totalCostCapForTeam = {};
-      let costCapHistoryForTeam = {};
-
-      for(const team of teamIds) {
+      const totalCostCapForTeam = {};
+      const costCapHistoryForTeam = {};
+      for (const team of teamIds) {
         totalCostCapForTeam[team] = 0;
         costCapHistoryForTeam[team] = [];
       }
 
-      [{ columns, values }] = database.exec(
-        `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' 
-        WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND AffectsCostCap = 1 GROUP BY TeamID, Day ORDER BY Day ASC`
+      [{columns, values}] = database.exec(
+        `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions'
+         WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND AffectsCostCap = 1
+         GROUP BY TeamID, Day ORDER BY Day ASC`
       );
-      for(const r of values) {
-        let transaction = {};
-        r.map((x, _idx) => transaction[columns[_idx]] = x)
-        //
+      for (const rowValues of values) {
+        const transaction = {};
+        rowValues.map((value, index) => transaction[columns[index]] = value);
         totalCostCapForTeam[transaction.TeamID] -= transaction.Value;
-        costCapHistoryForTeam[transaction.TeamID].push(
-          [transaction.Day, totalCostCapForTeam[transaction.TeamID]]
-        )
+        costCapHistoryForTeam[transaction.TeamID].push([transaction.Day, totalCostCapForTeam[transaction.TeamID]]);
       }
 
-      let costCapFines = database.exec(
+      const costCapFines = database.exec(
         `SELECT FTA.TeamID, FTA.Day, FTA.Value - SUM(FTB.Value) FROM (
-          SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND TransactionType = 33 GROUP BY TeamID, Day
-        ) as FTA, (
-          SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND AffectsCostCap = 1 GROUP BY TeamID, Day
-        ) as FTB WHERE FTB.Day <= FTA.Day AND FTA.TeamID = FTB.TeamID GROUP BY FTA.TeamID, FTA.Day`
+            SELECT TeamID, Day, SUM(value) as Value
+            FROM 'Finance_Transactions'
+            WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND TransactionType = 33
+            GROUP BY TeamID, Day
+          ) as FTA, (
+            SELECT TeamID, Day, SUM(value) as Value
+            FROM 'Finance_Transactions'
+            WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND AffectsCostCap = 1
+            GROUP BY TeamID, Day
+          ) as FTB
+         WHERE FTB.Day <= FTA.Day AND FTA.TeamID = FTB.TeamID
+         GROUP BY FTA.TeamID, FTA.Day`
       );
 
       const raceMarklines = [];
-
       if (costCapFines.length) {
-        let [{ values: [[TeamID, Day, CCF]] }] = costCapFines;
-        if (CCF > 0) {
+        const [{values: [[, , calculatedCostCap]]}] = costCapFines;
+        if (calculatedCostCap > 0) {
           raceMarklines.push({
             name: "Calculated Cost Cap",
-            yAxis: CCF,
-            symbol: 'none',
+            yAxis: calculatedCostCap,
+            symbol: "none",
+            lineStyle: {
+              color: "#facc15",
+              type: "dashed",
+            },
             label: {
-              formatter: x => `${x.name}: ${(x.value / 1000000).toFixed(1)}m`,
-              position: 'insideStartBottom'
-            }
+              formatter: (item) => `${item.name}: ${formatMillions(item.value)}`,
+              position: "insideStartBottom",
+            },
           });
         }
       }
@@ -105,144 +107,170 @@ export default function CostCap() {
         raceMarklines.push({
           name: "Current Cost Cap",
           yAxis: costCap,
+          symbol: "none",
+          lineStyle: {
+            color: "#7dd3fc",
+            type: "dashed",
+          },
           label: {
-            formatter: x => `${x.name}: ${(x.value / 1000000).toFixed(1)}m`,
-            position: 'insideStartBottom'
-          }
+            formatter: (item) => `${item.name}: ${formatMillions(item.value)}`,
+            position: "insideStartBottom",
+          },
         });
       }
 
-
-      [{ columns, values }] = database.exec(
-        `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
+      [{columns, values}] = database.exec(
+        `SELECT * FROM Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID
+         WHERE SeasonID = ${season} ORDER BY Day ASC`
       );
-      for(const r of values) {
-        let race = {};
-        r.map((x, _idx) => {
-          race[columns[_idx]] = x;
-        })
+      for (const rowValues of values) {
+        const race = {};
+        rowValues.map((value, index) => race[columns[index]] = value);
         raceMarklines.push({
           name: raceAbbrevs[race.TrackID],
           xAxis: dayToDate(race.Day),
           itemStyle: {
-            color: 'rgba(255, 173, 177, 0.5)'
+            color: "rgba(125, 211, 252, 0.24)",
           },
           label: {
-            formatter: '{b}',
-            position: 'insideStart'
-          }
-        })
+            formatter: "{b}",
+            position: "insideStart",
+          },
+        });
       }
 
-      const seriesList = [{
-        type: 'line',
+      const nextSeriesList = [{
+        type: "line",
         markLine: {
-          symbol: 'none',
-          data: raceMarklines
-        }
+          symbol: "none",
+          data: raceMarklines,
+        },
       }];
 
-
-
-
       let calcYMax = costCap;
-      for(const i of teamIds) {
-        costCapHistoryForTeam[i].push([Math.min(player.Day, seasonEnd - 1), totalCostCapForTeam[i]])
-        if (totalCostCapForTeam[i] > calcYMax) {
-          calcYMax = totalCostCapForTeam[i];
+      let leadingUsed = 0;
+
+      for (const teamId of teamIds) {
+        costCapHistoryForTeam[teamId].push([Math.min(player.Day, seasonEnd - 1), totalCostCapForTeam[teamId]]);
+        if (totalCostCapForTeam[teamId] > calcYMax) {
+          calcYMax = totalCostCapForTeam[teamId];
         }
-        const color = getComputedStyle(window.vc).getPropertyValue(`--team${i}`);
+        if (totalCostCapForTeam[teamId] > leadingUsed) {
+          leadingUsed = totalCostCapForTeam[teamId];
+        }
+        const color = getComputedStyle(window.vc).getPropertyValue(`--team${teamId}`);
         const data = [];
         let previousDate = seasonStart;
         let previousCapUsage = 0;
-        for(const [day, cap] of costCapHistoryForTeam[i]) {
-          for(let i = previousDate; i < day; i++) {
-            data.push([dayToDate(i), previousCapUsage]);
+        for (const [day, cap] of costCapHistoryForTeam[teamId]) {
+          for (let date = previousDate; date < day; date++) {
+            data.push([dayToDate(date), previousCapUsage]);
           }
           previousCapUsage = cap;
           previousDate = day;
-          // data.push([dayToDate(day), cap]);
         }
         data.push([dayToDate(previousDate), previousCapUsage]);
 
-        seriesList.push( {
-          name: teamNames(i, version),
-          type: 'line',
+        nextSeriesList.push({
+          name: teamNames(teamId, version),
+          type: "line",
           itemStyle: {color},
+          lineStyle: {width: teamId === player.TeamID ? 3 : 2},
+          emphasis: {
+            focus: "series",
+          },
           showSymbol: false,
-          data
-        })
+          data,
+        });
       }
 
-      setSeriesList(seriesList);
-      setYMax(
-        Math.floor(calcYMax * 1.2 / 10000000) * 10000000
-      );
-
-    } catch (e) {
-      console.error(e);
+      setOverview({
+        costCap,
+        playerUsed: totalCostCapForTeam[player.TeamID] || 0,
+        playerRemaining: costCap - (totalCostCapForTeam[player.TeamID] || 0),
+        leadingUsed,
+      });
+      setSeriesList(nextSeriesList);
+      setYMax(Math.floor(calcYMax * 1.2 / 10000000) * 10000000);
+    } catch (error) {
+      console.error(error);
     }
-
-  }, [database, season])
+  }, [database, player.Day, player.TeamID, season, teamIds, version]);
 
   return (
-    <div>
-      <Typography variant="h5" component="h5">
-        Cost Cap Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-        <InputLabel id="standard-label">Season</InputLabel>
-        <Select
-          labelId="standard-label"
-          id="standard"
-          value={season}
-          onChange={handleChange}
-          label="Season"
-        >
-          {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
-        </Select>
-      </FormControl>
-      </Typography>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <Alert severity="warning" sx={{ my: 2 }}>
-        <AlertTitle>Warning</AlertTitle>
-        AI Teams <b>DO NOT</b> follow the cost cap, <b>NOR</b> will they be fined for breaching it. The inclusion of AI Teams is only for informative purposes.
-        <br/>
-        Game <b>DOES NOT</b> track previous caps. However if you have been fined for breaching the cap, it can be calculated from the fines.
-      </Alert>
-      <div style={{ overflowX: "auto" }}>
-        <ReactECharts
-          theme="dark"
-          style={{ height: 500 }}
-          option={{
-            legend: {show: true},
-            textStyle: {
-              fontFamily: defaultFontFamily,
-              fontVariantNumeric: 'tabular-nums',
-            },
-            backgroundColor: "transparent",
-            tooltip: {
-              order: 'valueDesc',
-              trigger: 'axis'
-            },
-            xAxis: {
-              type: 'time',
-              nameLocation: 'middle',
-              max: xMax,
-            },
-            yAxis: {
-              type: 'value',
-              name: 'Cost Cap',
-              axisLabel: {
-                formatter: val => `${val / 1000000}m`
+    <WorkspaceShell
+      title="Cost Cap"
+      description="Track season spend against the live cap, compare team trajectories, and see where your current program sits relative to the ceiling."
+      season={season}
+      seasons={seasons}
+      onSeasonChange={setSeason}
+      stats={[
+        {label: "Current Cap", value: currencyFormatter.format(overview.costCap)},
+        {label: "Player Spend", value: currencyFormatter.format(overview.playerUsed)},
+        {
+          label: "Player Headroom",
+          value: currencyFormatter.format(overview.playerRemaining),
+          valueClassName: overview.playerRemaining < 0 ? "text-rose-300" : "text-emerald-300",
+        },
+        {label: "Highest Spend", value: currencyFormatter.format(overview.leadingUsed)},
+      ]}
+    >
+      <section className="border border-amber-300/20 bg-amber-500/[0.08] px-4 py-3 text-sm text-amber-100">
+        AI teams do not obey the cost cap or receive breach fines. Their lines are still shown for comparison, and older caps can only be inferred when the save contains fines.
+      </section>
+      <section className="border border-white/10 bg-white/[0.015] p-3">
+        <div className="min-w-0 overflow-x-auto">
+          <ReactECharts
+            theme="dark"
+            style={{height: 520}}
+            option={{
+              legend: {
+                top: 8,
+                textStyle: {
+                  color: "#cbd5e1",
+                  fontSize: 12,
+                },
               },
-              max: yMax,
-            },
-            grid: {
-              right: 60,
-              left: 60,
-            },
-            series: seriesList
-          }} />
-      </div>
-    </div>
+              textStyle: {
+                fontFamily: defaultFontFamily,
+                fontVariantNumeric: "tabular-nums",
+              },
+              backgroundColor: "transparent",
+              tooltip: {
+                order: "valueDesc",
+                trigger: "axis",
+                valueFormatter: (value) => currencyFormatter.format(value),
+              },
+              xAxis: {
+                type: "time",
+                max: xMax,
+                axisLine: {lineStyle: {color: "rgba(255,255,255,0.14)"}},
+                splitLine: {lineStyle: {color: "rgba(255,255,255,0.05)"}},
+                axisLabel: {color: "#94a3b8"},
+              },
+              yAxis: {
+                type: "value",
+                name: "Cost Cap Spend",
+                nameTextStyle: {color: "#64748b"},
+                axisLine: {show: true, lineStyle: {color: "rgba(255,255,255,0.14)"}},
+                splitLine: {lineStyle: {color: "rgba(255,255,255,0.05)"}},
+                axisLabel: {
+                  color: "#94a3b8",
+                  formatter: (value) => formatMillions(value),
+                },
+                max: yMax,
+              },
+              grid: {
+                top: 64,
+                right: 28,
+                bottom: 28,
+                left: 72,
+              },
+              series: seriesList,
+            }}
+          />
+        </div>
+      </section>
+    </WorkspaceShell>
   );
 }

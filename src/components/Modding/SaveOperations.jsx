@@ -17,7 +17,7 @@ import {
 } from "@/js/localization";
 import { getExistingTableSet, recalculateRaceStandings } from "@/components/Customize/Player/timeMachineUtils";
 import { currencyFormatter } from "@/components/Finance/utils";
-import { getOfficialTeamLogo } from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import { DataGrid } from "@mui/x-data-grid";
 import { Alert, AlertTitle, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -70,14 +70,53 @@ const clampPercentage = (value, max) => {
   return Math.max(0, Math.min(100, (value / max) * 100));
 };
 
-function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, nextRaceName, onRefresh, teamId, mode = "modern", legacyObligations = [], legacyIncentives = [] }) {
+function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, nextRaceName, onRefresh, teamId, mode = "modern", legacyObligations = [], legacyIncentives = [], currentDay = 0 }) {
   const database = useContext(DatabaseContext);
   const { enqueueSnackbar } = useSnackbar();
+  const legacyIncentiveGroups = useMemo(() => {
+    const grouped = Array.from(
+      legacyIncentives.reduce((map, row) => {
+        const key = row.RaceID || `unknown-${row.ConditionID}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            RaceID: row.RaceID,
+            TrackID: row.TrackID,
+            Day: row.Day,
+            raceLabel: row.TrackID ? (raceAbbrevs[row.TrackID] || row.RaceID) : `${row.RaceID ?? "?"}`,
+            items: [],
+          });
+        }
+        map.get(key).items.push(row);
+        return map;
+      }, new Map()).values()
+    ).map((race) => {
+      const isFinished = Number(race.Day || 0) > 0 && Number(race.Day) <= Number(currentDay || 0);
+      return {
+        ...race,
+        isFinished,
+        items: race.items.map((row) => ({
+          ...row,
+          DerivedStatus: Number(row.Achieved)
+            ? "achieved"
+            : isFinished
+              ? "failed"
+              : "pending",
+        })),
+      };
+    }).sort((left, right) => Number(right.RaceID || 0) - Number(left.RaceID || 0));
+
+    return {
+      finished: grouped.filter((race) => race.isFinished),
+      upcoming: grouped.filter((race) => !race.isFinished),
+    };
+  }, [currentDay, legacyIncentives]);
 
   if (mode === "legacy") {
     const acceptedObligations = legacyObligations.filter((row) => Number(row.Accepted));
     const achievedIncentives = legacyIncentives.filter((row) => Number(row.Achieved));
-    const pendingIncentives = legacyIncentives.filter((row) => !Number(row.Achieved));
+    const failedIncentives = legacyIncentiveGroups.finished.flatMap((race) => race.items).filter((row) => row.DerivedStatus === "failed");
+    const pendingIncentives = legacyIncentiveGroups.upcoming.flatMap((race) => race.items).filter((row) => row.DerivedStatus === "pending");
 
     return (
       <div className="grid gap-4">
@@ -95,6 +134,7 @@ function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, n
                 { label: "Accepted", value: acceptedObligations.length },
                 { label: "All Obligations", value: legacyObligations.length },
                 { label: "Achieved", value: achievedIncentives.length },
+                { label: "Failed", value: failedIncentives.length },
                 { label: "Pending", value: pendingIncentives.length },
               ].map((item) => (
                 <div key={item.label} className="border border-white/10 bg-black/10 p-3">
@@ -147,38 +187,68 @@ function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, n
 
         <section className="border border-white/10 bg-white/[0.015]">
           <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Guarantees & Incentives</div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="bg-white/[0.04]">
-                  {["Race", "Condition", "Target", "Type", "Status"].map((header) => (
-                    <th key={header} className="border-b border-white/10 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {legacyIncentives.map((row) => (
-                  <tr key={`legacy-incentive-${row.id}`} className="bg-white/[0.01] odd:bg-white/[0.03]">
-                    <td className="border-b border-white/5 px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        {row.TrackID ? <img src={`/flags/${raceFlags[row.TrackID]}.svg`} alt="" className="h-[16px] w-6 border border-white/10 object-cover" /> : null}
-                        <span className="text-sm text-white">{row.TrackID ? (raceAbbrevs[row.TrackID] || row.RaceID) : row.RaceID}</span>
+          <div className="px-4 py-4">
+            <div className="grid gap-4">
+              {[
+                { key: "finished", title: "Finished", rows: legacyIncentiveGroups.finished },
+                { key: "upcoming", title: "Upcoming", rows: legacyIncentiveGroups.upcoming },
+              ].map((section) => (
+                <div key={section.key} className="grid gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{section.title}</div>
+                  {section.rows.length ? (
+                    <div className="overflow-x-auto">
+                      <div className="flex min-w-full gap-3">
+                        {section.rows.map((race) => (
+                          <div key={`legacy-race-${section.key}-${race.key}`} className="w-[320px] shrink-0 border border-white/10 bg-black/10">
+                            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+                              {race.TrackID ? <img src={`/flags/${raceFlags[race.TrackID]}.svg`} alt="" className="h-[16px] w-6 border border-white/10 object-cover" /> : null}
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white">{race.raceLabel}</div>
+                                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                                  {race.items.length} item{race.items.length === 1 ? "" : "s"}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid">
+                              {race.items.map((row, index) => (
+                                <div
+                                  key={`legacy-incentive-${row.id}`}
+                                  className={`grid gap-2 px-4 py-3 ${index > 0 ? "border-t border-white/5" : ""}`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <div className="text-sm font-semibold text-slate-100">{row.Label}</div>
+                                      <div className="mt-1 text-xs text-slate-400">{row.TargetText}</div>
+                                    </div>
+                                    <span className={`shrink-0 border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                                      row.DerivedStatus === "achieved"
+                                        ? "border-emerald-300/30 bg-emerald-500/[0.08] text-emerald-100"
+                                        : row.DerivedStatus === "failed"
+                                          ? "border-rose-300/30 bg-rose-500/[0.08] text-rose-100"
+                                          : "border-amber-300/30 bg-amber-500/[0.08] text-amber-100"
+                                    }`}>
+                                      {row.DerivedStatus === "achieved" ? "Achieved" : row.DerivedStatus === "failed" ? "Failed" : "Pending"}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.12em] text-slate-500">
+                                    <span>{row.IsIncentive ? "Incentive" : "Guarantee"}</span>
+                                    <span>
+                                      {Number(row.NumDrivers) > 0 ? `${row.NumDrivers} driver${Number(row.NumDrivers) === 1 ? "" : "s"}` : "Single condition"}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </td>
-                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-200">{row.Label}</td>
-                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-300">{row.TargetText}</td>
-                    <td className="border-b border-white/5 px-3 py-2 text-sm text-slate-300">{row.IsIncentive ? "Incentive" : "Guarantee"}</td>
-                    <td className="border-b border-white/5 px-3 py-2">
-                      <span className={`border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${row.Achieved ? "border-emerald-300/30 bg-emerald-500/[0.08] text-emerald-100" : "border-amber-300/30 bg-amber-500/[0.08] text-amber-100"}`}>
-                        {row.Achieved ? "Achieved" : "Pending"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  ) : (
+                    <div className="border border-white/10 bg-black/10 px-4 py-3 text-sm text-slate-400">No {section.title.toLowerCase()} race guarantees or incentives.</div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>
@@ -403,7 +473,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
   const database = useContext(DatabaseContext);
   const basicInfo = useContext(BasicInfoContext);
   const { version, careerSaveMetadata } = useContext(MetadataContext);
-  const { logoStyle = "colored" } = useContext(UiSettingsContext);
+  const { logoStyle = "normal" } = useContext(UiSettingsContext);
   const { enqueueSnackbar } = useSnackbar();
   const { player, teamMap, teamIds } = basicInfo;
   const [displayTeamId, setDisplayTeamId] = useState(teamId);
@@ -416,9 +486,6 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
     return [teamId, ...Array.from(seen).filter((value) => value !== teamId)];
   }, [objectiveRows, ratingRows, teamId, teamIds]);
   const selectedTeamLabel = getTeamDisplayName(teamMap, displayTeamId, version);
-  const selectedTeamLogo = displayTeamId >= 32 && (careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64)
-    ? `data:image/png;base64,${careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64}`
-    : getOfficialTeamLogo(version, displayTeamId, logoStyle);
   const isOwnTeam = displayTeamId === teamId;
   const currentConfidence = confidenceRows.find((row) => row.Season === currentSeason)?.Confidence ?? "-";
   const selectedObjectiveRows = objectiveRows.filter((row) => row.TeamID === displayTeamId);
@@ -577,9 +644,6 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
               {teamOptions.map((optionTeamId) => {
                 const label = getTeamDisplayName(teamMap, optionTeamId, version);
                 const selected = optionTeamId === displayTeamId;
-                const logoSrc = optionTeamId >= 32 && (careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64)
-                  ? `data:image/png;base64,${careerSaveMetadata?.CustomTeamLogoBase64 || player?.CustomTeamLogoBase64}`
-                  : getOfficialTeamLogo(version, optionTeamId, logoStyle);
                 return (
                   <button
                     key={optionTeamId}
@@ -593,11 +657,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
                   >
                     <div className="flex flex-col items-center gap-2">
                       <div className={`flex h-10 w-full items-center justify-center ${selected ? "opacity-100" : "opacity-90 group-hover:opacity-100"}`}>
-                        {logoSrc ? (
-                          <img src={logoSrc} alt={label} className="h-8 w-8 object-contain" />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full border border-white/10 bg-white/5" />
-                        )}
+                        <TeamLogo TeamID={optionTeamId} size="md" logoStyleOverride={logoStyle} alt={label} />
                       </div>
                       <div className="w-full truncate text-center text-[11px] font-semibold text-slate-200">
                         {label}
@@ -616,7 +676,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Season Objectives</div>
             <div className="mt-2 flex items-center gap-3">
-              {selectedTeamLogo ? <img src={selectedTeamLogo} alt={selectedTeamLabel} className="h-10 w-10 object-contain" /> : null}
+              <TeamLogo TeamID={displayTeamId} size="lg" logoStyleOverride={logoStyle} alt={selectedTeamLabel} />
               <div className="text-lg font-bold text-white">{selectedTeamLabel}</div>
             </div>
           </div>
@@ -775,7 +835,7 @@ function BoardWorkspace({ confidenceRows, objectiveRows, ratingRows, paymentRows
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Board Rating</div>
             <div className="mt-2 flex items-center gap-3">
-              {selectedTeamLogo ? <img src={selectedTeamLogo} alt={selectedTeamLabel} className="h-10 w-10 object-contain" /> : null}
+              <TeamLogo TeamID={displayTeamId} size="lg" logoStyleOverride={logoStyle} alt={selectedTeamLabel} />
               <div className="text-base font-bold text-white">{selectedTeamLabel}</div>
             </div>
             <div className="mt-3 text-sm text-slate-400">
@@ -1320,7 +1380,8 @@ export default function SaveOperations({
                 Sponsorship_GuaranteesAndIncentives.Driver1TargetPos,
                 Sponsorship_GuaranteesAndIncentives.Driver2TargetPos,
                 Sponsorship_Enum_Conditions.LocKey,
-                Races.TrackID
+                Races.TrackID,
+                Races.Day
          FROM Sponsorship_GuaranteesAndIncentives
          LEFT JOIN Sponsorship_Enum_Conditions
            ON Sponsorship_Enum_Conditions.ConditionID = Sponsorship_GuaranteesAndIncentives.ConditionID
@@ -1602,6 +1663,7 @@ export default function SaveOperations({
           nextRaceName={nextRaceName}
           onRefresh={refresh}
           teamId={teamId}
+          currentDay={currentDay}
           mode={sponsorshipMode}
           legacyObligations={legacyObligationRows}
           legacyIncentives={legacyIncentiveRows}

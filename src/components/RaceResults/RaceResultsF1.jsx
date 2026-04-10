@@ -19,6 +19,7 @@ export default function RaceResultsF1({ seriesOptions = [], activeSeries = 1, on
   const [driverResults, setDriverResults] = useState([]);
   const [driverTeams, setDriverTeams] = useState({});
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
+  const [teamHistoryMode, setTeamHistoryMode] = useState("merge");
 
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
@@ -190,7 +191,13 @@ PR1.PracticeSession IS NULL`
           r.map((x, _idx) => {
             raceResult[columns[_idx]] = x;
           });
-          if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap && raceResult.FastestLap > 0) {
+          if (
+            Number(raceResult.FastestLap) > 10 &&
+            (
+              !fastestLapOfRace[raceResult.RaceID]
+              || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap
+            )
+          ) {
             fastestLapOfRace[raceResult.RaceID] = raceResult.FastestLap
           }
           if (!driverResults[raceResult.DriverID]) {
@@ -280,6 +287,17 @@ PR1.PracticeSession IS NULL`
               <SeriesSwitch options={seriesOptions} value={activeSeries} onChange={onSeriesChange} />
             ) : null}
             <label className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-300">Team History</span>
+              <select
+                value={teamHistoryMode}
+                onChange={(event) => setTeamHistoryMode(event.target.value)}
+                className="border border-white/10 bg-black/10 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-300/50"
+              >
+                <option value="merge" className="bg-[#182026] text-white">Merge</option>
+                <option value="split" className="bg-[#182026] text-white">Split</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-3">
               <span className="text-sm font-medium text-slate-300">Season</span>
               <select
                 value={season}
@@ -307,6 +325,7 @@ PR1.PracticeSession IS NULL`
           driverStandings={driverStandings}
           driverResults={driverResults}
           fastestLapOfRace={fastestLapOfRace}
+          teamHistoryMode={teamHistoryMode}
         />
       </div>
     </div>

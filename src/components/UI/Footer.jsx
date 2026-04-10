@@ -1,7 +1,9 @@
 import { Divider, Link, Typography } from "@mui/material";
 
 export default function Footer({ fullWidth = false }) {
-  const shellClassName = fullWidth ? "w-full px-4 pb-3 md:px-6" : "mx-auto w-full max-w-screen-2xl px-4 pb-3 md:px-6";
+  const shellClassName = fullWidth
+    ? "w-full px-4 pb-3 md:px-6"
+    : "mx-auto w-full max-w-screen-2xl px-4 pb-3 md:px-6";
   return (
     <footer className={shellClassName}>
       <Divider variant="fullWidth" sx={{ my: 2 }} />

@@ -1,106 +1,65 @@
+import {currencyFormatter} from "@/components/Finance/utils";
+import WorkspaceShell from "@/components/Finance/WorkspaceShell";
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
 import {teamNames} from "@/js/localization";
-import {Divider, Typography} from "@mui/material";
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
+import {defaultFontFamily} from "@/ui/Fonts";
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {defaultFontFamily} from "../../ui/Fonts";
 import * as Tx from "./consts_transactions";
 
-const grid = {
-  left: 100,
-  right: 100,
-  top: 50,
-  bottom: 50
-};
+function formatMillions(value) {
+  return `${(value / 1000000).toFixed(1)}m`;
+}
 
 export default function Spending() {
-
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext)
-  const basicInfo = useContext(BasicInfoContext);
-
-  const { player, teamIds } = basicInfo;
+  const {version} = useContext(MetadataContext);
+  const {player, teamIds} = useContext(BasicInfoContext);
 
   const [series, setSeries] = useState([]);
-  const [elements, setElements] = useState([]);
   const [teamNameCategories, setTeamNameCategories] = useState([]);
-  const [chart, setChart] = useState(null);
-
-
-
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
+  const [overview, setOverview] = useState({
+    playerSpend: 0,
+    topSpend: 0,
+    largestCategory: "-",
+    playerRank: "-",
+  });
 
   useEffect(() => {
-    let seasonList = [];
-    for(let s = player.StartSeason; s <= player.CurrentSeason; s++) {
+    const seasonList = [];
+    for (let s = player.StartSeason; s <= player.CurrentSeason; s++) {
       seasonList.push(s);
     }
     setSeasons(seasonList);
   }, [player.CurrentSeason, player.StartSeason]);
 
-  // const [currentSeason, setCurrentSeason] = useState(2023);
-
-  const handleChange = (event) => {
-    setSeason(event.target.value);
-  };
-
-
-
-
   useEffect(() => {
-    if (!chart) return;
-
-    // let season = player.CurrentSeason;
     try {
+      let values;
 
-      let columns, values;
-
-      [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
+      [{values}] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
       const [seasonStart, seasonEnd] = values[0];
 
-      let teamNameCategories = {};
-      for(const i of teamIds) {
-        teamNameCategories[i] = teamNames(i, version);
-      }
-
-      setTeamNameCategories(teamNameCategories);
-
-      let teams = 10;
       const categoryNames = [
-        'Entry Fee & PU',
-        'Staff',
-        'Fac. Upgrade',
-        'Fac. Upkeep',
-        'Manufacture',
-        'Emergency Man.',
-        'Design',
-        'Research',
-        'Additional PU',
-        'Misc & Fine',
+        "Entry Fee & PU",
+        "Staff",
+        "Fac. Upgrade",
+        "Fac. Upkeep",
+        "Manufacture",
+        "Emergency Man.",
+        "Design",
+        "Research",
+        "Additional PU",
+        "Misc & Fine",
       ];
-      let maxCategories = categoryNames.length;
-      // const color = [
-      //   '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'
-      // ];
 
-
-      const rawData = [];
-      for(let i = 0; i < maxCategories; i++) {
-        rawData.push(
-          Object.fromEntries(teamIds.map(t => [t, 0]))
-        );
-      }
-
-      let categoriesMapping = {
+      const rawData = categoryNames.map(() => Object.fromEntries(teamIds.map((teamId) => [teamId, 0])));
+      const categoriesMapping = {
         [Tx.EntryFee]: 0,
         [Tx.EnginePurchase]: 0,
-
         [Tx.StaffWages]: 1,
         [Tx.StaffRaceBonus]: 1,
         [Tx.StaffStartingBonus]: 1,
@@ -110,152 +69,142 @@ export default function Spending() {
         [Tx.EngineerSubTeamWages]: 1,
         [Tx.ScoutSubTeamWages]: 1,
         [Tx.PitCrewWages]: 1,
-
         [Tx.BuildingUpgrade]: 2,
         [Tx.BuildingRefurbishment]: 2,
         [Tx.BuildingConstruction]: 2,
-
         [Tx.BuildingUpkeep]: 3,
-
         [Tx.PartManufacture]: 4,
-
         [Tx.EmergencyPart]: 5,
         [Tx.RaceWeekendEmergencyPart]: 5,
-
         [Tx.PartDesign]: 6,
         [Tx.PartResearch]: 7,
-
         [Tx.EmergencyEngine]: 8,
         [Tx.RaceWeekendEmergencyEngine]: 8,
-
         [Tx.Sponsorship]: 9,
         [Tx.SponsorshipGuarantees]: 9,
         [Tx.Dilemma]: 9,
         [Tx.Fine]: 9,
       };
 
-      [{ columns, values }] = database.exec(
-        `SELECT TeamID, TransactionType, -SUM(value) as Value FROM 'Finance_Transactions' 
-        WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND Value < 0 GROUP BY TeamID, TransactionType ORDER BY Day ASC`
+      [{values}] = database.exec(
+        `SELECT TeamID, TransactionType, -SUM(value) as Value FROM 'Finance_Transactions'
+         WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} AND Value < 0
+         GROUP BY TeamID, TransactionType ORDER BY Day ASC`
       );
 
-      for(const [TeamID, TransactionType, Value] of values) {
-        if (categoriesMapping[TransactionType] !== undefined) {
-          rawData[
-            categoriesMapping[TransactionType]
-          ][
-            TeamID
-          ] += Value;
-        } else {
-          rawData[9][TeamID] += Value;
-          console.log("unknown TransactionType", TransactionType)
-        }
+      for (const [teamId, transactionType, value] of values) {
+        const categoryIndex = categoriesMapping[transactionType] ?? 9;
+        rawData[categoryIndex][teamId] += value;
       }
 
+      const totalsByTeam = teamIds.map((teamId) => ({
+        teamId,
+        total: rawData.reduce((sum, categoryRow) => sum + (categoryRow[teamId] || 0), 0),
+      })).sort((a, b) => b.total - a.total);
 
-      console.log(rawData);
+      const sortedTeamIds = totalsByTeam.map((row) => row.teamId);
+      setTeamNameCategories(sortedTeamIds.map((teamId) => teamNames(teamId, version)));
 
-      // const gridWidth = chart.getWidth() - grid.left - grid.right;
-      // const gridHeight = chart.getHeight() - grid.top - grid.bottom;
-      // const categoryWidth = gridWidth / teams;
-      // const barWidth = categoryWidth * 0.6;
-      // const barPadding = (categoryWidth - barWidth) / 2;
+      const categoryTotals = categoryNames.map((name, index) => ({
+        name,
+        total: teamIds.reduce((sum, teamId) => sum + (rawData[index][teamId] || 0), 0),
+      }));
+      const largestCategory = categoryTotals.sort((a, b) => b.total - a.total)[0];
+      const playerRank = totalsByTeam.findIndex((row) => row.teamId === player.TeamID) + 1;
 
+      const nextSeries = categoryNames.map((name, index) => ({
+        name,
+        type: "bar",
+        stack: "total",
+        barMaxWidth: 22,
+        emphasis: {
+          focus: "series",
+        },
+        label: {
+          show: false,
+        },
+        data: sortedTeamIds.map((teamId) => rawData[index][teamId] || 0),
+      }));
 
-      const series = categoryNames.map((name, sid) => {
-        return {
-          name,
-          type: 'bar',
-          stack: 'total',
-          barWidth: '50%',
-          label: {
-            show: true,
-            formatter: (params) => (params.value / 1e6).toFixed(2) + `m`,
-          },
-          data: Object.values(rawData[sid])
-        };
+      setSeries(nextSeries);
+      setOverview({
+        playerSpend: totalsByTeam.find((row) => row.teamId === player.TeamID)?.total || 0,
+        topSpend: totalsByTeam[0]?.total || 0,
+        largestCategory: largestCategory?.name || "-",
+        playerRank: playerRank || "-",
       });
-
-      // const elements = [];
-      // for (let j = 1; j <= teams; ++j) {
-      //   const leftX = grid.left + categoryWidth * j - barPadding;
-      //   const rightX = leftX + barPadding * 2;
-      //   let leftY = grid.top + gridHeight;
-      //   let rightY = leftY;
-      //   for (let i = 0, len = teams; i < len; ++i) {
-      //     const points = [];
-      //     const leftBarHeight = (rawData[i][j - 1] / 350000000) * gridHeight;
-      //     points.push([leftX, leftY]);
-      //     points.push([leftX, leftY - leftBarHeight]);
-      //     const rightBarHeight = (rawData[i][j] / 350000000) * gridHeight;
-      //     points.push([rightX, rightY - rightBarHeight]);
-      //     points.push([rightX, rightY]);
-      //     points.push([leftX, leftY]);
-      //     leftY -= leftBarHeight;
-      //     rightY -= rightBarHeight;
-      //     elements.push({
-      //       type: 'polygon',
-      //       shape: {points},
-      //       style: {
-      //         fill: color[i],
-      //         opacity: 0.25
-      //       }
-      //     });
-      //   }
-      // }
-
-      setSeries(series);
-      setElements(elements);
-
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     }
-
-  }, [database, season, chart])
+  }, [database, player.TeamID, season, teamIds, version]);
 
   return (
-    <div>
-      <Typography variant="h5" component="h5">
-        Spending Breakdown for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-        <InputLabel id="standard-label">Season</InputLabel>
-        <Select
-          labelId="standard-label"
-          id="standard"
-          value={season}
-          onChange={handleChange}
-          label="Season"
-        >
-          {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
-        </Select>
-      </FormControl>
-      </Typography>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <div style={{ overflowX: "auto" }}>
-        <ReactECharts
-          theme="dark"
-          onChartReady={e => setChart(e)}
-          style={{ height: 800 }}
-          option={{
-            backgroundColor: "transparent",
-            legend: {show: true},
-            textStyle: {
-              fontFamily: defaultFontFamily,
-              fontVariantNumeric: 'tabular-nums',
-            },
-            grid,
-            yAxis: {
-              type: 'value'
-            },
-            xAxis: {
-              type: 'category',
-              data: Object.values(teamNameCategories),
-            },
-            series,
-            graphic: {
-              elements
-            }
-          }} />
-      </div>
-    </div>
+    <WorkspaceShell
+      title="Spending Breakdown"
+      description="Compare where teams are burning money across the current season, with a cleaner category view that makes the biggest sinks obvious."
+      season={season}
+      seasons={seasons}
+      onSeasonChange={setSeason}
+      stats={[
+        {label: "Player Spend", value: currencyFormatter.format(overview.playerSpend)},
+        {label: "Top Spend", value: currencyFormatter.format(overview.topSpend)},
+        {label: "Largest Category", value: overview.largestCategory},
+        {label: "Player Rank", value: overview.playerRank === "-" ? "-" : `P${overview.playerRank}`},
+      ]}
+    >
+      <section className="border border-white/10 bg-white/[0.015] p-3">
+        <div className="min-w-0 overflow-x-auto">
+          <ReactECharts
+            theme="dark"
+            style={{height: 640}}
+            option={{
+              backgroundColor: "transparent",
+              legend: {
+                top: 8,
+                textStyle: {
+                  color: "#cbd5e1",
+                  fontSize: 12,
+                },
+              },
+              textStyle: {
+                fontFamily: defaultFontFamily,
+                fontVariantNumeric: "tabular-nums",
+              },
+              tooltip: {
+                trigger: "axis",
+                axisPointer: {type: "shadow"},
+                valueFormatter: (value) => currencyFormatter.format(value),
+              },
+              grid: {
+                left: 120,
+                right: 28,
+                top: 64,
+                bottom: 28,
+              },
+              xAxis: {
+                type: "value",
+                axisLine: {lineStyle: {color: "rgba(255,255,255,0.14)"}},
+                splitLine: {lineStyle: {color: "rgba(255,255,255,0.05)"}},
+                axisLabel: {
+                  color: "#94a3b8",
+                  formatter: (value) => formatMillions(value),
+                },
+              },
+              yAxis: {
+                type: "category",
+                data: teamNameCategories,
+                axisLine: {lineStyle: {color: "rgba(255,255,255,0.14)"}},
+                axisTick: {show: false},
+                axisLabel: {
+                  color: "#cbd5e1",
+                  fontWeight: 600,
+                },
+              },
+              series,
+            }}
+          />
+        </div>
+      </section>
+    </WorkspaceShell>
   );
 }

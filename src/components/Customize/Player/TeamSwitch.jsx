@@ -1,5 +1,5 @@
 import {BasicInfoContext, BasicInfoUpdaterContext, DatabaseContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
-import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import {teamNames} from "@/js/localization";
 import {useSnackbar} from "notistack";
 import * as React from "react";
@@ -9,7 +9,7 @@ export default function TeamSwitch() {
   const database = useContext(DatabaseContext);
   const metadata = useContext(MetadataContext);
   const {version, careerSaveMetadata} = metadata;
-  const {logoStyle = "colored"} = useContext(UiSettingsContext);
+  const {logoStyle = "normal"} = useContext(UiSettingsContext);
   const basicInfo = useContext(BasicInfoContext);
   const basicInfoUpdater = useContext(BasicInfoUpdaterContext);
   const {enqueueSnackbar} = useSnackbar();
@@ -18,9 +18,6 @@ export default function TeamSwitch() {
   const teams = basicInfo.teamIds.map((id) => ({
     ...basicInfo.teamMap[id],
     displayName: teamNames(id, version),
-    logoSrc: id === 32 && customTeamLogoBase64
-      ? `data:image/png;base64,${customTeamLogoBase64}`
-      : getOfficialTeamLogo(version, id, logoStyle),
   }));
 
   const currentTeam = teams.find((team) => team.TeamID === basicInfo.player.TeamID) || basicInfo.teamMap[basicInfo.player.TeamID];
@@ -68,13 +65,13 @@ export default function TeamSwitch() {
                 This tool is powerful and can affect progression data. Use it deliberately, especially during an active season.
               </p>
             </div>
-            {currentTeam?.logoSrc ? (
-              <img
-                src={currentTeam.logoSrc}
-                alt={currentTeam.displayName || teamNames(currentTeam.TeamID, version)}
-                className="h-16 w-16 shrink-0 object-contain opacity-95"
-              />
-            ) : null}
+            <TeamLogo
+              TeamID={currentTeam.TeamID}
+              size="xl"
+              logoStyleOverride={logoStyle}
+              alt={currentTeam.displayName || teamNames(currentTeam.TeamID, version)}
+              className="opacity-95"
+            />
           </div>
         </div>
 
@@ -114,13 +111,13 @@ export default function TeamSwitch() {
                       </div>
                       <div className="mt-2 text-sm font-bold text-white">{team.displayName}</div>
                     </div>
-                    {team.logoSrc ? (
-                      <img
-                        src={team.logoSrc}
-                        alt={team.displayName}
-                        className={`h-14 w-14 shrink-0 object-contain ${isCurrent ? "opacity-100" : "opacity-90"}`}
-                      />
-                    ) : null}
+                    <TeamLogo
+                      TeamID={team.TeamID}
+                      size="xl"
+                      logoStyleOverride={logoStyle}
+                      alt={team.displayName}
+                      className={isCurrent ? "opacity-100" : "opacity-90"}
+                    />
                   </div>
                 </button>
               );

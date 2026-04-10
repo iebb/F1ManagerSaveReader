@@ -13,6 +13,9 @@ export const setCareerSaveMetadataFields = (metadata, updates) => {
       property.Property = updates[property.Name];
     }
   }
+  if (metadata?.careerSaveMetadata) {
+    Object.assign(metadata.careerSaveMetadata, updates);
+  }
 };
 
 export const getExistingTableSet = (database) => {
@@ -43,12 +46,51 @@ const buildAggregateMap = (rows, idColumn) => {
   return aggregateMap;
 };
 
+const buildCountbackMap = (rows, idColumn) => {
+  const countbackMap = new Map();
+
+  for (const row of rows) {
+    const entryId = Number(row[idColumn]);
+    const formula = Number(row.RaceFormula);
+    const finishingPos = Number(row.FinishingPos);
+    if (!Number.isFinite(entryId) || !Number.isFinite(formula) || !Number.isFinite(finishingPos) || finishingPos <= 0) {
+      continue;
+    }
+
+    const key = `${entryId}:${formula}`;
+    const counts = countbackMap.get(key) || new Map();
+    counts.set(finishingPos, (counts.get(finishingPos) || 0) + 1);
+    countbackMap.set(key, counts);
+  }
+
+  return countbackMap;
+};
+
+const compareCountbackMaps = (leftCounts, rightCounts) => {
+  const positions = new Set([
+    ...Array.from(leftCounts?.keys?.() || []),
+    ...Array.from(rightCounts?.keys?.() || []),
+  ]);
+  const sortedPositions = [...positions].sort((left, right) => left - right);
+
+  for (const finishingPos of sortedPositions) {
+    const leftCount = leftCounts?.get(finishingPos) || 0;
+    const rightCount = rightCounts?.get(finishingPos) || 0;
+    if (leftCount !== rightCount) {
+      return rightCount - leftCount;
+    }
+  }
+
+  return 0;
+};
+
 const recalculateStandingsTable = ({
   database,
   season,
   table,
   idColumn,
   pointsMap,
+  countbackMap,
 }) => {
   const rows = database.getAllRows(
     `SELECT ${idColumn}, RaceFormula FROM ${table} WHERE SeasonID = :season`,
@@ -70,6 +112,13 @@ const recalculateStandingsTable = ({
       const rightPoints = pointsMap.get(`${right[idColumn]}:${formula}`) || 0;
       if (rightPoints !== leftPoints) {
         return rightPoints - leftPoints;
+      }
+      const countbackComparison = compareCountbackMaps(
+        countbackMap.get(`${left[idColumn]}:${formula}`),
+        countbackMap.get(`${right[idColumn]}:${formula}`)
+      );
+      if (countbackComparison !== 0) {
+        return countbackComparison;
       }
       return left[idColumn] - right[idColumn];
     });
@@ -136,6 +185,27 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
       ),
       "DriverID"
     );
+    const driverCountback = buildCountbackMap(
+      database.getAllRows(
+        `
+          SELECT DriverID, 1 AS RaceFormula, FinishingPos
+          FROM Races_Results
+          WHERE Season = :season
+          UNION ALL
+          SELECT DriverID, RaceFormula, FinishingPos
+          FROM Races_SprintResults
+          WHERE SeasonID = :season
+          UNION ALL
+          SELECT DriverID, RaceFormula, FinishingPos
+          FROM Races_FeatureRaceResults
+          WHERE SeasonID = :season
+        `,
+        {
+          ":season": season,
+        }
+      ),
+      "DriverID"
+    );
 
     recalculateStandingsTable({
       database,
@@ -143,6 +213,7 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
       table: "Races_DriverStandings",
       idColumn: "DriverID",
       pointsMap: driverPoints,
+      countbackMap: driverCountback,
     });
   }
 
@@ -176,6 +247,27 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
       ),
       "TeamID"
     );
+    const teamCountback = buildCountbackMap(
+      database.getAllRows(
+        `
+          SELECT TeamID, 1 AS RaceFormula, FinishingPos
+          FROM Races_Results
+          WHERE Season = :season
+          UNION ALL
+          SELECT TeamID, RaceFormula, FinishingPos
+          FROM Races_SprintResults
+          WHERE SeasonID = :season
+          UNION ALL
+          SELECT TeamID, RaceFormula, FinishingPos
+          FROM Races_FeatureRaceResults
+          WHERE SeasonID = :season
+        `,
+        {
+          ":season": season,
+        }
+      ),
+      "TeamID"
+    );
 
     recalculateStandingsTable({
       database,
@@ -183,6 +275,7 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
       table: "Races_TeamStandings",
       idColumn: "TeamID",
       pointsMap: teamPoints,
+      countbackMap: teamCountback,
     });
   }
 

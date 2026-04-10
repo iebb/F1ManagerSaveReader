@@ -6,7 +6,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint f1msavereadergen2 --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "export:real-world:f1": "python3 scripts/export_real_world_f1_jolpica.py --from-year 2022 --to-year 2025 --output-root public/real-world/f1 --mirror-root data/real-world/f1 --db save2024.db",
+    "export:real-world:feeders": "python3 scripts/export_real_world_feeder_series.py --from-year 2022 --to-year 2025 --output-root public/real-world --db save2024.db --mirror-root data/real-world"
   },
   "dependencies": {
     "@blueprintjs/core": "^5.11.0",

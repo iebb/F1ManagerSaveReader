@@ -20,6 +20,7 @@ export default function RaceResultsF2({ formulae = 2, seriesOptions = [], active
   const [driverResults, setDriverResults] = useState([]);
   const [driverTeams, setDriverTeams] = useState({});
   const [fastestLapOfRace, setFastestLapOfRace] = useState([]);
+  const [teamHistoryMode, setTeamHistoryMode] = useState("merge");
 
   // const [formulae, setFormulae] = useState(2);
 
@@ -162,7 +163,13 @@ WHERE SeasonID = ${season} AND RaceFormula = ${formulae} AND QualifyingStage = 1
           r.map((x, _idx) => {
             raceResult[columns[_idx]] = x;
           });
-          if (!fastestLapOfRace[raceResult.RaceID] || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap && raceResult.FastestLap > 0) {
+          if (
+            Number(raceResult.FastestLap) > 10 &&
+            (
+              !fastestLapOfRace[raceResult.RaceID]
+              || fastestLapOfRace[raceResult.RaceID] > raceResult.FastestLap
+            )
+          ) {
             fastestLapOfRace[raceResult.RaceID] = raceResult.FastestLap
           }
           if (!driverResults[raceResult.DriverID]) {
@@ -290,6 +297,17 @@ AND StartDay <= ${player.Day} AND EndSeason >= ${season} AND ContractType = 0 AN
               <SeriesSwitch options={seriesOptions} value={activeSeries} onChange={onSeriesChange} />
             ) : null}
             <label className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-300">Team History</span>
+              <select
+                value={teamHistoryMode}
+                onChange={(event) => setTeamHistoryMode(event.target.value)}
+                className="border border-white/10 bg-black/10 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-300/50"
+              >
+                <option value="merge" className="bg-[#182026] text-white">Merge</option>
+                <option value="split" className="bg-[#182026] text-white">Split</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-3">
               <span className="text-sm font-medium text-slate-300">Season</span>
               <select
                 value={season}
@@ -317,6 +335,7 @@ AND StartDay <= ${player.Day} AND EndSeason >= ${season} AND ContractType = 0 AN
           driverStandings={driverStandings}
           driverResults={driverResults}
           fastestLapOfRace={fastestLapOfRace}
+          teamHistoryMode={teamHistoryMode}
         />
       </div>
     </div>

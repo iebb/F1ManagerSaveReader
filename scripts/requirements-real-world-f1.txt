@@ -1,0 +1,5 @@
+fastf1>=3.8.2
+beautifulsoup4>=4.14.3
+lxml>=6.0.2
+pandas>=2.3.3
+requests>=2.32.5

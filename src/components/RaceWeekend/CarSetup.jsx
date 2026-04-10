@@ -1,5 +1,5 @@
 import {TeamName} from "@/components/Localization/Localization";
-import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import {circuitNames, countryNames, getDriverName} from "@/js/localization";
 import {
   Button,
@@ -78,7 +78,7 @@ export default function CarSetup() {
   const {version, gameVersion, careerSaveMetadata} = useContext(MetadataContext)
   const metadata = useContext(MetadataContext);
   const basicInfo = useContext(BasicInfoContext);
-  const {logoStyle = "colored"} = useContext(UiSettingsContext);
+  const {logoStyle = "normal"} = useContext(UiSettingsContext);
 
   const [rows, setRows] = useState([]);
   const [teamOnly, setTeamOnly] = useState(false);
@@ -204,17 +204,7 @@ export default function CarSetup() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
-                  {((row.TeamID >= 32 && customTeamLogoBase64)
-                    ? `data:image/png;base64,${customTeamLogoBase64}`
-                    : getOfficialTeamLogo(version, row.TeamID, logoStyle)) ? (
-                    <img
-                      src={(row.TeamID >= 32 && customTeamLogoBase64)
-                        ? `data:image/png;base64,${customTeamLogoBase64}`
-                        : getOfficialTeamLogo(version, row.TeamID, logoStyle)}
-                      alt=""
-                      className="mt-0.5 h-8 w-8 shrink-0 object-contain"
-                    />
-                  ) : null}
+                  <TeamLogo TeamID={row.TeamID} size="md" logoStyleOverride={logoStyle} className="mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                     {isCurrentTeam ? "Player Team" : "Grid Reference"}

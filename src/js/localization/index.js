@@ -1,6 +1,94 @@
 import {teamColors2023, teams2023, teams2024} from "./Teams2023";
 import {staffNames, driverCodes} from "./staffNames";
 
+const f1TeamNamesByBrandYear = {
+  2022: {
+    1: "Ferrari",
+    2: "McLaren",
+    3: "Red Bull",
+    4: "Mercedes",
+    5: "Alpine",
+    6: "Williams",
+    7: "Haas",
+    8: "AlphaTauri",
+    9: "Alfa Romeo",
+    10: "Aston Martin",
+  },
+  2023: {
+    1: "Ferrari",
+    2: "McLaren",
+    3: "Red Bull",
+    4: "Mercedes",
+    5: "Alpine",
+    6: "Williams",
+    7: "Haas",
+    8: "AlphaTauri",
+    9: "Alfa Romeo",
+    10: "Aston Martin",
+  },
+  2024: {
+    1: "Ferrari",
+    2: "McLaren",
+    3: "Red Bull",
+    4: "Mercedes",
+    5: "Alpine",
+    6: "Williams",
+    7: "Haas",
+    8: "Racing Bulls",
+    9: "Kick Sauber",
+    10: "Aston Martin",
+  },
+  2025: {
+    1: "Ferrari",
+    2: "McLaren",
+    3: "Red Bull",
+    4: "Mercedes",
+    5: "Alpine",
+    6: "Williams",
+    7: "Haas",
+    8: "Racing Bulls",
+    9: "Kick Sauber",
+    10: "Aston Martin",
+  },
+  2026: {
+    1: "Ferrari",
+    2: "McLaren",
+    3: "Red Bull",
+    4: "Mercedes",
+    5: "Alpine",
+    6: "Williams",
+    7: "Haas",
+    8: "Racing Bulls",
+    9: "Audi",
+    10: "Aston Martin",
+  },
+};
+
+function getTeamBrandingContext(options = {}) {
+  const globalContext = typeof window !== "undefined" ? window.__teamBrandingContext || {} : {};
+  return {
+    currentSeason: options.currentSeason ?? globalContext.currentSeason ?? null,
+    startSeason: options.startSeason ?? globalContext.startSeason ?? null,
+    useRealWorldTeamBrands: options.useRealWorldTeamBrands ?? globalContext.useRealWorldTeamBrands ?? true,
+    brandYearOverride: options.brandYearOverride ?? null,
+  };
+}
+
+function getDisplayBrandYear(version, options = {}) {
+  const saveYear = Math.min(2026, Math.max(2022, version + 2020));
+  const { currentSeason, startSeason, useRealWorldTeamBrands, brandYearOverride } = getTeamBrandingContext(options);
+
+  if (Number.isFinite(Number(brandYearOverride))) {
+    return Math.min(2026, Math.max(2022, Number(brandYearOverride)));
+  }
+
+  if (useRealWorldTeamBrands && Number.isFinite(Number(currentSeason)) && Number.isFinite(Number(startSeason)) && Number(currentSeason) > Number(startSeason)) {
+    return Math.min(2026, Math.max(2022, Number(currentSeason)));
+  }
+
+  return saveYear;
+}
+
 Date.prototype.getWeek = function() {
   var date = new Date(this.getTime());
   date.setHours(0, 0, 0, 0);
@@ -33,7 +121,12 @@ export const yearToDateRange = y => [
 export const formatDate = d => d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
 
 
-export const teamNames = (x, version) => {
+export const teamNames = (x, version, options = {}) => {
+  if (x >= 1 && x <= 10) {
+    const brandYear = getDisplayBrandYear(version, options);
+    return f1TeamNamesByBrandYear[brandYear]?.[x] || teams2024[x] || teams2023[x];
+  }
+
   if (version <= 3) return teams2023[x];
   if (x === 32 && window.customTeamName) {
     return window.customTeamName;
@@ -210,11 +303,35 @@ export const getDriverName = (d) => {
 
 export const literal = /LITERAL:Value=\|(.*)\|/
 export const stringLiteral = /^\[STRING_LITERAL:Value=\|(.*)\|]$/
+const literalFallbacks = {
+  Sponsorship_Obligation_RaceHospitality: "Race Hospitality",
+  Sponsorship_Obligation_FactoryEvent: "Factory Event",
+  Sponsorship_Obligation_MerchandiseItems: "Merchandise Items",
+  Sponsorship_Obligation_DriverAppearanceAtGP: "Driver Appearance at GP",
+  Sponsorship_Obligation_DriverAppearanceAwayFromGP: "Driver Appearance Away from GP",
+  Sponsorship_Obligation_MemorabiliaRoomEvent: "Memorabilia Room Event",
+  Sponsorship_Obligation_FactoryRaceDayEvent: "Factory Race Day Event",
+  Sponsorship_Obligation_GamingRigHireDay: "Gaming Rig Hire Day",
+  SPONSOR_TARGET_CONDITION_FASTEST_LAP: "Fastest Lap",
+  SPONSOR_TARGET_CONDITION_REACH_Q2: "Reach Q2",
+  SPONSOR_TARGET_CONDITION_REACH_Q3: "Reach Q3",
+  SPONSOR_TARGET_CONDITION_QUALI_POS: "Qualifying Position",
+  SPONSOR_TARGET_CONDITION_QUALI_STREAK: "Qualifying Streak",
+  SPONSOR_TARGET_CONDITION_RACE_POS: "Race Position",
+  SPONSOR_TARGET_CONDITION_RACE_STREAK: "Race Streak",
+  Sponsorship_Unit_Days: "Days",
+  Sponsorship_Unit_Items: "Items",
+  Sponsorship_Unit_Hours: "Hours",
+};
 
 export const resolveLiteral = (_nameString) => {
   const ex = literal.exec(_nameString);
   if (ex) {
     return ex[1];
+  }
+  const literalKey = `${_nameString || ""}`.replace(/^\[/, "").replace(/]$/, "");
+  if (literalFallbacks[literalKey]) {
+    return literalFallbacks[literalKey];
   }
   return _nameString;
 }

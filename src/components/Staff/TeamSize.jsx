@@ -1,5 +1,5 @@
 import {BasicInfoContext, DatabaseContext, MetadataContext, UiSettingsContext} from "@/js/Contexts";
-import {getOfficialTeamLogo} from "@/components/Common/teamLogos";
+import TeamLogo from "@/components/Common/TeamLogo";
 import {resolveLiteral, teamNames} from "@/js/localization";
 import {Add, Remove} from "@mui/icons-material";
 import {DataGrid} from "@mui/x-data-grid";
@@ -31,7 +31,7 @@ function ActionButton({title, onClick, children}) {
 export default function TeamSize() {
   const database = useContext(DatabaseContext);
   const {version, careerSaveMetadata} = useContext(MetadataContext);
-  const {logoStyle = "colored"} = useContext(UiSettingsContext);
+  const {logoStyle = "normal"} = useContext(UiSettingsContext);
   const {teamIds, teamMap, player} = useContext(BasicInfoContext);
   const [updated, setUpdated] = useState(0);
   const [subTeamStats, setSubTeamStats] = useState([]);
@@ -123,15 +123,12 @@ export default function TeamSize() {
               </div>
             ),
             renderCell: ({value}) => {
-              const logoSrc = value >= 32 && customTeamLogoBase64
-                ? `data:image/png;base64,${customTeamLogoBase64}`
-                : getOfficialTeamLogo(version, value, logoStyle);
               const teamLabel = value >= 32 && teamMap?.[value]?.TeamNameLocKey
                 ? resolveLiteral(teamMap[value].TeamNameLocKey)
                 : teamNames(value, version);
               return (
                 <div className="flex h-full items-center gap-2 py-1.5">
-                  {logoSrc ? <img src={logoSrc} alt="" className="h-6 w-6 shrink-0 object-contain opacity-95" /> : null}
+                  <TeamLogo TeamID={value} size="sm" logoStyleOverride={logoStyle} className="opacity-95" />
                   <div className="min-w-0 truncate text-[15px] font-semibold leading-5" style={getTeamTextStyle(value)}>
                     {teamLabel}
                   </div>

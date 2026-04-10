@@ -76,6 +76,14 @@ function formatContractDate(value) {
   return Number.isFinite(Number(value)) && Number(value) > 0 ? formatDate(dayToDate(Number(value))) : "—";
 }
 
+function formatMonths(value) {
+  if (!Number.isFinite(Number(value))) {
+    return "—";
+  }
+  const wholeMonths = Math.max(0, Math.round(Number(value)));
+  return `${wholeMonths} month${wholeMonths === 1 ? "" : "s"}`;
+}
+
 function DetailStat({ label, value, tone = "text-white" }) {
   return (
     <div className="border border-white/10 bg-black/10 p-3">
@@ -356,10 +364,21 @@ export default function Contracts() {
     payroll: flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.Salary || 0), 0),
     startingBonus: flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.StartingBonus || 0), 0),
     raceBonus: flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.RaceBonus || 0), 0),
-    averageEndSeason: flattenedContracts.length
-      ? Math.round(flattenedContracts.reduce((sum, entry) => sum + Number(entry.contract?.EndSeason || player.CurrentSeason), 0) / flattenedContracts.length)
-      : player.CurrentSeason,
-  }), [flattenedContracts, player.CurrentSeason]);
+    averageRemainingMonths: (() => {
+      const currentDate = dayToDate(player.Day);
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      if (!flattenedContracts.length) {
+        return 0;
+      }
+      const totalMonths = flattenedContracts.reduce((sum, entry) => {
+        const endSeason = Number(entry.contract?.EndSeason || player.CurrentSeason);
+        const monthsRemaining = (endSeason - currentYear) * 12 + (12 - currentMonth);
+        return sum + Math.max(0, monthsRemaining);
+      }, 0);
+      return totalMonths / flattenedContracts.length;
+    })(),
+  }), [flattenedContracts, player.CurrentSeason, player.Day]);
 
   const editableFields = useMemo(
     () => editableContractFields.filter((field) => contractColumns.includes(field.key)),
@@ -487,7 +506,7 @@ export default function Contracts() {
             <DetailStat label="Annual Payroll" value={formatMoney(payrollSummary.payroll)} />
             <DetailStat label="Signing Bonuses" value={formatMoney(payrollSummary.startingBonus)} />
             <DetailStat label="Race Bonuses" value={formatMoney(payrollSummary.raceBonus)} />
-            <DetailStat label="Average End Season" value={payrollSummary.averageEndSeason} />
+            <DetailStat label="Avg Contract Remain" value={formatMonths(payrollSummary.averageRemainingMonths)} />
           </div>
         </div>
 

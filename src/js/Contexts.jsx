@@ -4,5 +4,8 @@ export const BasicInfoContext = createContext(null);
 export const BasicInfoUpdaterContext = createContext(() => {});
 export const MetadataContext = createContext({});
 export const EnvContext = createContext({});
-export const UiSettingsContext = createContext({ logoStyle: "colored" });
+export const UiSettingsContext = createContext({
+  logoStyle: "normal",
+  useRealWorldTeamBrands: true,
+});
 export const UiSettingsUpdaterContext = createContext(() => {});

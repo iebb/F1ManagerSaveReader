@@ -19,6 +19,11 @@
 # misc
 .DS_Store
 *.pem
+__pycache__/
+*.py[cod]
+/.cache
+/.codex-previews
+/data/real-world/
 
 # debug
 npm-debug.log*

@@ -15,6 +15,7 @@ import RaceResults from "@/pages/race-results";
 import Regulations from "@/pages/regulations";
 import RaceControl from "@/pages/race-control";
 import Settings from "@/pages/settings";
+import SqlEditor from "@/pages/sql-editor";
 import Sporting from "@/pages/sporting";
 import Sponsorship from "@/pages/sponsorship";
 import TeamTools from "@/pages/team-tools";
@@ -38,7 +39,9 @@ import SportsScoreIcon from "@mui/icons-material/SportsScore";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import FlagIcon from "@mui/icons-material/Flag";
 import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
+import ScienceIcon from "@mui/icons-material/Science";
 import {useContext, useMemo, useState} from "react";
+import Experimental from "@/pages/experimental";
 
 const sections = [
   {
@@ -83,6 +86,8 @@ const sections = [
     items: [
       {name: "Inbox", icon: <MailOutlineIcon fontSize="small" />, tab: <Inbox />},
       {name: "Tools", icon: <TuneIcon fontSize="small" />, tab: <TeamTools />},
+      {name: "SQL Editor", icon: <TuneIcon fontSize="small" />, tab: <SqlEditor />},
+      {name: "Experimental", icon: <ScienceIcon fontSize="small" />, tab: <Experimental />, minVersion: "4.0"},
       {name: "Settings", icon: <SettingsSuggestIcon fontSize="small" />, tab: <Settings />},
       {name: "Plugins", icon: <AccountTreeIcon fontSize="small" />, tab: <Plugins />},
     ],

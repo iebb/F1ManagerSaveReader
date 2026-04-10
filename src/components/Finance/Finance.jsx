@@ -1,202 +1,214 @@
-import {raceAbbrevs} from "@/js/localization";
-import {Alert, AlertTitle} from "@mui/material";
-import {Divider, Typography} from "@mui/material";
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
+import {currencyFormatter} from "@/components/Finance/utils";
+import WorkspaceShell from "@/components/Finance/WorkspaceShell";
+import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
+import {dayToDate, raceAbbrevs, teamNames} from "@/js/localization";
+import {defaultFontFamily} from "@/ui/Fonts";
 import ReactECharts from "echarts-for-react";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {dayToDate, teamNames} from "@/js/localization";
-import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {defaultFontFamily} from "../../ui/Fonts";
 
+function formatMillions(value) {
+  return `${(value / 1000000).toFixed(1)}m`;
+}
 
 export default function Finance() {
-
   const database = useContext(DatabaseContext);
-  const {version, gameVersion} = useContext(MetadataContext)
-  const basicInfo = useContext(BasicInfoContext);
-
-  const { player } = basicInfo;
+  const {version} = useContext(MetadataContext);
+  const {player, teamIds} = useContext(BasicInfoContext);
 
   const [seriesList, setSeriesList] = useState([]);
-  const [yMax, setYMax] = useState(0);
   const [xMax, setXMax] = useState(0);
-
   const [season, setSeason] = useState(player.CurrentSeason);
   const [seasons, setSeasons] = useState([]);
+  const [overview, setOverview] = useState({
+    playerRevenue: 0,
+    fieldLeaderRevenue: 0,
+    averageRevenue: 0,
+    playerPosition: "-",
+  });
 
   useEffect(() => {
-    let seasonList = [];
-    for(let s = player.StartSeason; s <= player.CurrentSeason; s++) {
+    const seasonList = [];
+    for (let s = player.StartSeason; s <= player.CurrentSeason; s++) {
       seasonList.push(s);
     }
     setSeasons(seasonList);
   }, [player.CurrentSeason, player.StartSeason]);
 
-  // const [currentSeason, setCurrentSeason] = useState(2023);
-
-  const handleChange = (event) => {
-    setSeason(event.target.value);
-  };
-
-
-
-
   useEffect(() => {
-
-    // let season = player.CurrentSeason;
     try {
+      let columns;
+      let values;
 
-      let columns, values;
-
-      [{ values }] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
+      [{values}] = database.exec(`SELECT Min(Day), Max(Day) FROM 'Seasons_Deadlines' WHERE SeasonID = ${season}`);
       const [seasonStart, seasonEnd] = values[0];
       setXMax(dayToDate(seasonEnd));
 
-      let totalRevenueForTeam = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      let revenueHistoryForTeam = [[], [], [], [], [], [], [], [], [], [], [], []];
-      [{ columns, values }] = database.exec(
-        `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions' 
-        WHERE Day >= ${seasonStart} AND Day < ${seasonEnd} GROUP BY TeamID, Day ORDER BY Day ASC`
+      const totalRevenueForTeam = Array(12).fill(0);
+      const revenueHistoryForTeam = Array.from({length: 12}, () => []);
+
+      [{columns, values}] = database.exec(
+        `SELECT TeamID, Day, SUM(value) as Value FROM 'Finance_Transactions'
+         WHERE Day >= ${seasonStart} AND Day < ${seasonEnd}
+         GROUP BY TeamID, Day ORDER BY Day ASC`
       );
-      for(const r of values) {
-        let transaction = {};
-        r.map((x, _idx) => transaction[columns[_idx]] = x)
-        //
+      for (const rowValues of values) {
+        const transaction = {};
+        rowValues.map((value, index) => transaction[columns[index]] = value);
         totalRevenueForTeam[transaction.TeamID] += transaction.Value;
-        revenueHistoryForTeam[transaction.TeamID].push(
-          [transaction.Day, totalRevenueForTeam[transaction.TeamID]]
-        )
+        revenueHistoryForTeam[transaction.TeamID].push([transaction.Day, totalRevenueForTeam[transaction.TeamID]]);
       }
 
       const raceMarklines = [];
-
-      [{ columns, values }] = database.exec(
-        `select * from Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID WHERE SeasonID = ${season} order by Day ASC`
+      [{columns, values}] = database.exec(
+        `SELECT * FROM Races JOIN Races_Tracks ON Races.TrackID = Races_Tracks.TrackID
+         WHERE SeasonID = ${season} ORDER BY Day ASC`
       );
-      for(const r of values) {
-        let race = {};
-        r.map((x, _idx) => {
-          race[columns[_idx]] = x;
-        })
+      for (const rowValues of values) {
+        const race = {};
+        rowValues.map((value, index) => race[columns[index]] = value);
         raceMarklines.push({
           name: raceAbbrevs[race.TrackID],
           xAxis: dayToDate(race.Day),
           itemStyle: {
-            color: 'rgba(255, 173, 177, 0.5)'
+            color: "rgba(125, 211, 252, 0.24)",
           },
           label: {
-            formatter: '{b}',
-            position: 'insideStart'
-          }
-        })
+            formatter: "{b}",
+            position: "insideStart",
+          },
+        });
       }
 
-      const seriesList = [{
-        type: 'line',
+      const nextSeriesList = [{
+        type: "line",
         markLine: {
-          symbol: 'none',
-          data: raceMarklines
-        }
+          symbol: "none",
+          data: raceMarklines,
+        },
       }];
 
+      const rankedTeams = [...teamIds]
+        .map((teamId) => ({teamId, total: totalRevenueForTeam[teamId]}))
+        .sort((a, b) => b.total - a.total);
+      const playerPosition = rankedTeams.findIndex((row) => row.teamId === player.TeamID) + 1;
+      const averageRevenue = rankedTeams.length
+        ? rankedTeams.reduce((sum, row) => sum + row.total, 0) / rankedTeams.length
+        : 0;
 
+      for (const teamId of teamIds) {
+        const lastDay = revenueHistoryForTeam[teamId].length
+          ? revenueHistoryForTeam[teamId][revenueHistoryForTeam[teamId].length - 1][0]
+          : seasonStart - 1;
+        revenueHistoryForTeam[teamId].push([
+          Math.max(lastDay + 1, Math.min(player.Day, seasonEnd - 1)),
+          totalRevenueForTeam[teamId],
+        ]);
 
-
-      for(let i = 1; i <= 10; i++) {
-        revenueHistoryForTeam[i].push([
-          Math.max(
-            revenueHistoryForTeam[i][revenueHistoryForTeam[i].length - 1][0] + 1,
-            Math.min(player.Day, seasonEnd - 1)
-          ),
-          totalRevenueForTeam[i]
-        ])
-        const color = getComputedStyle(window.vc).getPropertyValue(`--team${i}`);
-        const data = [
-          [dayToDate(seasonStart - 1), 0]
-        ];
+        const color = getComputedStyle(window.vc).getPropertyValue(`--team${teamId}`);
+        const data = [[dayToDate(seasonStart - 1), 0]];
         let previousDate = seasonStart;
-        let previousCapUsage = 0;
-        for(const [day, cap] of revenueHistoryForTeam[i]) {
-          for(let i = previousDate; i < day; i++) {
-            data.push([dayToDate(i), previousCapUsage]);
+        let previousRevenue = 0;
+        for (const [day, total] of revenueHistoryForTeam[teamId]) {
+          for (let date = previousDate; date < day; date++) {
+            data.push([dayToDate(date), previousRevenue]);
           }
-          previousCapUsage = cap;
+          previousRevenue = total;
           previousDate = day;
         }
-        data.push([dayToDate(previousDate), previousCapUsage]);
+        data.push([dayToDate(previousDate), previousRevenue]);
 
-        seriesList.push( {
-          name: teamNames(i, version),
-          type: 'line',
+        nextSeriesList.push({
+          name: teamNames(teamId, version),
+          type: "line",
           itemStyle: {color},
+          lineStyle: {width: teamId === player.TeamID ? 3 : 2},
+          emphasis: {
+            focus: "series",
+          },
           showSymbol: false,
-          data
-        })
+          data,
+        });
       }
 
-      setSeriesList(seriesList);
-
-    } catch (e) {
-      console.error(e);
+      setSeriesList(nextSeriesList);
+      setOverview({
+        playerRevenue: totalRevenueForTeam[player.TeamID] || 0,
+        fieldLeaderRevenue: rankedTeams[0]?.total || 0,
+        averageRevenue,
+        playerPosition: playerPosition || "-",
+      });
+    } catch (error) {
+      console.error(error);
     }
-
-  }, [database, season])
+  }, [database, player.Day, player.TeamID, season, teamIds, version]);
 
   return (
-    <div>
-      <Typography variant="h5" component="h5">
-        Revenue Overview for <FormControl variant="standard" sx={{ minWidth: 120, m: -0.5, p: -0.5, ml: 2 }}>
-        <InputLabel id="standard-label">Season</InputLabel>
-        <Select
-          labelId="standard-label"
-          id="standard"
-          value={season}
-          onChange={handleChange}
-          label="Season"
-        >
-          {seasons.map(s => <MenuItem value={s} key={s}>{s}</MenuItem>)}
-        </Select>
-      </FormControl>
-      </Typography>
-      <Divider variant="fullWidth" sx={{ my: 2 }} />
-      <div style={{ overflowX: "auto" }}>
-        <ReactECharts
-          theme="dark"
-          style={{ height: 500 }}
-          option={{
-            legend: {show: true},
-            textStyle: {
-              fontFamily: defaultFontFamily,
-              fontVariantNumeric: 'tabular-nums',
-            },
-            backgroundColor: "transparent",
-            tooltip: {
-              order: 'valueDesc',
-              trigger: 'axis'
-            },
-            xAxis: {
-              type: 'time',
-              nameLocation: 'middle',
-              max: xMax,
-            },
-            yAxis: {
-              type: 'value',
-              name: 'Revenue',
-              axisLabel: {
-                formatter: val => `${val / 1000000}m`
+    <WorkspaceShell
+      title="Revenue"
+      description="Follow cumulative team cashflow through the season and see how the player team stacks up against the rest of the paddock."
+      season={season}
+      seasons={seasons}
+      onSeasonChange={setSeason}
+      stats={[
+        {label: "Player Revenue", value: currencyFormatter.format(overview.playerRevenue)},
+        {label: "Field Leader", value: currencyFormatter.format(overview.fieldLeaderRevenue)},
+        {label: "Field Average", value: currencyFormatter.format(overview.averageRevenue)},
+        {label: "Player Rank", value: overview.playerPosition === "-" ? "-" : `P${overview.playerPosition}`},
+      ]}
+    >
+      <section className="border border-white/10 bg-white/[0.015] p-3">
+        <div className="min-w-0 overflow-x-auto">
+          <ReactECharts
+            theme="dark"
+            style={{height: 520}}
+            option={{
+              legend: {
+                top: 8,
+                textStyle: {
+                  color: "#cbd5e1",
+                  fontSize: 12,
+                },
               },
-            },
-            grid: {
-              right: 60,
-              left: 60,
-            },
-            series: seriesList
-          }} />
-      </div>
-    </div>
+              textStyle: {
+                fontFamily: defaultFontFamily,
+                fontVariantNumeric: "tabular-nums",
+              },
+              backgroundColor: "transparent",
+              tooltip: {
+                order: "valueDesc",
+                trigger: "axis",
+                valueFormatter: (value) => currencyFormatter.format(value),
+              },
+              xAxis: {
+                type: "time",
+                max: xMax,
+                axisLine: {lineStyle: {color: "rgba(255,255,255,0.14)"}},
+                splitLine: {lineStyle: {color: "rgba(255,255,255,0.05)"}},
+                axisLabel: {color: "#94a3b8"},
+              },
+              yAxis: {
+                type: "value",
+                name: "Revenue",
+                nameTextStyle: {color: "#64748b"},
+                axisLine: {show: true, lineStyle: {color: "rgba(255,255,255,0.14)"}},
+                splitLine: {lineStyle: {color: "rgba(255,255,255,0.05)"}},
+                axisLabel: {
+                  color: "#94a3b8",
+                  formatter: (value) => formatMillions(value),
+                },
+              },
+              grid: {
+                top: 64,
+                right: 28,
+                bottom: 28,
+                left: 72,
+              },
+              series: seriesList,
+            }}
+          />
+        </div>
+      </section>
+    </WorkspaceShell>
   );
 }

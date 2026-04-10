@@ -7,7 +7,9 @@ import { EnvContext, MetadataContext } from "@/js/Contexts";
 export default function Header({ fullWidth = false, onToggleFullWidth = () => { }, hasLoadedSave = false }) {
   const env = useContext(EnvContext);
   const metadata = useContext(MetadataContext);
-  const shellClassName = fullWidth ? "w-full px-4 pt-2 md:px-6" : "mx-auto w-full max-w-screen-2xl px-4 pt-2 md:px-6";
+  const shellClassName = fullWidth
+    ? "w-full px-4 pt-2 md:px-6"
+    : "mx-auto w-full max-w-screen-2xl px-4 pt-2 md:px-6";
   return (
     <header className={shellClassName}>
       <div className="shell-hero">
@@ -35,6 +37,17 @@ export default function Header({ fullWidth = false, onToggleFullWidth = () => { 
             </div>
           </div>
           <div className="headerUser">
+            <a
+              href="https://ko-fi.com/A0A8ERCTF"
+              target="_blank"
+              rel="noreferrer"
+              className="kofi-button"
+              aria-label="Support on Ko-fi"
+              title="Support on Ko-fi"
+            >
+              <span className="kofi-button__icon" aria-hidden="true">♡</span>
+              <span className="kofi-button__text">Support on Ko-fi</span>
+            </a>
             <a
               href="https://github.com/iebb/F1ManagerSaveReader/issues"
               target="_blank"
@@ -66,17 +79,6 @@ export default function Header({ fullWidth = false, onToggleFullWidth = () => { 
                 {fullWidth ? <ViewStreamOutlinedIcon fontSize="small" /> : <ViewAgendaOutlinedIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
-            <a
-              href="https://ko-fi.com/A0A8ERCTF"
-              target="_blank"
-              rel="noreferrer"
-              className="kofi-button"
-              aria-label="Support on Ko-fi"
-              title="Support on Ko-fi"
-            >
-              <span className="kofi-button__icon" aria-hidden="true">♡</span>
-              <span className="kofi-button__text">Support on Ko-fi</span>
-            </a>
           </div>
         </div>
       </div>
