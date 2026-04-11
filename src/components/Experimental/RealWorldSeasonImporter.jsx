@@ -34,6 +34,7 @@ export default function RealWorldSeasonImporter() {
   const [customTeamDerivation, setCustomTeamDerivation] = useState(14);
   const [customTeamDnfChance, setCustomTeamDnfChance] = useState(8);
   const [driverReplacementSelections, setDriverReplacementSelections] = useState({});
+  const [driverReplacementQueries, setDriverReplacementQueries] = useState({});
   const currentSeason = Number(basicInfo?.player?.CurrentSeason || 0);
   const lockedCompletedRounds = useMemo(() => getLockedCompletedRounds(basicInfo), [basicInfo]);
   const customF1Team = useMemo(() => {
@@ -76,6 +77,9 @@ export default function RealWorldSeasonImporter() {
   useEffect(() => {
     const activeConflicts = new Set((preview?.driverConflicts || []).map((conflict) => conflict.importedDriverName));
     setDriverReplacementSelections((current) => Object.fromEntries(
+      Object.entries(current).filter(([driverName]) => activeConflicts.has(driverName))
+    ));
+    setDriverReplacementQueries((current) => Object.fromEntries(
       Object.entries(current).filter(([driverName]) => activeConflicts.has(driverName))
     ));
   }, [preview?.driverConflicts]);
@@ -460,49 +464,103 @@ export default function RealWorldSeasonImporter() {
                       <div className="mt-1 text-sm text-slate-300">
                         Current save occupant: {conflict.conflictingDriverName || "empty"}.
                       </div>
+                      {conflict.occupiedElsewhere ? (
+                        <div className="mt-1 text-sm text-amber-200">
+                          This driver is currently occupying {conflict.occupiedElsewhere.teamName} seat {conflict.occupiedElsewhere.seat}.
+                        </div>
+                      ) : null}
                       {selectedConflictGroup ? (
                         <div className="mt-2 text-xs text-rose-300">
                           This replacement is already assigned to {selectedConflictGroup.filter((driverName) => driverName !== conflict.importedDriverName).join(", ")}.
                         </div>
                       ) : null}
                     </div>
-                    <label className="grid gap-2 text-sm text-slate-200">
+                    <div className="grid gap-2 text-sm text-slate-200">
                       <span className="font-medium text-white">Select Replacement</span>
-                      <select
-                        value={selectedValue}
+                      <input
+                        type="text"
+                        value={driverReplacementQueries[conflict.importedDriverName] || ""}
                         onChange={(event) => {
-                          const nextValue = event.target.value;
-                          setDriverReplacementSelections((current) => ({
+                          setDriverReplacementQueries((current) => ({
                             ...current,
-                            [conflict.importedDriverName]: nextValue,
+                            [conflict.importedDriverName]: event.target.value,
                           }));
                         }}
-                        className="border border-white/10 bg-black/30 px-3 py-3 text-white outline-none"
-                      >
-                        <option value="">Choose driver</option>
-                        <option value="__create__">Create generated driver</option>
-                        {driverOptions.map((driver) => {
-                          const isSelectedElsewhere = Object.entries(driverReplacementSelections).some(([driverName, value]) => (
-                            driverName !== conflict.importedDriverName && `${value}` === `${driver.staffId}`
-                          ));
-                          const isOccupiedElsewhere = Boolean(
-                            driver.occupiedLabel && Number(driver.staffId) !== Number(conflict.conflictingDriverId)
-                          );
-                          return (
-                            <option
-                              key={driver.staffId}
-                              value={String(driver.staffId)}
-                              disabled={isSelectedElsewhere || isOccupiedElsewhere}
-                            >
-                              {driver.label}
-                            </option>
-                          );
-                        })}
-                      </select>
+                        placeholder="Search existing drivers"
+                        className="border border-white/10 bg-slate-950 px-3 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-sky-300/50"
+                      />
+                      <div className="grid max-h-[220px] gap-1 overflow-y-auto rounded border border-white/10 bg-slate-950/90 p-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDriverReplacementSelections((current) => ({
+                              ...current,
+                              [conflict.importedDriverName]: "__create__",
+                            }));
+                          }}
+                          className={`w-full px-3 py-2 text-left text-sm transition ${
+                            selectedValue === "__create__"
+                              ? "bg-sky-500/20 text-white"
+                              : "text-slate-200 hover:bg-white/[0.06]"
+                          }`}
+                        >
+                          Create generated driver
+                        </button>
+                        {driverOptions
+                          .filter((driver) => {
+                            const query = `${driverReplacementQueries[conflict.importedDriverName] || ""}`.trim().toLowerCase();
+                            if (!query) {
+                              return true;
+                            }
+                            return driver.searchable.includes(query);
+                          })
+                          .slice(0, 12)
+                          .map((driver) => {
+                            const isSelectedElsewhere = Object.entries(driverReplacementSelections).some(([driverName, value]) => (
+                              driverName !== conflict.importedDriverName && `${value}` === `${driver.staffId}`
+                            ));
+                            const isOccupiedElsewhere = Boolean(
+                              driver.occupiedLabel && Number(driver.staffId) !== Number(conflict.conflictingDriverId)
+                            );
+                            const disabled = isSelectedElsewhere || isOccupiedElsewhere;
+                            const selected = `${selectedValue}` === `${driver.staffId}`;
+                            return (
+                              <button
+                                key={driver.staffId}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => {
+                                  setDriverReplacementSelections((current) => ({
+                                    ...current,
+                                    [conflict.importedDriverName]: String(driver.staffId),
+                                  }));
+                                }}
+                                className={`w-full px-3 py-2 text-left transition ${
+                                  selected
+                                    ? "bg-sky-500/20 text-white"
+                                    : disabled
+                                      ? "cursor-not-allowed text-slate-600"
+                                      : "text-slate-200 hover:bg-white/[0.06]"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="truncate text-sm font-medium">{driver.name}</span>
+                                  <span className="shrink-0 text-xs text-slate-400">{driver.ratingLabel}</span>
+                                </div>
+                                {driver.occupiedLabel ? (
+                                  <div className="mt-1 text-xs text-slate-500">{driver.occupiedLabel}</div>
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        Search by name. Existing occupied F1 race-seat drivers stay blocked unless they are the current occupant of this exact seat.
+                      </div>
                       <div className="text-xs text-slate-400">
                         Selecting an existing driver moves them onto this imported seat and extends their current contract through {targetYear || currentSeason}.
                       </div>
-                    </label>
+                    </div>
                   </div>
                 );
               })}
@@ -728,7 +786,9 @@ function buildDriverReplacementOptions({ database, basicInfo }) {
         staffId,
         name,
         rating,
+        ratingLabel,
         occupiedLabel,
+        searchable: `${name} ${occupiedLabel || ""}`.toLowerCase(),
         label: occupiedLabel ? `${name} • ${ratingLabel} • ${occupiedLabel}` : `${name} • ${ratingLabel}`,
       };
     })

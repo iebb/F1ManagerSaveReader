@@ -768,11 +768,30 @@ function applyF1PitStopImport({ database, tableSet, importState, event, raceShel
     })
     .filter((entry) => entry.driverId && entry.teamId);
 
-  if (!raceEntries.length) {
+  const raceEntryDriverIds = new Set(raceEntries.map((entry) => Number(entry.driverId)).filter(Number.isFinite));
+  const customTeamEntries = getCustomTeamDriverEntries(importState)
+    .filter((driver) => !raceEntryDriverIds.has(Number(driver.driverId)))
+    .map((driver, index) => ({
+      row: {
+        driverId: driver.driverId,
+        driverName: driver.driverName,
+        driverCode: driver.driverCode,
+        teamId: driver.teamId,
+        teamName: driver.teamName,
+        laps: getSessionLapFallback(raceRows),
+      },
+      index: raceEntries.length + index,
+      driverId: Number(driver.driverId),
+      teamId: Number(driver.teamId),
+      driverKey: normalizeName(driver.driverName),
+    }));
+  const allRaceEntries = [...raceEntries, ...customTeamEntries];
+
+  if (!allRaceEntries.length) {
     return;
   }
 
-  const raceEntryByDriverKey = Object.fromEntries(raceEntries.map((entry) => [entry.driverKey, entry]));
+  const raceEntryByDriverKey = Object.fromEntries(allRaceEntries.map((entry) => [entry.driverKey, entry]));
   const fetchedPayload = event?.pitStops || null;
   const fetchedResults = (fetchedPayload?.results || [])
     .map((row) => {
@@ -803,7 +822,7 @@ function applyF1PitStopImport({ database, tableSet, importState, event, raceShel
   const generatedRows = buildMockPitStopRows({
     importState,
     event,
-    raceEntries,
+    raceEntries: allRaceEntries,
     existingDriverKeys: new Set(fetchedResults.map((row) => row.driverKey)),
     seedSuffix: fetchedResults.length ? "pit-missing" : "pit-full",
     slowerThan: fetchedResults.length
@@ -860,7 +879,10 @@ function buildMockPitStopRows({ importState, event, raceEntries, existingDriverK
         entry.teamId,
         entry.driverId,
       ].join(":"));
-      const stopDuration = roundToThreeDecimals(baseFloor + (entry.index * 0.018) + (rng() * 0.09));
+      const stopDuration = normalizeMockPitStopDuration(
+        baseFloor + (entry.index * 0.018) + (rng() * 0.09),
+        rng
+      );
       const totalLaps = Number(entry.row?.laps || raceEntries[0]?.row?.laps || 57);
       const lap = Math.max(1, Math.min(totalLaps, Math.round((totalLaps * (0.28 + (rng() * 0.38))))));
       return {
@@ -923,6 +945,16 @@ function insertPitStopTimings({ database, tableSet, seasonId, raceId, timingRows
 function buildPitStopStageDurations(totalDuration) {
   const weights = [0.168, 0.139, 0.168, 0.168, 0.139, 0.109, 0.109, 0, 0];
   return weights.map((weight) => roundToSixDecimals((Number(totalDuration) || 0) * weight));
+}
+
+function normalizeMockPitStopDuration(value, rng) {
+  let rounded = roundToThreeDecimals(value);
+  const milliseconds = Math.round((rounded - Math.floor(rounded)) * 1000);
+  if (milliseconds % 100 === 0) {
+    const jitter = 1 + Math.floor(rng() * 98);
+    rounded = roundToThreeDecimals(Math.floor(rounded) + ((milliseconds + jitter) / 1000));
+  }
+  return rounded;
 }
 
 function roundToThreeDecimals(value) {
@@ -3616,6 +3648,8 @@ function getImportDriverConflicts({ dataset, basicInfo, targetYear, lastComplete
 
   const existingDriverIdsByName = buildExistingDriverLookup(basicInfo);
   const teamSeatState = buildInitialSeatState(basicInfo);
+  const currentSeatOccupancy = buildCurrentF1SeatOccupancy(basicInfo);
+  const customTeamId = getCustomTeamF1TeamId(basicInfo);
   const driverDisplayNames = {};
   const selectedEvents = [];
 
@@ -3644,7 +3678,7 @@ function getImportDriverConflicts({ dataset, basicInfo, targetYear, lastComplete
     applyLineupToSeatState(teamSeatState, event?.lineup || {});
   });
 
-  return Object.entries(teamSeatState)
+  const missingDriverConflicts = Object.entries(teamSeatState)
     .flatMap(([teamIdValue, seatState]) => [1, 2].map((posInTeam) => ({
       teamId: Number(teamIdValue),
       posInTeam,
@@ -3662,9 +3696,62 @@ function getImportDriverConflicts({ dataset, basicInfo, targetYear, lastComplete
         posInTeam: entry.posInTeam,
         conflictingDriverId,
         conflictingDriverName: resolveDriverName(conflictingDriver) || null,
+        occupiedElsewhere: null,
       };
     })
     .sort((left, right) => left.teamId - right.teamId || left.posInTeam - right.posInTeam || left.importedDriverName.localeCompare(right.importedDriverName));
+
+  const customTeamSeatConflicts = customTeamId
+    ? [1, 2]
+      .map((posInTeam) => {
+        const driverKey = teamSeatState?.[customTeamId]?.[posInTeam] || "";
+        const driverId = Number(existingDriverIdsByName[driverKey] || 0);
+        const occupiedElsewhere = currentSeatOccupancy[driverId];
+        if (!driverKey || !driverId || !occupiedElsewhere || Number(occupiedElsewhere.teamId) === Number(customTeamId)) {
+          return null;
+        }
+        const team = basicInfo?.teamMap?.[customTeamId] || {};
+        const conflictingDriverId = Number(team?.[`Driver${posInTeam}ID`] || 0) || null;
+        const conflictingDriver = conflictingDriverId ? basicInfo?.driverMap?.[conflictingDriverId] : null;
+        return {
+          importedDriverName: driverDisplayNames[driverKey] || driverKey,
+          teamId: customTeamId,
+          teamName: resolveLiteral(team.TeamNameLocKey || team.TeamName || "") || team.TeamName || `Team ${customTeamId}`,
+          posInTeam,
+          conflictingDriverId,
+          conflictingDriverName: resolveDriverName(conflictingDriver) || null,
+          occupiedElsewhere,
+        };
+      })
+      .filter(Boolean)
+    : [];
+
+  const deduped = new Map();
+  [...missingDriverConflicts, ...customTeamSeatConflicts].forEach((conflict) => {
+    deduped.set(`${conflict.teamId}:${conflict.posInTeam}:${normalizeName(conflict.importedDriverName)}`, conflict);
+  });
+  return [...deduped.values()]
+    .sort((left, right) => left.teamId - right.teamId || left.posInTeam - right.posInTeam || left.importedDriverName.localeCompare(right.importedDriverName));
+}
+
+function buildCurrentF1SeatOccupancy(basicInfo) {
+  const occupancy = {};
+  Object.values(basicInfo?.teamMap || {})
+    .filter((team) => Number(team?.Formula) === 1)
+    .forEach((team) => {
+      [1, 2].forEach((seat) => {
+        const driverId = Number(team?.[`Driver${seat}ID`] || 0);
+        if (!Number.isFinite(driverId) || driverId <= 0) {
+          return;
+        }
+        occupancy[driverId] = {
+          teamId: Number(team.TeamID),
+          seat,
+          teamName: resolveLiteral(team.TeamNameLocKey || team.TeamName || "") || team.TeamName || `Team ${team.TeamID}`,
+        };
+      });
+    });
+  return occupancy;
 }
 
 function applyLineupToSeatState(teamSeatState, lineup = {}) {

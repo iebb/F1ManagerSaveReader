@@ -63,11 +63,42 @@ const readRows = (database, query, params = {}) => {
   }
 };
 
-const clampPercentage = (value, max) => {
-  if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
-    return 0;
+const normalizePitStopSeconds = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0 || numeric >= 1e6) {
+    return null;
   }
-  return Math.max(0, Math.min(100, (value / max) * 100));
+  return numeric;
+};
+
+const formatPitStopSeconds = (value) => {
+  const numeric = normalizePitStopSeconds(value);
+  return Number.isFinite(numeric) ? `${numeric.toFixed(3)}s` : "NO TIME";
+};
+
+const calculateMedian = (values) => {
+  const numericValues = values
+    .map((value) => normalizePitStopSeconds(value))
+    .filter((value) => Number.isFinite(value))
+    .sort((left, right) => left - right);
+  if (!numericValues.length) {
+    return null;
+  }
+  const middle = Math.floor(numericValues.length / 2);
+  if (numericValues.length % 2 === 1) {
+    return numericValues[middle];
+  }
+  return (numericValues[middle - 1] + numericValues[middle]) / 2;
+};
+
+const calculateAverage = (values) => {
+  const numericValues = values
+    .map((value) => normalizePitStopSeconds(value))
+    .filter((value) => Number.isFinite(value));
+  if (!numericValues.length) {
+    return null;
+  }
+  return numericValues.reduce((sum, value) => sum + value, 0) / numericValues.length;
 };
 
 function SponsorshipWorkspace({ rows, secondaryRows, availableRows, bonusRows, nextRaceName, onRefresh, teamId, mode = "modern", legacyObligations = [], legacyIncentives = [], currentDay = 0 }) {
@@ -1165,6 +1196,7 @@ function SportingWorkspace({ pitStopRows, timingRows, inspectionRows, penaltyCou
 
 function PitStopWorkspace({ pitStopRows, timingRows, currentSeason }) {
   const { logoStyle = "normal" } = useContext(UiSettingsContext);
+  const [expandedRaces, setExpandedRaces] = useState({});
 
   const seasonStandings = useMemo(() => {
     const standingsMap = new Map();
@@ -1176,15 +1208,31 @@ function PitStopWorkspace({ pitStopRows, timingRows, currentSeason }) {
         Points: 0,
         Wins: 0,
         Podiums: 0,
+        Stops: [],
         BestStop: Number.POSITIVE_INFINITY,
+        WorstStop: null,
+        AverageStop: null,
+        MedianStop: null,
       };
       current.Points += Number(row.Points || 0);
-      current.BestStop = Math.min(current.BestStop, Number(row.FastestPitStopTime || 999));
+      const stopTime = normalizePitStopSeconds(row.FastestPitStopTime);
+      if (Number.isFinite(stopTime)) {
+        current.Stops.push(stopTime);
+      }
+      current.BestStop = Math.min(current.BestStop, Number.isFinite(stopTime) ? stopTime : Number.POSITIVE_INFINITY);
+      current.WorstStop = Number.isFinite(stopTime)
+        ? Math.max(Number(current.WorstStop ?? stopTime), stopTime)
+        : current.WorstStop;
       if (Number(row.FinishPosition) === 1) current.Wins += 1;
       if (Number(row.FinishPosition) <= 3) current.Podiums += 1;
       standingsMap.set(teamId, current);
     });
     return [...standingsMap.values()]
+      .map((row) => ({
+        ...row,
+        AverageStop: calculateAverage(row.Stops),
+        MedianStop: calculateMedian(row.Stops),
+      }))
       .sort((left, right) => (
         right.Points - left.Points
         || right.Wins - left.Wins
@@ -1220,7 +1268,7 @@ function PitStopWorkspace({ pitStopRows, timingRows, currentSeason }) {
       .map((race) => {
         const rows = [...race.rows].sort((left, right) => (
           Number(left.FinishPosition || 999) - Number(right.FinishPosition || 999)
-          || Number(left.FastestPitStopTime || 999) - Number(right.FastestPitStopTime || 999)
+          || (normalizePitStopSeconds(left.FastestPitStopTime) ?? Number.POSITIVE_INFINITY) - (normalizePitStopSeconds(right.FastestPitStopTime) ?? Number.POSITIVE_INFINITY)
         ));
         const raceTimingRows = timingByRace.get(race.RaceID) || [];
         const stopKeys = new Set(raceTimingRows.map((row) => `${row.DriverID}:${row.PitStopID}`));
@@ -1238,79 +1286,44 @@ function PitStopWorkspace({ pitStopRows, timingRows, currentSeason }) {
 
   return (
     <div className="grid gap-3">
-      <section className="border border-white/10 bg-white/[0.02] p-5">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Pit Stop Audit</div>
-            <h2 className="mt-2 text-lg font-bold text-white">Pit Stop Results & Timing Detail</h2>
-            <p className="mt-2 max-w-[880px] text-sm text-slate-400">
-              Review DHL fastest-pit-stop award rows and per-stage timing detail for the currently loaded save season.
-            </p>
+      <section className="border border-white/10 bg-white/[0.02] p-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Season Results</div>
+        <h3 className="mt-2 text-base font-bold text-white">Pit Crew Championship</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Points, wins, podiums, and stop-time benchmarks across the season.
+        </p>
+        <div className="mt-4 grid gap-2">
+          <div className="grid grid-cols-[38px_minmax(0,1.3fr)_52px_52px_70px_70px_70px_70px_84px] items-center gap-3 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <div>Pos</div>
+            <div>Team</div>
+            <div className="text-right">Wins</div>
+            <div className="text-right">Pods</div>
+            <div className="text-right">Avg</div>
+            <div className="text-right">Median</div>
+            <div className="text-right">Best</div>
+            <div className="text-right">Worst</div>
+            <div className="text-right">Pts</div>
           </div>
-          <div className="grid grid-cols-3 gap-2 xl:min-w-[420px]">
-            {[
-              { label: "Teams Ranked", value: seasonStandings.length },
-              { label: "Rounds Logged", value: rounds.length },
-              { label: "Season", value: currentSeason },
-            ].map((item) => (
-              <div key={item.label} className="border border-white/10 bg-black/10 p-3">
-                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{item.label}</div>
-                <div className="mt-1 text-base font-semibold text-white">{item.value}</div>
+          {seasonStandings.map((row) => (
+            <div key={row.TeamID} className="grid grid-cols-[38px_minmax(0,1.3fr)_52px_52px_70px_70px_70px_70px_84px] items-center gap-3 bg-black/20 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="text-sm font-bold text-white">{row.Position}</div>
+              <div className="flex min-w-0 items-center gap-2">
+                <TeamLogo TeamID={row.TeamID} size="sm" logoStyleOverride={logoStyle} alt={row.Team} className="opacity-95" />
+                <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
               </div>
-            ))}
-          </div>
+              <div className="text-right text-sm text-slate-300">{row.Wins}W</div>
+              <div className="text-right text-sm text-slate-300">{row.Podiums}P</div>
+              <div className="text-right text-xs text-slate-300">{formatPitStopSeconds(row.AverageStop)}</div>
+              <div className="text-right text-xs text-slate-300">{formatPitStopSeconds(row.MedianStop)}</div>
+              <div className="text-right text-xs text-emerald-300">{formatPitStopSeconds(row.BestStop)}</div>
+              <div className="text-right text-xs text-rose-300">{formatPitStopSeconds(row.WorstStop)}</div>
+              <div className="text-right text-sm font-semibold text-sky-300">{row.Points} pts</div>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <div className="border border-white/10 bg-white/[0.015] p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Season Results</div>
-          <h3 className="mt-2 text-base font-bold text-white">Pit Crew Championship</h3>
-          <p className="mt-2 text-sm text-slate-400">
-            Points, event wins, and best stop across the season.
-          </p>
-          <div className="mt-4 grid gap-2">
-            {seasonStandings.map((row) => (
-              <div key={row.TeamID} className="grid grid-cols-[38px_minmax(0,1fr)_64px_64px_84px] items-center gap-3 border border-white/8 bg-black/20 px-3 py-2">
-                <div className="text-sm font-bold text-white">{row.Position}</div>
-                <div className="flex min-w-0 items-center gap-2">
-                  <TeamLogo TeamID={row.TeamID} size="sm" logoStyleOverride={logoStyle} alt={row.Team} className="opacity-95" />
-                  <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
-                </div>
-                <div className="text-right text-sm text-slate-300">{row.Wins}W</div>
-                <div className="text-right text-sm text-slate-300">{row.Podiums}P</div>
-                <div className="text-right text-sm font-semibold text-sky-300">{row.Points} pts</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="border border-white/10 bg-white/[0.015] p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Best Stop</div>
-          <h3 className="mt-2 text-base font-bold text-white">Season Benchmarks</h3>
-          <div className="mt-4 grid gap-3">
-            {seasonStandings.slice(0, 3).map((row) => (
-              <div key={`benchmark-${row.TeamID}`} className="border border-white/8 bg-black/20 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <TeamLogo TeamID={row.TeamID} size="sm" logoStyleOverride={logoStyle} alt={row.Team} className="opacity-95" />
-                    <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
-                  </div>
-                  <div className="text-sm font-bold text-amber-300">{Number(row.BestStop || 0).toFixed(3)}s</div>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
-                  <div
-                    className="h-full bg-[linear-gradient(90deg,rgba(14,165,233,0.9),rgba(251,191,36,0.95))]"
-                    style={{ width: `${clampPercentage((seasonStandings[0]?.BestStop || row.BestStop) / Math.max(row.BestStop || 1, 1), 1) || 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border border-white/10 bg-white/[0.015] p-4">
+      <section className="border border-white/10 bg-white/[0.02] p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Per Race</div>
@@ -1318,53 +1331,85 @@ function PitStopWorkspace({ pitStopRows, timingRows, currentSeason }) {
           </div>
           <div className="text-xs text-slate-500">Read-only season summary</div>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="mt-3 grid gap-2.5 md:grid-cols-2 2xl:grid-cols-3">
           {rounds.map((race) => (
-            <div key={race.RaceID} className="border border-white/8 bg-black/20 p-4">
+            <div key={race.RaceID} className="bg-[linear-gradient(180deg,rgba(0,0,0,0.22),rgba(0,0,0,0.32))] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              {(() => {
+                const remainingRows = race.rows.slice(race.winner ? 1 : 0);
+                const visibleRows = expandedRaces[race.RaceID] ? remainingRows : remainingRows.slice(0, 2);
+                return (
+                  <>
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{raceAbbrevs[race.TrackID] || `R${race.RaceID}`}</div>
-                  <div className="mt-1 text-sm font-bold text-white">{race.Race}</div>
+                <div className="flex items-start gap-2.5">
+                  {raceFlags[race.TrackID] ? (
+                    <img
+                      src={`/flags/${raceFlags[race.TrackID]}.svg`}
+                      alt={race.Race}
+                      className="mt-0.5 h-[18px] w-7 rounded-[2px] border border-white/8 object-cover"
+                    />
+                  ) : null}
+                  <div className="pt-[1px] text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    {raceAbbrevs[race.TrackID] || `R${race.RaceID}`}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Stops</div>
-                  <div className="text-sm font-semibold text-white">{race.stopCount}</div>
+                <div className="pt-[1px] text-right text-sm font-semibold text-white">
+                  {circuitNames[race.TrackID] || race.Race}
                 </div>
               </div>
               {race.winner ? (
-                <div className="mt-3 rounded border border-amber-300/20 bg-amber-500/10 p-3">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="mt-2.5 bg-amber-500/10 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(251,191,36,0.18)]">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-300/18 text-sm font-bold tabular-nums text-amber-200">
+                        1
+                      </div>
                       <TeamLogo TeamID={race.winner.TeamID} size="sm" logoStyleOverride={logoStyle} alt={race.winner.Team} className="opacity-95" />
                       <div className="min-w-0">
                         <div className="truncate text-sm font-semibold text-white">{race.winner.Team}</div>
                         <div className="truncate text-xs text-slate-400">{race.winner.Driver}</div>
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-amber-300">{Number(race.winner.FastestPitStopTime || 0).toFixed(3)}s</div>
+                    <div className="text-sm font-bold text-amber-300">{formatPitStopSeconds(race.winner.FastestPitStopTime)}</div>
                   </div>
                 </div>
               ) : null}
-              <div className="mt-3 grid gap-2">
-                {race.rows.map((row) => (
+              <div className="mt-2.5 grid gap-1.5">
+                {visibleRows.map((row) => (
                   <div
                     key={`${row.RaceID}-${row.TeamID}-${row.FinishPosition}`}
-                    className="grid w-full grid-cols-[28px_minmax(0,1fr)_76px_56px] items-center gap-3 border border-white/8 bg-white/[0.03] px-3 py-2 text-left"
+                    className="grid w-full grid-cols-[28px_minmax(0,1fr)_76px] items-center gap-2.5 bg-white/[0.04] px-3 py-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                   >
-                    <div className="text-sm font-bold text-white">{row.FinishPosition}</div>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
-                      <div className="truncate text-xs text-slate-400">{row.Driver}</div>
+                    <div className="flex h-7 w-7 items-center justify-center text-sm font-bold tabular-nums text-white">
+                      {row.FinishPosition}
                     </div>
-                    <div className="text-right text-sm text-sky-300">{Number(row.FastestPitStopTime || 0).toFixed(3)}s</div>
-                    <div className="text-right text-sm text-slate-300">{row.Points} pts</div>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <TeamLogo TeamID={row.TeamID} size="sm" logoStyleOverride={logoStyle} alt={row.Team} className="opacity-95" />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
+                        <div className="truncate text-xs text-slate-400">{row.Driver}</div>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm text-sky-300">{formatPitStopSeconds(row.FastestPitStopTime)}</div>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                <span>Total delay</span>
-                <span>{Number(race.totalDelay || 0).toFixed(3)}s</span>
-              </div>
+              {remainingRows.length > 2 ? (
+                <button
+                  type="button"
+                  onClick={() => setExpandedRaces((current) => ({
+                    ...current,
+                    [race.RaceID]: !current[race.RaceID],
+                  }))}
+                  className="mt-2.5 text-sm font-medium text-sky-300 transition hover:text-sky-200"
+                >
+                  {expandedRaces[race.RaceID]
+                    ? `Show top 3`
+                    : `Show ${remainingRows.length - 2} more`}
+                </button>
+              ) : null}
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -1721,7 +1766,7 @@ export default function SaveOperations({
       Race: circuitNames[row.TrackID] || `Race ${row.RaceID}`,
       Team: getTeamDisplayName(teamMap, row.TeamID, version),
       Driver: getDriverName(driverMap[row.DriverID]),
-      FastestPitStopTime: Number(row.FastestPitStopTime).toFixed(3),
+      FastestPitStopTime: normalizePitStopSeconds(row.FastestPitStopTime),
     }));
     setPitStopRows(pitStops);
 
