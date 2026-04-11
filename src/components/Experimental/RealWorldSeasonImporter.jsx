@@ -30,6 +30,7 @@ export default function RealWorldSeasonImporter() {
   const [targetYear, setTargetYear] = useState("");
   const [lastRound, setLastRound] = useState(0);
   const [isApplying, setIsApplying] = useState(false);
+  const [importPriority, setImportPriority] = useState("driver");
   const [customTeamBaselineStrength, setCustomTeamBaselineStrength] = useState(12);
   const [customTeamDerivation, setCustomTeamDerivation] = useState(14);
   const [customTeamDnfChance, setCustomTeamDnfChance] = useState(8);
@@ -257,6 +258,7 @@ export default function RealWorldSeasonImporter() {
           derivation: Number(customTeamDerivation),
           dnfChance: Number(customTeamDnfChance),
         } : null,
+        importPriority,
         driverReplacements: Object.fromEntries(
           Object.entries(driverReplacementSelections)
             .filter(([, value]) => value && value !== "__create__")
@@ -294,6 +296,40 @@ export default function RealWorldSeasonImporter() {
           Pick a year and race cell. The current-season row follows the save’s remaining in-game calendar; future-season rows use the bundled real-world calendars.
           Selecting a cell imports results through that race, inclusive. If you pick a future season, the importer first completes the remaining current season,
           carries the save forward across the season boundary, and then applies the selected future-season rounds.
+        </div>
+        <div className="mb-4 grid gap-2 border border-white/10 bg-black/20 p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">F1 Binding</div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              {
+                id: "driver",
+                title: "Prioritize Driver",
+                description: "Apply each imported result to the same driver even if they changed team.",
+              },
+              {
+                id: "team",
+                title: "Prioritize Team",
+                description: "Apply each imported result to the team seat, except when the same driver is already swapped within that team.",
+              },
+            ].map((option) => {
+              const selected = importPriority === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setImportPriority(option.id)}
+                  className={`min-w-[240px] flex-1 border px-3 py-3 text-left transition ${
+                    selected
+                      ? "border-sky-300/50 bg-sky-500/12 text-white"
+                      : "border-white/10 bg-white/[0.03] text-slate-200 hover:border-white/20"
+                  }`}
+                >
+                  <div className="text-sm font-semibold">{option.title}</div>
+                  <div className="mt-1 text-xs text-slate-400">{option.description}</div>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <div

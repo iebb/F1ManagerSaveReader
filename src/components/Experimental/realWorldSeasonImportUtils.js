@@ -310,6 +310,7 @@ export function applyRealWorldSeasonImport({
   lastCompletedRound,
   customTeamRandomization,
   driverReplacements,
+  importPriority,
 }) {
   if ((metadata?.version || 0) < 4) {
     throw new Error("This experimental importer currently targets F1 Manager 2024 saves only.");
@@ -355,6 +356,7 @@ export function applyRealWorldSeasonImport({
           allowCarryForwardFromPriorSeason: year > startingSeason,
           customTeamRandomization,
           driverReplacements,
+          importPriority,
         });
         result.createdDrivers.forEach((name) => createdDrivers.push(name));
         result.appliedSeries.forEach((seriesKey) => appliedSeries.add(seriesKey));
@@ -390,6 +392,7 @@ function applySingleSeasonImport({
   allowCarryForwardFromPriorSeason = false,
   customTeamRandomization,
   driverReplacements,
+  importPriority,
 }) {
   let tableSet = getExistingTableSet(database);
   const f1Season = datasets?.f1?.seasons?.[`${targetYear}`];
@@ -435,6 +438,7 @@ function applySingleSeasonImport({
     initialPlayerDay: Number(basicInfo?.player?.Day || 0),
     customTeamRandomization: normalizeCustomTeamRandomization({ basicInfo, customTeamRandomization }),
     driverReplacements: normalizeDriverReplacements({ basicInfo, driverReplacements }),
+    importPriority: normalizeImportPriority(importPriority),
   };
 
   ensureExperimentalTables(database);
@@ -569,17 +573,27 @@ function applySeriesSeason({ database, tableSet, importState, seriesKey, season,
       const sessionTimeContext = buildSessionTimeContext(plan.sessionType, sessionRows);
       let insertedCount = 0;
       sessionRows.forEach((resultRow, resultIndex) => {
-        const driverId = Number(resultRow.driverId) || ensureDriverExists({
-          database,
-          importState,
-          driverName: resultRow.driverName,
-          driverCode: resultRow.driverCode,
-        });
         const teamId = resolveSeriesTeamId({
           config,
           resultRow,
           event,
           teamMapping,
+        });
+        const seatAssignment = config.formula === 1 ? seatAssignments[teamId]?.[normalizeName(resultRow.driverName)] : null;
+        const resolvedDriverId = config.formula === 1
+          ? resolveF1ResultDriverId({
+            database,
+            importState,
+            resultRow,
+            teamId,
+            seatAssignment,
+          })
+          : null;
+        const driverId = Number(resolvedDriverId) || Number(resultRow.driverId) || ensureDriverExists({
+          database,
+          importState,
+          driverName: resultRow.driverName,
+          driverCode: resultRow.driverCode,
         });
         if (!driverId || (config.formula === 1 && !teamId)) {
           console.debug("[RealWorldImport][RowSkip]", {
@@ -595,8 +609,6 @@ function applySeriesSeason({ database, tableSet, importState, seriesKey, season,
           });
           return;
         }
-        const seatAssignment = config.formula === 1 ? seatAssignments[teamId]?.[normalizeName(resultRow.driverName)] : null;
-
         insertSessionResultRow({
           database,
           table: plan.table,
@@ -1246,13 +1258,20 @@ function ensureStandingsRows({ database, tableSet, seasonId, formula, season, im
 function ensureEventSeatAssignments(importState, event) {
   const seatAssignmentsByTeam = {};
   const lineup = event.lineup || {};
-  applyLineupToSeatState(importState.teamSeatState, lineup);
   Object.entries(lineup).forEach(([teamName]) => {
     const teamId = mapF1TeamNameToId(teamName);
     if (!teamId) {
       return;
     }
-    const nextState = importState.teamSeatState[teamId] || { 1: null, 2: null };
+    const nextState = importState.importPriority === "team"
+      ? buildTeamPrioritySeatState({
+        currentState: importState.initialTeamSeatState[teamId] || { 1: null, 2: null },
+        importedDrivers: lineup[teamName] || [],
+      })
+      : (() => {
+        applyLineupToSeatState(importState.teamSeatState, { [teamName]: lineup[teamName] || [] });
+        return importState.teamSeatState[teamId] || { 1: null, 2: null };
+      })();
     seatAssignmentsByTeam[teamId] = Object.fromEntries(
       Object.entries(nextState)
         .filter(([, driverKey]) => driverKey)
@@ -1273,6 +1292,51 @@ function ensureEventSeatAssignments(importState, event) {
   }
 
   return seatAssignmentsByTeam;
+}
+
+function buildTeamPrioritySeatState({ currentState, importedDrivers }) {
+  const nextState = { 1: currentState?.[1] || null, 2: currentState?.[2] || null };
+  (importedDrivers || []).forEach((driverName, index) => {
+    const driverKey = normalizeName(driverName);
+    const importedSeat = index + 1;
+    const sameDriverSeat = Number(Object.entries(nextState).find(([, key]) => key === driverKey)?.[0] || 0);
+    if (sameDriverSeat) {
+      nextState[sameDriverSeat] = driverKey;
+      return;
+    }
+    nextState[importedSeat] = nextState[importedSeat] || driverKey;
+  });
+  return nextState;
+}
+
+function resolveF1ResultDriverId({ database, importState, resultRow, teamId, seatAssignment }) {
+  if (importState.importPriority !== "team") {
+    return null;
+  }
+  const loadoutId = Number(seatAssignment?.loadoutId || 0);
+  if (!Number.isFinite(teamId) || !Number.isFinite(loadoutId) || loadoutId <= 0) {
+    return null;
+  }
+  const team = importState?.teamMap?.[teamId];
+  const seatDriverId = Number(team?.[`Driver${loadoutId}ID`] || 0);
+  if (Number.isFinite(seatDriverId) && seatDriverId > 0) {
+    return seatDriverId;
+  }
+  const contractRow = readRows(
+    database,
+    `SELECT StaffID
+     FROM Staff_Contracts
+     WHERE TeamID = :teamId
+       AND PosInTeam = :posInTeam
+       AND ContractType = 0
+     ORDER BY StartDay DESC
+     LIMIT 1`,
+    {
+      ":teamId": teamId,
+      ":posInTeam": loadoutId,
+    }
+  )[0];
+  return Number(contractRow?.StaffID || 0) || null;
 }
 
 function insertSessionResultRow({
@@ -3800,6 +3864,10 @@ function normalizeDriverReplacements({ basicInfo, driverReplacements }) {
       .map(([driverName, staffId]) => [normalizeName(driverName), Number(staffId)])
       .filter(([driverKey, staffId]) => driverKey && validDriverIds.has(staffId))
   );
+}
+
+function normalizeImportPriority(value) {
+  return value === "team" ? "team" : "driver";
 }
 
 function inferProfileFromName(driverName, driverCode) {
