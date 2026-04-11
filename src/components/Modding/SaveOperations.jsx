@@ -1053,14 +1053,14 @@ function SportingWorkspace({ pitStopRows, timingRows, inspectionRows, penaltyCou
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Sporting Audit</div>
-            <h2 className="mt-2 text-lg font-bold text-white">Pit Stops, Penalties & Inspection Results</h2>
+            <h2 className="mt-2 text-lg font-bold text-white">Penalties & Inspection Results</h2>
             <p className="mt-2 max-w-[880px] text-sm text-slate-400">
               Inspect extra race data that already lives in the save and adjust the cleanly editable parts without dropping into raw SQL.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 xl:min-w-[420px]">
             {[
-              { label: "Pit Stop Awards", value: pitStopRows.length },
+              { label: "Inspections", value: inspectionRows.length },
               { label: "Failed Inspections", value: failedInspections },
               { label: "Grid Penalties", value: penaltyCount },
             ].map((item) => (
@@ -1111,81 +1111,6 @@ function SportingWorkspace({ pitStopRows, timingRows, inspectionRows, penaltyCou
       </section>
 
       <section className="border border-white/10 bg-white/[0.015]">
-        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Pit Stop Results</div>
-        <DataGrid
-          autoHeight
-          disableRowSelectionOnClick
-          rows={pitStopRows}
-          processRowUpdate={(newRow, oldRow) => {
-            try {
-              database.exec(
-                `UPDATE Races_PitStopResults
-                 SET Points = :points
-                 WHERE SeasonID = :seasonId
-                   AND RaceID = :raceId
-                   AND TeamID = :teamId
-                   AND FinishPosition = :finishPosition`,
-                {
-                  ":points": Number(newRow.Points),
-                  ":seasonId": newRow.SeasonID,
-                  ":raceId": newRow.RaceID,
-                  ":teamId": newRow.TeamID,
-                  ":finishPosition": newRow.FinishPosition,
-                }
-              );
-
-              recalculateRaceStandings({
-                database,
-                season: currentSeason,
-                tableSet: existingTables,
-              });
-
-              onRefresh();
-              return newRow;
-            } catch (error) {
-              enqueueSnackbar(`Failed to update pit stop points: ${error.message || error}`, { variant: "error" });
-              return oldRow;
-            }
-          }}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 20 } },
-          }}
-          pageSizeOptions={[20, 40]}
-          columns={[
-            { field: "Race", headerName: "Race", width: 150 },
-            { field: "Team", headerName: "Team", width: 170 },
-            { field: "Driver", headerName: "Driver", width: 170 },
-            { field: "FinishPosition", headerName: "Finish", width: 90 },
-            { field: "FastestPitStopTime", headerName: "Best Stop", width: 110 },
-            { field: "Points", headerName: "Points", width: 90, editable: true, type: "number" },
-          ]}
-        />
-      </section>
-
-      <section className="border border-white/10 bg-white/[0.015]">
-        <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Pit Stop Timing Detail</div>
-        <DataGrid
-          autoHeight
-          disableRowSelectionOnClick
-          rows={timingRows}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 20 } },
-          }}
-          pageSizeOptions={[20, 40]}
-          columns={[
-            { field: "Race", headerName: "Race", width: 150 },
-            { field: "Team", headerName: "Team", width: 170 },
-            { field: "Driver", headerName: "Driver", width: 170 },
-            { field: "PitStopID", headerName: "Stop", width: 80 },
-            { field: "PitStopStage", headerName: "Stage", width: 90 },
-            { field: "Lap", headerName: "Lap", width: 80 },
-            { field: "Duration", headerName: "Duration", width: 100 },
-            { field: "IncidentDelay", headerName: "Delay", width: 90 },
-          ]}
-        />
-      </section>
-
-      <section className="border border-white/10 bg-white/[0.015]">
         <div className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Inspection Results</div>
         <DataGrid
           autoHeight
@@ -1233,6 +1158,216 @@ function SportingWorkspace({ pitStopRows, timingRows, inspectionRows, penaltyCou
             },
           ]}
         />
+      </section>
+    </div>
+  );
+}
+
+function PitStopWorkspace({ pitStopRows, timingRows, currentSeason }) {
+  const { logoStyle = "normal" } = useContext(UiSettingsContext);
+
+  const seasonStandings = useMemo(() => {
+    const standingsMap = new Map();
+    pitStopRows.forEach((row) => {
+      const teamId = Number(row.TeamID);
+      const current = standingsMap.get(teamId) || {
+        TeamID: teamId,
+        Team: row.Team,
+        Points: 0,
+        Wins: 0,
+        Podiums: 0,
+        BestStop: Number.POSITIVE_INFINITY,
+      };
+      current.Points += Number(row.Points || 0);
+      current.BestStop = Math.min(current.BestStop, Number(row.FastestPitStopTime || 999));
+      if (Number(row.FinishPosition) === 1) current.Wins += 1;
+      if (Number(row.FinishPosition) <= 3) current.Podiums += 1;
+      standingsMap.set(teamId, current);
+    });
+    return [...standingsMap.values()]
+      .sort((left, right) => (
+        right.Points - left.Points
+        || right.Wins - left.Wins
+        || left.BestStop - right.BestStop
+        || left.TeamID - right.TeamID
+      ))
+      .map((row, index) => ({ ...row, Position: index + 1 }));
+  }, [pitStopRows]);
+
+  const rounds = useMemo(() => {
+    const timingByRace = timingRows.reduce((map, row) => {
+      const key = Number(row.RaceID);
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key).push(row);
+      return map;
+    }, new Map());
+
+    return [...pitStopRows.reduce((map, row) => {
+      const raceId = Number(row.RaceID);
+      if (!map.has(raceId)) {
+        map.set(raceId, {
+          RaceID: raceId,
+          Race: row.Race,
+          TrackID: Number(row.TrackID),
+          rows: [],
+        });
+      }
+      map.get(raceId).rows.push(row);
+      return map;
+    }, new Map()).values()]
+      .map((race) => {
+        const rows = [...race.rows].sort((left, right) => (
+          Number(left.FinishPosition || 999) - Number(right.FinishPosition || 999)
+          || Number(left.FastestPitStopTime || 999) - Number(right.FastestPitStopTime || 999)
+        ));
+        const raceTimingRows = timingByRace.get(race.RaceID) || [];
+        const stopKeys = new Set(raceTimingRows.map((row) => `${row.DriverID}:${row.PitStopID}`));
+        const totalDelay = raceTimingRows.reduce((sum, row) => sum + Number(row.IncidentDelay || 0), 0);
+        return {
+          ...race,
+          rows,
+          winner: rows[0] || null,
+          stopCount: stopKeys.size,
+          totalDelay,
+        };
+      })
+      .sort((left, right) => right.RaceID - left.RaceID);
+  }, [pitStopRows, timingRows]);
+
+  return (
+    <div className="grid gap-3">
+      <section className="border border-white/10 bg-white/[0.02] p-5">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Pit Stop Audit</div>
+            <h2 className="mt-2 text-lg font-bold text-white">Pit Stop Results & Timing Detail</h2>
+            <p className="mt-2 max-w-[880px] text-sm text-slate-400">
+              Review DHL fastest-pit-stop award rows and per-stage timing detail for the currently loaded save season.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 xl:min-w-[420px]">
+            {[
+              { label: "Teams Ranked", value: seasonStandings.length },
+              { label: "Rounds Logged", value: rounds.length },
+              { label: "Season", value: currentSeason },
+            ].map((item) => (
+              <div key={item.label} className="border border-white/10 bg-black/10 p-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{item.label}</div>
+                <div className="mt-1 text-base font-semibold text-white">{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <div className="border border-white/10 bg-white/[0.015] p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Season Results</div>
+          <h3 className="mt-2 text-base font-bold text-white">Pit Crew Championship</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Points, event wins, and best stop across the season.
+          </p>
+          <div className="mt-4 grid gap-2">
+            {seasonStandings.map((row) => (
+              <div key={row.TeamID} className="grid grid-cols-[38px_minmax(0,1fr)_64px_64px_84px] items-center gap-3 border border-white/8 bg-black/20 px-3 py-2">
+                <div className="text-sm font-bold text-white">{row.Position}</div>
+                <div className="flex min-w-0 items-center gap-2">
+                  <TeamLogo TeamID={row.TeamID} size="sm" logoStyleOverride={logoStyle} alt={row.Team} className="opacity-95" />
+                  <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
+                </div>
+                <div className="text-right text-sm text-slate-300">{row.Wins}W</div>
+                <div className="text-right text-sm text-slate-300">{row.Podiums}P</div>
+                <div className="text-right text-sm font-semibold text-sky-300">{row.Points} pts</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border border-white/10 bg-white/[0.015] p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Best Stop</div>
+          <h3 className="mt-2 text-base font-bold text-white">Season Benchmarks</h3>
+          <div className="mt-4 grid gap-3">
+            {seasonStandings.slice(0, 3).map((row) => (
+              <div key={`benchmark-${row.TeamID}`} className="border border-white/8 bg-black/20 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <TeamLogo TeamID={row.TeamID} size="sm" logoStyleOverride={logoStyle} alt={row.Team} className="opacity-95" />
+                    <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
+                  </div>
+                  <div className="text-sm font-bold text-amber-300">{Number(row.BestStop || 0).toFixed(3)}s</div>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
+                  <div
+                    className="h-full bg-[linear-gradient(90deg,rgba(14,165,233,0.9),rgba(251,191,36,0.95))]"
+                    style={{ width: `${clampPercentage((seasonStandings[0]?.BestStop || row.BestStop) / Math.max(row.BestStop || 1, 1), 1) || 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border border-white/10 bg-white/[0.015] p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Per Race</div>
+            <h3 className="mt-2 text-base font-bold text-white">Fastest Pit Stop By Round</h3>
+          </div>
+          <div className="text-xs text-slate-500">Read-only season summary</div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          {rounds.map((race) => (
+            <div key={race.RaceID} className="border border-white/8 bg-black/20 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{raceAbbrevs[race.TrackID] || `R${race.RaceID}`}</div>
+                  <div className="mt-1 text-sm font-bold text-white">{race.Race}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Stops</div>
+                  <div className="text-sm font-semibold text-white">{race.stopCount}</div>
+                </div>
+              </div>
+              {race.winner ? (
+                <div className="mt-3 rounded border border-amber-300/20 bg-amber-500/10 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <TeamLogo TeamID={race.winner.TeamID} size="sm" logoStyleOverride={logoStyle} alt={race.winner.Team} className="opacity-95" />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-white">{race.winner.Team}</div>
+                        <div className="truncate text-xs text-slate-400">{race.winner.Driver}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm font-bold text-amber-300">{Number(race.winner.FastestPitStopTime || 0).toFixed(3)}s</div>
+                  </div>
+                </div>
+              ) : null}
+              <div className="mt-3 grid gap-2">
+                {race.rows.map((row) => (
+                  <div
+                    key={`${row.RaceID}-${row.TeamID}-${row.FinishPosition}`}
+                    className="grid w-full grid-cols-[28px_minmax(0,1fr)_76px_56px] items-center gap-3 border border-white/8 bg-white/[0.03] px-3 py-2 text-left"
+                  >
+                    <div className="text-sm font-bold text-white">{row.FinishPosition}</div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-white">{row.Team}</div>
+                      <div className="truncate text-xs text-slate-400">{row.Driver}</div>
+                    </div>
+                    <div className="text-right text-sm text-sky-300">{Number(row.FastestPitStopTime || 0).toFixed(3)}s</div>
+                    <div className="text-right text-sm text-slate-300">{row.Points} pts</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                <span>Total delay</span>
+                <span>{Number(race.totalDelay || 0).toFixed(3)}s</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );
@@ -1704,14 +1839,24 @@ export default function SaveOperations({
     {
       id: "sporting",
       name: "Sporting",
-      description: "Pit stop awards and inspections",
+      description: "Penalties and inspections",
       content: (
         <SportingWorkspace
-          pitStopRows={pitStopRows}
-          timingRows={timingRows}
           inspectionRows={inspectionRows}
           penaltyCount={penaltyCount}
           onRefresh={refresh}
+          currentSeason={currentSeason}
+        />
+      ),
+    },
+    {
+      id: "pit-stop",
+      name: "Pit Stop",
+      description: "Pit stop awards and timing detail",
+      content: (
+        <PitStopWorkspace
+          pitStopRows={pitStopRows}
+          timingRows={timingRows}
           currentSeason={currentSeason}
         />
       ),

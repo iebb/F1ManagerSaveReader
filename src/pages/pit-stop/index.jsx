@@ -3,10 +3,10 @@ import SaveOperations from "@/components/Modding/SaveOperations";
 export default function Page() {
   return (
     <SaveOperations
-      visibleTabs={["sporting"]}
+      visibleTabs={["pit-stop"]}
       titleEyebrow="Season Workspace"
-      title="Sporting Audit"
-      description="Inspect inspection outcomes and grid penalty state as a dedicated sporting operations page."
+      title="Pit Stop"
+      description="Inspect pit stop award rows and timing-stage detail as a dedicated DHL fastest-pit-stop workspace."
       showLimitNote={false}
     />
   );

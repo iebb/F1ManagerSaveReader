@@ -270,7 +270,6 @@ PR1.PracticeSession IS NULL`
     }
 
   }, [database, season])
-
   return (
     <div className="grid gap-3">
       <section className="border border-white/10 bg-white/[0.015] p-4">

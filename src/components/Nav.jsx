@@ -1,6 +1,7 @@
 import Customize from "@/components/Customize";
 import Parts from "@/components/Parts";
 import People from "@/components/People/Staff";
+import PitStop from "@/pages/pit-stop";
 import Plugins from "@/components/Plugin/Plugins";
 import Staff from "@/components/Staff/Staff";
 import {BasicInfoContext, MetadataContext} from "@/js/Contexts";
@@ -49,7 +50,6 @@ const sections = [
     items: [
       {name: "Weekend Setup", icon: <EventIcon fontSize="small" />, tab: <WeekendSetup />, showOnlyInWeekend: true},
       {name: "Race Control", icon: <FlagIcon fontSize="small" />, tab: <RaceControl />, showOnlyInWeekend: true, minVersion: "3.0"},
-      {name: "Sporting Audit", icon: <FlagIcon fontSize="small" />, tab: <Sporting />},
     ],
   },
   {
@@ -59,6 +59,8 @@ const sections = [
       {name: "Results", icon: <SportsScoreIcon fontSize="small" />, tab: <F1Results />},
       {name: "Season Summary", icon: <SportsScoreIcon fontSize="small" />, tab: <RaceResults />},
       {name: "Regulations", icon: <RuleIcon fontSize="small" />, tab: <Regulations />},
+      {name: "Pit Stop", icon: <FlagIcon fontSize="small" />, tab: <PitStop />},
+      {name: "Sporting Audit", icon: <FlagIcon fontSize="small" />, tab: <Sporting />},
     ],
   },
   {
