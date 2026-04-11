@@ -116,6 +116,162 @@ const compareCountbackMaps = (leftCounts, rightCounts) => {
   return 0;
 };
 
+const buildActiveContractDriverMap = ({ database, season }) => {
+  const contractColumns = new Set(
+    (database.getAllRows?.("PRAGMA table_info('Staff_Contracts')") || []).map((row) => row.name)
+  );
+  const hasFormula = contractColumns.has("Formula");
+  const formulaSelect = hasFormula
+    ? "COALESCE(sc.Formula, t.Formula, 1)"
+    : "COALESCE(t.Formula, 1)";
+  const rows = database.getAllRows(
+    `
+      SELECT DISTINCT sc.StaffID AS DriverID, ${formulaSelect} AS RaceFormula
+      FROM Staff_Contracts sc
+      JOIN Staff_DriverData sd ON sd.StaffID = sc.StaffID
+      LEFT JOIN Teams t ON t.TeamID = sc.TeamID
+      WHERE sc.ContractType = 0
+        AND sc.EndSeason >= :season
+        AND sc.TeamID > 0
+        AND sc.PosInTeam IN (1, 2)
+        ${hasFormula ? "AND sc.Formula > 0" : ""}
+    `,
+    { ":season": season }
+  );
+
+  const formulaMap = new Map();
+  rows.forEach((row) => {
+    const driverId = Number(row.DriverID);
+    const formula = Number(row.RaceFormula);
+    if (!Number.isFinite(driverId) || !Number.isFinite(formula) || formula <= 0) {
+      return;
+    }
+    if (!formulaMap.has(formula)) {
+      formulaMap.set(formula, new Set());
+    }
+    formulaMap.get(formula).add(driverId);
+  });
+  return formulaMap;
+};
+
+const buildEnteredRaceDriverMap = ({ database, season, tableSet }) => {
+  const formulaMap = new Map();
+  const addRows = (rows) => {
+    rows.forEach((row) => {
+      const driverId = Number(row.DriverID);
+      const formula = Number(row.RaceFormula);
+      if (!Number.isFinite(driverId) || !Number.isFinite(formula) || formula <= 0) {
+        return;
+      }
+      if (!formulaMap.has(formula)) {
+        formulaMap.set(formula, new Set());
+      }
+      formulaMap.get(formula).add(driverId);
+    });
+  };
+
+  if (tableSet.has("Races_Results")) {
+    addRows(database.getAllRows(
+      `SELECT DISTINCT DriverID, 1 AS RaceFormula
+       FROM Races_Results
+       WHERE Season = :season`,
+      { ":season": season }
+    ));
+  }
+  if (tableSet.has("Races_SprintResults")) {
+    addRows(database.getAllRows(
+      `SELECT DISTINCT DriverID, RaceFormula
+       FROM Races_SprintResults
+       WHERE SeasonID = :season`,
+      { ":season": season }
+    ));
+  }
+  if (tableSet.has("Races_FeatureRaceResults")) {
+    addRows(database.getAllRows(
+      `SELECT DISTINCT DriverID, RaceFormula
+       FROM Races_FeatureRaceResults
+       WHERE SeasonID = :season`,
+      { ":season": season }
+    ));
+  }
+
+  return formulaMap;
+};
+
+const syncDriverStandingsEntries = ({ database, season, tableSet }) => {
+  const contractedByFormula = buildActiveContractDriverMap({ database, season });
+  const enteredByFormula = buildEnteredRaceDriverMap({ database, season, tableSet });
+  const eligibleByFormula = new Map();
+
+  const formulas = new Set([
+    ...contractedByFormula.keys(),
+    ...enteredByFormula.keys(),
+  ]);
+
+  formulas.forEach((formula) => {
+    const eligible = new Set([
+      ...(contractedByFormula.get(formula) || new Set()),
+      ...(enteredByFormula.get(formula) || new Set()),
+    ]);
+    eligibleByFormula.set(formula, eligible);
+  });
+
+  const existingRows = database.getAllRows(
+    `SELECT ROWID AS __RowId, SeasonID, DriverID, RaceFormula
+     FROM Races_DriverStandings
+     WHERE SeasonID = :season`,
+    { ":season": season }
+  );
+  const existingKeys = new Set();
+  existingRows.forEach((row) => {
+    const driverId = Number(row.DriverID);
+    const formula = Number(row.RaceFormula);
+    const eligible = eligibleByFormula.get(formula);
+    const key = `${driverId}:${formula}`;
+    if (existingKeys.has(key)) {
+      database.exec(
+        `DELETE FROM Races_DriverStandings WHERE ROWID = :rowId`,
+        { ":rowId": Number(row.__RowId) }
+      );
+      return;
+    }
+    existingKeys.add(key);
+    if (!eligible?.has(driverId)) {
+      database.exec(
+        `DELETE FROM Races_DriverStandings
+         WHERE SeasonID = :season
+           AND DriverID = :driverId
+           AND RaceFormula = :formula`,
+        {
+          ":season": season,
+          ":driverId": driverId,
+          ":formula": formula,
+        }
+      );
+    }
+  });
+
+  formulas.forEach((formula) => {
+    const eligible = eligibleByFormula.get(formula) || new Set();
+    [...eligible].forEach((driverId) => {
+      const key = `${driverId}:${formula}`;
+      if (existingKeys.has(key)) {
+        return;
+      }
+      database.exec(
+        `INSERT INTO Races_DriverStandings
+         (SeasonID, DriverID, Points, Position, LastPointsChange, LastPositionChange, RaceFormula)
+         VALUES (:season, :driverId, 0, 0, 0, 0, :formula)`,
+        {
+          ":season": season,
+          ":driverId": driverId,
+          ":formula": formula,
+        }
+      );
+    });
+  });
+};
+
 const recalculateStandingsTable = ({
   database,
   season,
@@ -190,6 +346,7 @@ export const recalculateRaceStandings = ({ database, season, tableSet }) => {
   }
 
   if (tableSet.has("Races_DriverStandings")) {
+    syncDriverStandingsEntries({ database, season, tableSet });
     const driverPointRows = database.getAllRows(
         `
           SELECT DriverID, RaceFormula, RaceID, SUM(Points) AS Points

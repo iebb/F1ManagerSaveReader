@@ -1749,7 +1749,7 @@ function compareSimulatedSessionRows(left, right) {
   if (bucketCompare !== 0) {
     return bucketCompare;
   }
-  if (Number(left.__sessionSortBucket || 0) === 1) {
+  if (Number.isFinite(Number(left.__sessionLaps)) || Number.isFinite(Number(right.__sessionLaps))) {
     const lapCompare = Number(right.__sessionLaps || 0) - Number(left.__sessionLaps || 0);
     if (lapCompare !== 0) {
       return lapCompare;
