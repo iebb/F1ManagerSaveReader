@@ -204,8 +204,9 @@ const DEFAULT_SERIES_CONFIG = {
 const F1_RACE_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const F1_SPRINT_POINTS = [8, 7, 6, 5, 4, 3, 2, 1];
 const DEFAULT_CUSTOM_TEAM_RANDOMIZATION = {
-  baselinePosition: 18,
-  derivation: 3,
+  baselineStrength: 12,
+  derivation: 14,
+  dnfChance: 8,
 };
 
 export async function readRealWorldDatasetFile(file) {
@@ -665,18 +666,19 @@ function buildSessionImportRows({ importState, seriesKey, season, event, session
     event.round,
     plan.sessionType,
     importState.customTeamRandomization?.teamId,
-    importState.customTeamRandomization?.baselinePosition,
+    importState.customTeamRandomization?.baselineStrength,
     importState.customTeamRandomization?.derivation,
+    importState.customTeamRandomization?.dnfChance,
   ].join(":"));
-  const baselinePosition = Number(importState.customTeamRandomization?.baselinePosition || DEFAULT_CUSTOM_TEAM_RANDOMIZATION.baselinePosition);
+  const baselineStrength = Number(importState.customTeamRandomization?.baselineStrength || DEFAULT_CUSTOM_TEAM_RANDOMIZATION.baselineStrength);
   const derivation = Number(importState.customTeamRandomization?.derivation || DEFAULT_CUSTOM_TEAM_RANDOMIZATION.derivation);
+  const dnfChance = Number(importState.customTeamRandomization?.dnfChance || DEFAULT_CUSTOM_TEAM_RANDOMIZATION.dnfChance);
   const explicitFastestLapDriver = plan.sessionType === "race"
     ? findExplicitFastestLapDriverKey(sessionRows)
     : null;
 
   const rankedRows = sessionRows.map((row, index) => ({
     ...row,
-    __sortRank: index + 1,
     __source: "imported",
     __originalIndex: index,
     __originalPoints: Number(row?.points ?? row?.pts ?? 0),
@@ -691,9 +693,8 @@ function buildSessionImportRows({ importState, seriesKey, season, event, session
   let customDriverChanges = 0;
 
   customTeamDrivers.forEach((driver, index) => {
-    const teammateOffset = index === 0 ? -0.35 - (rng() * 0.35) : 0.35 + (rng() * 0.35);
-    const randomOffset = derivation > 0 ? (((rng() * 2) - 1) * derivation) : 0;
-    const sortRank = Math.max(1, baselinePosition + randomOffset + teammateOffset);
+    const teammateOffset = index === 0 ? -0.05 - (rng() * 0.04) : 0.05 + (rng() * 0.04);
+    const targetQuantile = clampUnitInterval((100 - baselineStrength) / 100 + teammateOffset);
     const existingRow = rankedRowByDriver.get(normalizeName(driver.driverName))
       || rankedRowByDriver.get(`code:${normalizeDriverCode(driver.driverCode)}`);
     if (existingRow) {
@@ -701,15 +702,19 @@ function buildSessionImportRows({ importState, seriesKey, season, event, session
       existingRow.teamName = driver.teamName;
       existingRow.teamId = driver.teamId;
       existingRow.driverNumber = driver.driverNumber ?? existingRow.driverNumber;
-      existingRow.__sortRank = sortRank;
       existingRow.__source = "custom-team-reassigned";
+      existingRow.__targetQuantile = targetQuantile;
+      existingRow.__variation = derivation;
+      existingRow.__dnfChance = dnfChance;
       customDriverChanges += 1;
       return;
     }
     rankedRows.push(buildSyntheticCustomTeamRow({
       driver,
       sessionType: plan.sessionType,
-      sortRank,
+      targetQuantile,
+      derivation,
+      dnfChance,
       lapFallback: getSessionLapFallback(sessionRows),
     }));
     customDriverChanges += 1;
@@ -718,17 +723,13 @@ function buildSessionImportRows({ importState, seriesKey, season, event, session
     return sessionRows;
   }
 
-  rankedRows.sort((left, right) => {
-    if (left.__sortRank !== right.__sortRank) {
-      return left.__sortRank - right.__sortRank;
-    }
-    if (left.__source !== right.__source) {
-      return left.__source === "imported" ? -1 : 1;
-    }
-    return (left.__originalIndex ?? 0) - (right.__originalIndex ?? 0);
+  const simulatedRows = simulateCustomTeamSessionRows({
+    rows: rankedRows,
+    sessionType: plan.sessionType,
+    rng,
   });
 
-  return rankedRows.map((row, index, allRows) => finalizeSyntheticSessionRow({
+  return simulatedRows.map((row, index, allRows) => finalizeSyntheticSessionRow({
     row,
     index,
     allRows,
@@ -1476,7 +1477,7 @@ function readCustomTeamDriverRow(database, driverId) {
   };
 }
 
-function buildSyntheticCustomTeamRow({ driver, sessionType, sortRank, lapFallback }) {
+function buildSyntheticCustomTeamRow({ driver, sessionType, targetQuantile, derivation, dnfChance, lapFallback }) {
   const baseRow = {
     driverId: driver.driverId,
     driverName: driver.driverName,
@@ -1484,7 +1485,9 @@ function buildSyntheticCustomTeamRow({ driver, sessionType, sortRank, lapFallbac
     driverNumber: driver.driverNumber,
     teamName: driver.teamName,
     teamId: driver.teamId,
-    __sortRank: sortRank,
+    __targetQuantile: targetQuantile,
+    __variation: derivation,
+    __dnfChance: dnfChance,
     __source: "synthetic-custom-team",
   };
   if (sessionType === "qualifying") {
@@ -1514,7 +1517,7 @@ function finalizeSyntheticSessionRow({ row, index, allRows, sessionType, explici
   const finalized = {
     ...row,
     position: finishingPos,
-    positionText: `${finishingPos}`,
+    positionText: row.__displayPositionText || `${finishingPos}`,
   };
 
   if (sessionType === "qualifying") {
@@ -1533,16 +1536,34 @@ function finalizeSyntheticSessionRow({ row, index, allRows, sessionType, explici
       : 0;
   finalized.points = basePoints + bonusPoint;
 
-  if (row.__source === "synthetic-custom-team") {
+  if (row.__source && row.__source !== "imported") {
     if (sessionType === "race" || sessionType === "sprint") {
-      const timeSeconds = inferSyntheticRaceTimeSeconds(allRows, index);
+      const timeSeconds = Number.isFinite(Number(row.__simulatedTimeSeconds))
+        ? Number(row.__simulatedTimeSeconds)
+        : inferSyntheticRaceTimeSeconds(allRows, index);
       if (Number.isFinite(timeSeconds)) {
         finalized.timeMillis = Math.max(0, Math.round(timeSeconds * 1000));
         finalized.time = formatSyntheticRaceTime({
           timeSeconds,
           finishingPos,
           winnerSeconds: inferSyntheticRaceTimeSeconds(allRows, 0),
+          laps: Number(finalized.laps || 0),
+          winnerLaps: Number(allRows[0]?.laps || finalized.laps || 0),
+          isRetired: row.__isRetired,
         });
+      }
+      if (row.__isRetired) {
+        finalized.status = "Retired";
+        finalized.classificationStatus = "Retired";
+        finalized.positionText = "DNF";
+      }
+    }
+    if (sessionType === "qualifying") {
+      const lapSeconds = Number(row.__simulatedLapSeconds);
+      if (Number.isFinite(lapSeconds)) {
+        finalized.q1 = formatLapTimeSeconds(lapSeconds);
+        finalized.q2 = null;
+        finalized.q3 = null;
       }
     }
   }
@@ -1551,6 +1572,9 @@ function finalizeSyntheticSessionRow({ row, index, allRows, sessionType, explici
 }
 
 function inferSyntheticRaceTimeSeconds(rows, index) {
+  if (Number.isFinite(Number(rows[index]?.__simulatedTimeSeconds))) {
+    return Number(rows[index].__simulatedTimeSeconds);
+  }
   const previous = [...rows.slice(0, index)].reverse().find((row) => Number.isFinite(extractRaceTimeSeconds(row)));
   const next = rows.slice(index + 1).find((row) => Number.isFinite(extractRaceTimeSeconds(row)));
   const previousSeconds = extractRaceTimeSeconds(previous);
@@ -1571,6 +1595,10 @@ function extractRaceTimeSeconds(row) {
   if (!row) {
     return null;
   }
+  const simulatedSeconds = Number(row.__simulatedTimeSeconds);
+  if (Number.isFinite(simulatedSeconds)) {
+    return simulatedSeconds;
+  }
   const explicitMillis = Number(row.timeMillis);
   if (Number.isFinite(explicitMillis)) {
     return explicitMillis / 1000;
@@ -1582,9 +1610,16 @@ function extractRaceTimeSeconds(row) {
   return null;
 }
 
-function formatSyntheticRaceTime({ timeSeconds, finishingPos, winnerSeconds }) {
+function formatSyntheticRaceTime({ timeSeconds, finishingPos, winnerSeconds, laps, winnerLaps, isRetired }) {
   if (!Number.isFinite(timeSeconds)) {
     return null;
+  }
+  if (isRetired) {
+    return "Retired";
+  }
+  if (Number.isFinite(winnerLaps) && Number.isFinite(laps) && winnerLaps > 0 && laps < winnerLaps) {
+    const lapDelta = Math.max(1, winnerLaps - laps);
+    return `+${lapDelta} ${lapDelta === 1 ? "lap" : "laps"}`;
   }
   if (finishingPos === 1) {
     const hours = Math.floor(timeSeconds / 3600);
@@ -1594,6 +1629,190 @@ function formatSyntheticRaceTime({ timeSeconds, finishingPos, winnerSeconds }) {
   }
   const winnerTime = Number.isFinite(winnerSeconds) ? winnerSeconds : 0;
   return `+${Math.max(0, timeSeconds - winnerTime).toFixed(3)}`;
+}
+
+function simulateCustomTeamSessionRows({ rows, sessionType, rng }) {
+  if (sessionType === "qualifying") {
+    return simulateCustomTeamQualifyingRows({ rows, rng });
+  }
+  if (sessionType === "race" || sessionType === "sprint") {
+    return simulateCustomTeamRaceRows({ rows, sessionType, rng });
+  }
+  return rows;
+}
+
+function simulateCustomTeamQualifyingRows({ rows, rng }) {
+  const anchors = rows
+    .map((row, index) => ({
+      row,
+      index,
+      lapSeconds: Number.isFinite(Number(row.__simulatedLapSeconds))
+        ? Number(row.__simulatedLapSeconds)
+        : resolveBestLapTime(row, "qualifying", null),
+    }))
+    .filter((entry) => Number.isFinite(entry.lapSeconds))
+    .sort((left, right) => left.lapSeconds - right.lapSeconds || left.index - right.index);
+  if (!anchors.length) {
+    return rows;
+  }
+
+  rows.forEach((row) => {
+    if (row.__source === "imported") {
+      row.__sessionSortBucket = 0;
+      row.__sessionMetric = resolveBestLapTime(row, "qualifying", null);
+      return;
+    }
+    const quantile = sampleNormalizedQuantile({
+      rng,
+      targetQuantile: Number(row.__targetQuantile),
+      derivation: Number(row.__variation),
+    });
+    row.__simulatedLapSeconds = interpolateAnchoredMetric(anchors.map((entry) => entry.lapSeconds), quantile);
+    row.__sessionSortBucket = 0;
+    row.__sessionMetric = row.__simulatedLapSeconds;
+  });
+
+  return [...rows].sort(compareSimulatedSessionRows);
+}
+
+function simulateCustomTeamRaceRows({ rows, sessionType, rng }) {
+  const context = buildSessionTimeContext(sessionType, rows);
+  const winnerLaps = Number(context?.winnerLaps || getSessionLapFallback(rows) || 57);
+  const avgLap = Number(context?.averageLapTime || 90);
+  const classifiedAnchors = rows
+    .map((row, index) => ({
+      row,
+      index,
+      laps: normalizeImportedLaps({ resultRow: row, sessionType, sessionLapFallback: winnerLaps }),
+      timeSeconds: resolveRaceTimeSeconds(row, sessionType, context),
+      dnf: isNonFinishStatus(row),
+    }))
+    .filter((entry) => !entry.dnf && Number(entry.laps || 0) > 0 && Number.isFinite(entry.timeSeconds))
+    .sort((left, right) => left.timeSeconds - right.timeSeconds || right.laps - left.laps || left.index - right.index);
+  const anchorTimes = classifiedAnchors.map((entry) => entry.timeSeconds);
+  const worstTime = anchorTimes[anchorTimes.length - 1] || ((context?.winnerTime || 0) + avgLap);
+
+  rows.forEach((row) => {
+    if (row.__source === "imported") {
+      const importedLaps = normalizeImportedLaps({ resultRow: row, sessionType, sessionLapFallback: winnerLaps });
+      row.__sessionSortBucket = isNonFinishStatus(row) ? 1 : 0;
+      row.__sessionMetric = resolveRaceTimeSeconds(row, sessionType, context);
+      row.__sessionLaps = importedLaps;
+      return;
+    }
+
+    const shouldDnf = rng() < (clampNumericValue(row.__dnfChance, DEFAULT_CUSTOM_TEAM_RANDOMIZATION.dnfChance, 0, 100) / 100);
+    if (shouldDnf) {
+      const dnfLaps = sampleRetirementLaps({ rng, winnerLaps });
+      row.laps = dnfLaps;
+      row.status = "Retired";
+      row.classificationStatus = "Retired";
+      row.time = "Retired";
+      row.timeMillis = null;
+      row.fastestLap = null;
+      row.__isRetired = true;
+      row.__displayPositionText = "DNF";
+      row.__sessionSortBucket = 1;
+      row.__sessionLaps = dnfLaps;
+      row.__sessionMetric = (winnerLaps - dnfLaps) * avgLap;
+      row.__simulatedTimeSeconds = context?.winnerTime || 0;
+      return;
+    }
+
+    const quantile = sampleNormalizedQuantile({
+      rng,
+      targetQuantile: Number(row.__targetQuantile),
+      derivation: Number(row.__variation),
+    });
+    const effectiveTime = anchorTimes.length
+      ? interpolateAnchoredMetric(anchorTimes, quantile)
+      : Math.max(Number(context?.winnerTime || 0), worstTime);
+    const lapDeficit = Math.max(0, Math.floor(Math.max(0, effectiveTime - Number(context?.winnerTime || 0)) / Math.max(avgLap, 1)));
+    const completedLaps = Math.max(1, winnerLaps - lapDeficit);
+    row.laps = completedLaps;
+    row.status = "Finished";
+    row.classificationStatus = "Finished";
+    row.__isRetired = false;
+    row.__displayPositionText = null;
+    row.__sessionSortBucket = 0;
+    row.__sessionLaps = completedLaps;
+    row.__simulatedTimeSeconds = effectiveTime;
+    row.__sessionMetric = effectiveTime;
+    row.timeMillis = Math.max(0, Math.round(effectiveTime * 1000));
+  });
+
+  return [...rows].sort(compareSimulatedSessionRows);
+}
+
+function compareSimulatedSessionRows(left, right) {
+  const bucketCompare = Number(left.__sessionSortBucket || 0) - Number(right.__sessionSortBucket || 0);
+  if (bucketCompare !== 0) {
+    return bucketCompare;
+  }
+  if (Number(left.__sessionSortBucket || 0) === 1) {
+    const lapCompare = Number(right.__sessionLaps || 0) - Number(left.__sessionLaps || 0);
+    if (lapCompare !== 0) {
+      return lapCompare;
+    }
+  }
+  const metricCompare = Number(left.__sessionMetric || 0) - Number(right.__sessionMetric || 0);
+  if (metricCompare !== 0) {
+    return metricCompare;
+  }
+  if (left.__source !== right.__source) {
+    return left.__source === "imported" ? -1 : 1;
+  }
+  return Number(left.__originalIndex || 0) - Number(right.__originalIndex || 0);
+}
+
+function sampleNormalizedQuantile({ rng, targetQuantile, derivation }) {
+  const sigma = clampNumericValue(derivation, DEFAULT_CUSTOM_TEAM_RANDOMIZATION.derivation, 0, 100) / 100;
+  const gaussian = randomStandardNormal(rng);
+  return clampUnitInterval(targetQuantile + (gaussian * sigma * 0.28));
+}
+
+function interpolateAnchoredMetric(sortedValues, quantile) {
+  if (!sortedValues.length) {
+    return 0;
+  }
+  if (sortedValues.length === 1) {
+    return Number(sortedValues[0]);
+  }
+  const scaled = clampUnitInterval(quantile) * (sortedValues.length - 1);
+  const lowerIndex = Math.floor(scaled);
+  const upperIndex = Math.min(sortedValues.length - 1, lowerIndex + 1);
+  const remainder = scaled - lowerIndex;
+  const lower = Number(sortedValues[lowerIndex] || 0);
+  const upper = Number(sortedValues[upperIndex] || lower);
+  return lower + ((upper - lower) * remainder);
+}
+
+function randomStandardNormal(rng) {
+  const u1 = Math.max(rng(), 1e-9);
+  const u2 = Math.max(rng(), 1e-9);
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+
+function clampUnitInterval(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0.5;
+  }
+  return Math.max(0, Math.min(1, numeric));
+}
+
+function sampleRetirementLaps({ rng, winnerLaps }) {
+  const normalized = clampUnitInterval(0.2 + (rng() * 0.78));
+  return Math.max(1, Math.min(winnerLaps - 1, Math.round(normalized * (winnerLaps - 1))));
+}
+
+function formatLapTimeSeconds(timeSeconds) {
+  if (!Number.isFinite(timeSeconds)) {
+    return null;
+  }
+  const minutes = Math.floor(timeSeconds / 60);
+  const seconds = (timeSeconds % 60).toFixed(3).padStart(6, "0");
+  return `${minutes}:${seconds}`;
 }
 
 function findExplicitFastestLapDriverKey(rows) {
@@ -1612,22 +1831,38 @@ function normalizeCustomTeamRandomization({ basicInfo, customTeamRandomization }
   if (!Number.isFinite(teamId)) {
     return null;
   }
-  const baselinePosition = clampNumericValue(
+  const legacyBaselinePosition = clampNumericValue(
     customTeamRandomization?.baselinePosition,
-    DEFAULT_CUSTOM_TEAM_RANDOMIZATION.baselinePosition,
+    null,
     1,
     20
+  );
+  const derivedLegacyStrength = Number.isFinite(legacyBaselinePosition)
+    ? Math.round(((20 - legacyBaselinePosition) / 19) * 100)
+    : DEFAULT_CUSTOM_TEAM_RANDOMIZATION.baselineStrength;
+  const baselineStrength = clampNumericValue(
+    customTeamRandomization?.baselineStrength,
+    derivedLegacyStrength,
+    0,
+    100
   );
   const derivation = clampNumericValue(
     customTeamRandomization?.derivation,
     DEFAULT_CUSTOM_TEAM_RANDOMIZATION.derivation,
     0,
-    10
+    100
+  );
+  const dnfChance = clampNumericValue(
+    customTeamRandomization?.dnfChance,
+    DEFAULT_CUSTOM_TEAM_RANDOMIZATION.dnfChance,
+    0,
+    100
   );
   return {
     teamId,
-    baselinePosition,
+    baselineStrength,
     derivation,
+    dnfChance,
   };
 }
 

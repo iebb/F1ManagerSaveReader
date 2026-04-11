@@ -30,8 +30,9 @@ export default function RealWorldSeasonImporter() {
   const [targetYear, setTargetYear] = useState("");
   const [lastRound, setLastRound] = useState(0);
   const [isApplying, setIsApplying] = useState(false);
-  const [customTeamBaselinePosition, setCustomTeamBaselinePosition] = useState(18);
-  const [customTeamDerivation, setCustomTeamDerivation] = useState(3);
+  const [customTeamBaselineStrength, setCustomTeamBaselineStrength] = useState(12);
+  const [customTeamDerivation, setCustomTeamDerivation] = useState(14);
+  const [customTeamDnfChance, setCustomTeamDnfChance] = useState(8);
   const [driverReplacementSelections, setDriverReplacementSelections] = useState({});
   const currentSeason = Number(basicInfo?.player?.CurrentSeason || 0);
   const lockedCompletedRounds = useMemo(() => getLockedCompletedRounds(basicInfo), [basicInfo]);
@@ -248,8 +249,9 @@ export default function RealWorldSeasonImporter() {
         targetYear: Number(targetYear),
         lastCompletedRound: Number(lastRound),
         customTeamRandomization: customF1Team ? {
-          baselinePosition: Number(customTeamBaselinePosition),
+          baselineStrength: Number(customTeamBaselineStrength),
           derivation: Number(customTeamDerivation),
+          dnfChance: Number(customTeamDnfChance),
         } : null,
         driverReplacements: Object.fromEntries(
           Object.entries(driverReplacementSelections)
@@ -386,35 +388,51 @@ export default function RealWorldSeasonImporter() {
                 <div className="grid gap-4">
                   <label className="grid gap-2 text-sm text-slate-200">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium text-white">Baseline Finish</span>
-                      <span className="min-w-[52px] text-right font-semibold text-amber-200">P{customTeamBaselinePosition}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={1}
-                      max={20}
-                      step={1}
-                      value={customTeamBaselinePosition}
-                      onChange={(event) => setCustomTeamBaselinePosition(Number(event.target.value))}
-                      className="w-full accent-amber-400"
-                    />
-                    <div className="text-xs text-slate-400">Target finishing band before event variation.</div>
-                  </label>
-                  <label className="grid gap-2 text-sm text-slate-200">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium text-white">Variation</span>
-                      <span className="min-w-[52px] text-right font-semibold text-amber-200">{customTeamDerivation}</span>
+                      <span className="font-medium text-white">Baseline Pace</span>
+                      <span className="min-w-[52px] text-right font-semibold text-amber-200">{customTeamBaselineStrength}%</span>
                     </div>
                     <input
                       type="range"
                       min={0}
-                      max={10}
+                      max={100}
+                      step={1}
+                      value={customTeamBaselineStrength}
+                      onChange={(event) => setCustomTeamBaselineStrength(Number(event.target.value))}
+                      className="w-full accent-amber-400"
+                    />
+                    <div className="text-xs text-slate-400">100% targets the front, 0% targets the back.</div>
+                  </label>
+                  <label className="grid gap-2 text-sm text-slate-200">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-medium text-white">Variation</span>
+                      <span className="min-w-[52px] text-right font-semibold text-amber-200">{customTeamDerivation}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
                       step={1}
                       value={customTeamDerivation}
                       onChange={(event) => setCustomTeamDerivation(Number(event.target.value))}
                       className="w-full accent-amber-400"
                     />
-                    <div className="text-xs text-slate-400">How far results can swing around the baseline.</div>
+                    <div className="text-xs text-slate-400">Standard-deviation spread around the baseline pace.</div>
+                  </label>
+                  <label className="grid gap-2 text-sm text-slate-200">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-medium text-white">DNF Chance</span>
+                      <span className="min-w-[52px] text-right font-semibold text-amber-200">{customTeamDnfChance}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={customTeamDnfChance}
+                      onChange={(event) => setCustomTeamDnfChance(Number(event.target.value))}
+                      className="w-full accent-amber-400"
+                    />
+                    <div className="text-xs text-slate-400">Probability that a generated race result becomes a retirement.</div>
                   </label>
                 </div>
               </div>
