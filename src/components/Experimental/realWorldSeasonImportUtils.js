@@ -3706,8 +3706,9 @@ function getImportDriverConflicts({ dataset, basicInfo, targetYear, lastComplete
       .map((posInTeam) => {
         const driverKey = teamSeatState?.[customTeamId]?.[posInTeam] || "";
         const driverId = Number(existingDriverIdsByName[driverKey] || 0);
-        const occupiedElsewhere = currentSeatOccupancy[driverId];
-        if (!driverKey || !driverId || !occupiedElsewhere || Number(occupiedElsewhere.teamId) === Number(customTeamId)) {
+        const occupiedElsewhere = (currentSeatOccupancy[driverId] || [])
+          .find((entry) => Number(entry.teamId) !== Number(customTeamId));
+        if (!driverKey || !driverId || !occupiedElsewhere) {
           return null;
         }
         const team = basicInfo?.teamMap?.[customTeamId] || {};
@@ -3744,11 +3745,12 @@ function buildCurrentF1SeatOccupancy(basicInfo) {
         if (!Number.isFinite(driverId) || driverId <= 0) {
           return;
         }
-        occupancy[driverId] = {
+        occupancy[driverId] = occupancy[driverId] || [];
+        occupancy[driverId].push({
           teamId: Number(team.TeamID),
           seat,
           teamName: resolveLiteral(team.TeamNameLocKey || team.TeamName || "") || team.TeamName || `Team ${team.TeamID}`,
-        };
+        });
       });
     });
   return occupancy;
