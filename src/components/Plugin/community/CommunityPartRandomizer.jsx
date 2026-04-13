@@ -687,7 +687,7 @@ export default function CommunityPartRandomizer() {
   };
 
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 0, borderColor: "divider", overflow: "hidden" }}>
+    <Paper id="community-part-randomizer" variant="outlined" sx={{ borderRadius: 0, borderColor: "divider", overflow: "hidden" }}>
       <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider", backgroundColor: "rgba(255,255,255,0.02)" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "flex-start", md: "center" }} justifyContent="space-between">
           <div>
