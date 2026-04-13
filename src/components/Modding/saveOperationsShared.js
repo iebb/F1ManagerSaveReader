@@ -1,8 +1,8 @@
 import {
   circuitNames,
-  resolveLiteral,
-  teamNames
 } from "@/js/localization";
+import {readRows as sharedReadRows} from "@/js/database/utils";
+import {getTeamDisplayName as sharedGetTeamDisplayName} from "@/js/utils/teamDisplay";
 
 export const objectiveStateLabels = {
   0: "Ongoing",
@@ -28,20 +28,8 @@ export const eventTypeLabels = {
   6: "Part Researched",
 };
 
-export const getTeamDisplayName = (teamMap, teamId, version) => {
-  if (teamId > 31 && teamMap?.[teamId]?.TeamNameLocKey) {
-    return resolveLiteral(teamMap[teamId].TeamNameLocKey);
-  }
-  return teamNames(teamId, version);
-};
-
-export const readRows = (database, query, params = {}) => {
-  try {
-    return database.getAllRows(query, params);
-  } catch {
-    return [];
-  }
-};
+export const getTeamDisplayName = sharedGetTeamDisplayName;
+export const readRows = sharedReadRows;
 
 export const clampPercentage = (value, max) => {
   if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {

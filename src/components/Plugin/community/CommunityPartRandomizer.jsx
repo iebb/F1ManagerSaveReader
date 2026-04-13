@@ -1,4 +1,5 @@
 import {DatabaseContext} from "@/js/Contexts";
+import {readFirstRow, readRows, runInTransaction} from "@/js/database/utils";
 import {
   Alert,
   Box,
@@ -56,10 +57,6 @@ function formatDriverName(name) {
   return String(name).split("_").pop().replace(/\]$/, "");
 }
 
-function randomBetweenZeroAndOne() {
-  return Math.random();
-}
-
 function ensureDiffTable(database) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS Parts_Designs_diff (
@@ -75,7 +72,7 @@ function ensureDiffTable(database) {
     )
   `);
 
-  const columns = (database.getAllRows(`PRAGMA table_info('Parts_Designs_diff')`) || []).map((row) => row.name);
+  const columns = readRows(database, `PRAGMA table_info('Parts_Designs_diff')`).map((row) => row.name);
   const missingColumns = [
     ["PreviousDesignID", "INTEGER"],
     ["TeamID", "INTEGER"],
@@ -92,13 +89,13 @@ function ensureDiffTable(database) {
 function calculateDifferencesAndStore(database) {
   ensureDiffTable(database);
 
-  const [{ CurrentSeason: currentSeason }] = database.getAllRows(`
+  const currentSeason = readFirstRow(database, `
     SELECT CurrentSeason
     FROM Player_State
     LIMIT 1
-  `);
+  `)?.CurrentSeason;
 
-  const designs = database.getAllRows(`
+  const designs = readRows(database, `
     SELECT DesignID, PartType, TeamID
     FROM Parts_Designs
     WHERE ValidFrom <= :currentSeason
@@ -108,7 +105,7 @@ function calculateDifferencesAndStore(database) {
   });
 
   for (const design of designs) {
-    const previousDesign = database.getAllRows(`
+    const previousDesign = readFirstRow(database, `
       SELECT DesignID
       FROM Parts_Designs
       WHERE PartType = :partType
@@ -122,14 +119,14 @@ function calculateDifferencesAndStore(database) {
       ":teamId": design.TeamID,
       ":designId": design.DesignID,
       ":currentSeason": currentSeason,
-    })[0];
+    });
 
     if (!previousDesign) {
       continue;
     }
 
     const previousValues = Object.fromEntries(
-      database.getAllRows(`
+      readRows(database, `
         SELECT PartStat, Value
         FROM Parts_Designs_StatValues
         WHERE DesignID = :designId
@@ -138,7 +135,7 @@ function calculateDifferencesAndStore(database) {
       }).map((row) => [row.PartStat, row.Value])
     );
 
-    const currentValues = database.getAllRows(`
+    const currentValues = readRows(database, `
       SELECT PartStat, Value
       FROM Parts_Designs_StatValues
       WHERE DesignID = :designId
@@ -156,7 +153,7 @@ function calculateDifferencesAndStore(database) {
         continue;
       }
 
-      const existing = database.getAllRows(`
+      const existing = readFirstRow(database, `
         SELECT Difference
         FROM Parts_Designs_diff
         WHERE DesignID = :designId
@@ -165,7 +162,7 @@ function calculateDifferencesAndStore(database) {
       `, {
         ":designId": design.DesignID,
         ":partStat": row.PartStat,
-      })[0];
+      });
 
       const difference = existing?.Difference ?? (row.Value - previousValue);
 
@@ -193,12 +190,10 @@ function calculateDifferencesAndStore(database) {
 function buildReport(database) {
   ensureDiffTable(database);
 
-  const player = database.getAllRows(`SELECT TeamID FROM Player LIMIT 1`)[0];
-  const state = database.getAllRows(`SELECT CurrentSeason FROM Player_State LIMIT 1`)[0];
-  const playerTeamId = player?.TeamID ?? -1;
-  const currentSeason = state?.CurrentSeason ?? 0;
+  const playerTeamId = readFirstRow(database, `SELECT TeamID FROM Player LIMIT 1`)?.TeamID ?? -1;
+  const currentSeason = readFirstRow(database, `SELECT CurrentSeason FROM Player_State LIMIT 1`)?.CurrentSeason ?? 0;
 
-  const reportData = database.getAllRows(`
+  const reportData = readRows(database, `
     SELECT
       t.TeamName AS TeamName,
       pdt.name AS PartName,
@@ -278,200 +273,196 @@ export default function CommunityPartRandomizer() {
     setBusyAction("parts");
 
     try {
-      database.exec("BEGIN");
-      ensureDiffTable(database);
-      calculateDifferencesAndStore(database);
+      const { nextReport, nextLog, updateCount } = runInTransaction(database, () => {
+        ensureDiffTable(database);
+        calculateDifferencesAndStore(database);
 
-      const state = database.getAllRows(`
-        SELECT Day, CurrentSeason
-        FROM Player_State
-        LIMIT 1
-      `)[0];
-      const player = database.getAllRows(`
-        SELECT TeamID
-        FROM Player
-        LIMIT 1
-      `)[0];
-      const lastRunRow = database.getAllRows(`
-        SELECT name
-        FROM Parts_Enum_Stats
-        WHERE Value = 12
-        LIMIT 1
-      `)[0];
-
-      const currentDate = state?.Day ?? 0;
-      const currentSeason = state?.CurrentSeason ?? 0;
-      const playerTeamId = player?.TeamID ?? -1;
-      const previousUpdateDate = parseTrackerValue(lastRunRow?.name, 45341);
-
-      const params = {
-        ":previousUpdateDate": previousUpdateDate,
-        ":currentDate": currentDate,
-        ":currentSeason": currentSeason,
-        ":playerTeamId": playerTeamId,
-      };
-
-      const scopeClause = scope === "AI"
-        ? "AND TeamID != :playerTeamId"
-        : (scope === "PLAYER" ? "AND TeamID = :playerTeamId" : "");
-
-      const designsToModify = database.getAllRows(`
-        SELECT DesignID, PartType, TeamID
-        FROM Parts_Designs
-        WHERE DayCompleted BETWEEN :previousUpdateDate AND :currentDate
-          ${scopeClause}
-          AND ValidFrom <= :currentSeason
-        ORDER BY DesignID ASC
-      `, params);
-
-      const detailedLogs = [];
-      let updateCount = 0;
-
-      for (const design of designsToModify) {
-        const randomPercentage = randomBetweenZeroAndOne();
-        const previousDesign = database.getAllRows(`
-          SELECT DesignID
-          FROM Parts_Designs
-          WHERE PartType = :partType
-            AND TeamID = :teamId
-            AND DesignID < :designId
-            AND ValidFrom <= :currentSeason
-          ORDER BY DesignID DESC
+        const state = readFirstRow(database, `
+          SELECT Day, CurrentSeason
+          FROM Player_State
           LIMIT 1
-        `, {
-          ":partType": design.PartType,
-          ":teamId": design.TeamID,
-          ":designId": design.DesignID,
+        `);
+        const playerTeamId = readFirstRow(database, `
+          SELECT TeamID
+          FROM Player
+          LIMIT 1
+        `)?.TeamID ?? -1;
+        const previousUpdateDate = parseTrackerValue(readFirstRow(database, `
+          SELECT name
+          FROM Parts_Enum_Stats
+          WHERE Value = 12
+          LIMIT 1
+        `)?.name, 45341);
+
+        const currentDate = state?.Day ?? 0;
+        const currentSeason = state?.CurrentSeason ?? 0;
+
+        const params = {
+          ":previousUpdateDate": previousUpdateDate,
+          ":currentDate": currentDate,
           ":currentSeason": currentSeason,
-        })[0];
+          ":playerTeamId": playerTeamId,
+        };
 
-        if (!previousDesign) {
-          continue;
-        }
+        const scopeClause = scope === "AI"
+          ? "AND TeamID != :playerTeamId"
+          : (scope === "PLAYER" ? "AND TeamID = :playerTeamId" : "");
 
-        const previousValues = Object.fromEntries(
-          database.getAllRows(`
+        const designsToModify = readRows(database, `
+          SELECT DesignID, PartType, TeamID
+          FROM Parts_Designs
+          WHERE DayCompleted BETWEEN :previousUpdateDate AND :currentDate
+            ${scopeClause}
+            AND ValidFrom <= :currentSeason
+          ORDER BY DesignID ASC
+        `, params);
+
+        const detailedLogs = [];
+        let updateCount = 0;
+
+        for (const design of designsToModify) {
+          const randomPercentage = Math.random();
+          const previousDesign = readFirstRow(database, `
+            SELECT DesignID
+            FROM Parts_Designs
+            WHERE PartType = :partType
+              AND TeamID = :teamId
+              AND DesignID < :designId
+              AND ValidFrom <= :currentSeason
+            ORDER BY DesignID DESC
+            LIMIT 1
+          `, {
+            ":partType": design.PartType,
+            ":teamId": design.TeamID,
+            ":designId": design.DesignID,
+            ":currentSeason": currentSeason,
+          });
+
+          if (!previousDesign) {
+            continue;
+          }
+
+          const previousValues = Object.fromEntries(
+            readRows(database, `
+              SELECT PartStat, Value
+              FROM Parts_Designs_StatValues
+              WHERE DesignID = :designId
+            `, {
+              ":designId": previousDesign.DesignID,
+            }).map((row) => [row.PartStat, row.Value])
+          );
+
+          const currentValues = readRows(database, `
             SELECT PartStat, Value
             FROM Parts_Designs_StatValues
             WHERE DesignID = :designId
           `, {
-            ":designId": previousDesign.DesignID,
-          }).map((row) => [row.PartStat, row.Value])
-        );
+            ":designId": design.DesignID,
+          });
 
-        const currentValues = database.getAllRows(`
-          SELECT PartStat, Value
-          FROM Parts_Designs_StatValues
-          WHERE DesignID = :designId
+          for (const statRow of currentValues) {
+            if (statRow.PartStat === 15) {
+              continue;
+            }
+
+            const previousValue = previousValues[statRow.PartStat];
+            if (previousValue === undefined) {
+              continue;
+            }
+
+            const existingDiff = readFirstRow(database, `
+              SELECT Difference
+              FROM Parts_Designs_diff
+              WHERE DesignID = :designId
+                AND PartStat = :partStat
+              LIMIT 1
+            `, {
+              ":designId": design.DesignID,
+              ":partStat": statRow.PartStat,
+            });
+
+            if (!existingDiff) {
+              continue;
+            }
+
+            const originalDifference = Number(existingDiff.Difference);
+            const low = previousValue;
+            const high = design.TeamID === playerTeamId
+              ? previousValue + (2 * originalDifference)
+              : previousValue + (2 * (originalDifference * multiplier));
+
+            let newValue = low + ((high - low) * randomPercentage);
+            let adjustment = 0;
+
+            if (design.TeamID !== playerTeamId) {
+              adjustment = originalDifference * (difficulty - 1);
+              newValue += adjustment;
+            }
+
+            database.exec(`
+              UPDATE Parts_Designs_StatValues
+              SET Value = :value, UnitValue = :unitValue
+              WHERE DesignID = :designId
+                AND PartStat = :partStat
+            `, {
+              ":value": newValue,
+              ":unitValue": newValue / 10,
+              ":designId": design.DesignID,
+              ":partStat": statRow.PartStat,
+            });
+
+            database.exec(`
+              INSERT OR REPLACE INTO Parts_Designs_diff
+                (DesignID, PartType, PartStat, Difference, PreviousDesignID, TeamID, RandomPercent, IsNegativeDifference)
+              VALUES
+                (:designId, :partType, :partStat, :difference, :previousDesignId, :teamId, :randomPercent, :isNegativeDifference)
+            `, {
+              ":designId": design.DesignID,
+              ":partType": design.PartType,
+              ":partStat": statRow.PartStat,
+              ":difference": originalDifference,
+              ":previousDesignId": previousDesign.DesignID,
+              ":teamId": design.TeamID,
+              ":randomPercent": randomPercentage * 100,
+              ":isNegativeDifference": originalDifference < 0 ? 1 : 0,
+            });
+
+            detailedLogs.push(
+              `Design ${design.DesignID} Stat ${statRow.PartStat}: prev=${previousValue}, current=${statRow.Value}, diff=${originalDifference}, random=${(randomPercentage * 100).toFixed(2)}%, adjustment=${adjustment.toFixed(3)}, new=${newValue.toFixed(3)}`
+            );
+            updateCount += 1;
+          }
+        }
+
+        database.exec(`
+          UPDATE Parts_Enum_Stats
+          SET name = :nextDate
+          WHERE Value = 12
         `, {
-          ":designId": design.DesignID,
+          ":nextDate": currentDate + 1,
         });
 
-        for (const statRow of currentValues) {
-          if (statRow.PartStat === 15) {
-            continue;
-          }
-
-          const previousValue = previousValues[statRow.PartStat];
-          if (previousValue === undefined) {
-            continue;
-          }
-
-          const existingDiff = database.getAllRows(`
-            SELECT Difference
-            FROM Parts_Designs_diff
-            WHERE DesignID = :designId
-              AND PartStat = :partStat
-            LIMIT 1
-          `, {
-            ":designId": design.DesignID,
-            ":partStat": statRow.PartStat,
-          })[0];
-
-          if (!existingDiff) {
-            continue;
-          }
-
-          const originalDifference = Number(existingDiff.Difference);
-          const low = previousValue;
-          const high = design.TeamID === playerTeamId
-            ? previousValue + (2 * originalDifference)
-            : previousValue + (2 * (originalDifference * multiplier));
-
-          let newValue = low + ((high - low) * randomPercentage);
-          let adjustment = 0;
-
-          if (design.TeamID !== playerTeamId) {
-            adjustment = originalDifference * (difficulty - 1);
-            newValue += adjustment;
-          }
-
-          database.exec(`
-            UPDATE Parts_Designs_StatValues
-            SET Value = :value, UnitValue = :unitValue
-            WHERE DesignID = :designId
-              AND PartStat = :partStat
-          `, {
-            ":value": newValue,
-            ":unitValue": newValue / 10,
-            ":designId": design.DesignID,
-            ":partStat": statRow.PartStat,
-          });
-
-          database.exec(`
-            INSERT OR REPLACE INTO Parts_Designs_diff
-              (DesignID, PartType, PartStat, Difference, PreviousDesignID, TeamID, RandomPercent, IsNegativeDifference)
-            VALUES
-              (:designId, :partType, :partStat, :difference, :previousDesignId, :teamId, :randomPercent, :isNegativeDifference)
-          `, {
-            ":designId": design.DesignID,
-            ":partType": design.PartType,
-            ":partStat": statRow.PartStat,
-            ":difference": originalDifference,
-            ":previousDesignId": previousDesign.DesignID,
-            ":teamId": design.TeamID,
-            ":randomPercent": randomPercentage * 100,
-            ":isNegativeDifference": originalDifference < 0 ? 1 : 0,
-          });
-
-          detailedLogs.push(
-            `Design ${design.DesignID} Stat ${statRow.PartStat}: prev=${previousValue}, current=${statRow.Value}, diff=${originalDifference}, random=${(randomPercentage * 100).toFixed(2)}%, adjustment=${adjustment.toFixed(3)}, new=${newValue.toFixed(3)}`
-          );
-          updateCount += 1;
-        }
-      }
-
-      database.exec(`
-        UPDATE Parts_Enum_Stats
-        SET name = :nextDate
-        WHERE Value = 12
-      `, {
-        ":nextDate": currentDate + 1,
+        return {
+          nextReport: buildReport(database),
+          nextLog: [
+            `@sam_fakt Part Randomizer`,
+            `Scope: ${scope}`,
+            `Multiplier: ${multiplier.toFixed(1)}`,
+            `Difficulty: ${difficulty.toFixed(1)}`,
+            `Updated stat rows: ${updateCount}`,
+            "",
+            detailedLogs.length ? detailedLogs.join("\n") : "No eligible part stat rows were updated.",
+          ].join("\n"),
+          updateCount,
+        };
       });
 
-      database.exec("COMMIT");
-
-      const nextReport = buildReport(database);
       setReportRows(nextReport);
-      setLog([
-        `@sam_fakt Part Randomizer`,
-        `Scope: ${scope}`,
-        `Multiplier: ${multiplier.toFixed(1)}`,
-        `Difficulty: ${difficulty.toFixed(1)}`,
-        `Updated stat rows: ${updateCount}`,
-        "",
-        detailedLogs.length ? detailedLogs.join("\n") : "No eligible part stat rows were updated.",
-      ].join("\n"));
-
+      setLog(nextLog);
       enqueueSnackbar(`Updated ${updateCount} part stat rows.`, {
         variant: updateCount ? "success" : "warning",
       });
     } catch (error) {
-      try {
-        database.exec("ROLLBACK");
-      } catch {
-        // Ignore rollback failures after partial transaction state changes.
-      }
       enqueueSnackbar(`Part randomizer failed: ${error.message || error}`, { variant: "error" });
     } finally {
       setBusyAction("");
@@ -486,193 +477,187 @@ export default function CommunityPartRandomizer() {
     setBusyAction("drivers");
 
     try {
-      database.exec("BEGIN");
+      const { nextLog, statUpdates, improvabilityUpdates } = runInTransaction(database, () => {
+        const state = readFirstRow(database, `
+          SELECT Day, CurrentSeason
+          FROM Player_State
+          LIMIT 1
+        `);
+        const currentDate = state?.Day ?? 0;
+        const currentSeason = state?.CurrentSeason ?? 0;
+        const lastUpdateDate = parseTrackerValue(readFirstRow(database, `
+          SELECT name
+          FROM Parts_Enum_Stats
+          WHERE Value = 13
+          LIMIT 1
+        `)?.name, 45341);
+        const daysSinceLastUpdate = Math.max(0, currentDate - lastUpdateDate);
 
-      const state = database.getAllRows(`
-        SELECT Day, CurrentSeason
-        FROM Player_State
-        LIMIT 1
-      `)[0];
-      const lastRunRow = database.getAllRows(`
-        SELECT name
-        FROM Parts_Enum_Stats
-        WHERE Value = 13
-        LIMIT 1
-      `)[0];
+        const drivers = readRows(database, `
+          SELECT DISTINCT sps.StaffID, sbd.FirstName, sbd.LastName
+          FROM Staff_PerformanceStats sps
+          JOIN Staff_DriverData sdd ON sdd.StaffID = sps.StaffID
+          LEFT JOIN Staff_BasicData sbd ON sbd.StaffID = sps.StaffID
+          ORDER BY sps.StaffID ASC
+        `);
 
-      const currentDate = state?.Day ?? 0;
-      const currentSeason = state?.CurrentSeason ?? 0;
-      const lastUpdateDate = parseTrackerValue(lastRunRow?.name, 45341);
-      const daysSinceLastUpdate = Math.max(0, currentDate - lastUpdateDate);
+        const driverLogs = [`Days since last driver update: ${daysSinceLastUpdate}`];
+        let statUpdates = 0;
+        let improvabilityUpdates = 0;
 
-      const drivers = database.getAllRows(`
-        SELECT DISTINCT sps.StaffID, sbd.FirstName, sbd.LastName
-        FROM Staff_PerformanceStats sps
-        JOIN Staff_DriverData sdd ON sdd.StaffID = sps.StaffID
-        LEFT JOIN Staff_BasicData sbd ON sbd.StaffID = sps.StaffID
-        ORDER BY sps.StaffID ASC
-      `);
+        for (const driver of drivers) {
+          const driverName = `${formatDriverName(driver.FirstName)} ${formatDriverName(driver.LastName)}`.trim();
+          const averagePerformance = readFirstRow(database, `
+            SELECT AVG(
+              CASE
+                WHEN CombinedResults.Performance = 3 THEN 2
+                ELSE CombinedResults.Performance
+              END +
+              CASE
+                WHEN CombinedResults.FinishingPos = 1 THEN 0.35
+                WHEN CombinedResults.FinishingPos = 2 THEN 0.15
+                WHEN CombinedResults.FinishingPos = 3 THEN 0.05
+                ELSE 0
+              END
+            ) AS AvgPerformance
+            FROM (
+              SELECT rr.Performance, rr.FinishingPos
+              FROM Races_Results rr
+              JOIN Races r ON rr.RaceID = r.RaceID
+              WHERE rr.DriverID = :driverId
+                AND r.SeasonID = :currentSeason
+                AND r.Day > :lastUpdateDate
+              UNION ALL
+              SELECT frr.Performance, frr.FinishingPos
+              FROM Races_FeatureRaceResults frr
+              JOIN Races r ON frr.RaceID = r.RaceID
+              WHERE frr.DriverID = :driverId
+                AND r.SeasonID = :currentSeason
+                AND r.Day > :lastUpdateDate
+            ) AS CombinedResults
+          `, {
+            ":driverId": driver.StaffID,
+            ":currentSeason": currentSeason,
+            ":lastUpdateDate": lastUpdateDate,
+          })?.AvgPerformance ?? 1.05388;
 
-      const driverLogs = [`Days since last driver update: ${daysSinceLastUpdate}`];
-      let statUpdates = 0;
-      let improvabilityUpdates = 0;
+          const adjustmentFactor = Math.max(0.210776, Math.min(0.843104, averagePerformance - 0.52694)) / 1.05388;
 
-      for (const driver of drivers) {
-        const driverName = `${formatDriverName(driver.FirstName)} ${formatDriverName(driver.LastName)}`.trim();
+          driverLogs.push("");
+          driverLogs.push(`Driver: ${driverName || `Staff ${driver.StaffID}`}`);
+          driverLogs.push(`Performance factor: ${adjustmentFactor.toFixed(3)}`);
 
-        const averagePerformanceRow = database.getAllRows(`
-          SELECT AVG(
-            CASE
-              WHEN CombinedResults.Performance = 3 THEN 2
-              ELSE CombinedResults.Performance
-            END +
-            CASE
-              WHEN CombinedResults.FinishingPos = 1 THEN 0.35
-              WHEN CombinedResults.FinishingPos = 2 THEN 0.15
-              WHEN CombinedResults.FinishingPos = 3 THEN 0.05
-              ELSE 0
-            END
-          ) AS AvgPerformance
-          FROM (
-            SELECT rr.Performance, rr.FinishingPos
-            FROM Races_Results rr
-            JOIN Races r ON rr.RaceID = r.RaceID
-            WHERE rr.DriverID = :driverId
-              AND r.SeasonID = :currentSeason
-              AND r.Day > :lastUpdateDate
-            UNION ALL
-            SELECT frr.Performance, frr.FinishingPos
-            FROM Races_FeatureRaceResults frr
-            JOIN Races r ON frr.RaceID = r.RaceID
-            WHERE frr.DriverID = :driverId
-              AND r.SeasonID = :currentSeason
-              AND r.Day > :lastUpdateDate
-          ) AS CombinedResults
-        `, {
-          ":driverId": driver.StaffID,
-          ":currentSeason": currentSeason,
-          ":lastUpdateDate": lastUpdateDate,
-        })[0];
+          for (const statId of DRIVER_STAT_IDS) {
+            const statRow = readFirstRow(database, `
+              SELECT Val
+              FROM Staff_PerformanceStats
+              WHERE StaffID = :driverId
+                AND StatID = :statId
+              LIMIT 1
+            `, {
+              ":driverId": driver.StaffID,
+              ":statId": statId,
+            });
 
-        const averagePerformance = averagePerformanceRow?.AvgPerformance ?? 1.05388;
-        const adjustmentFactor = Math.max(0.210776, Math.min(0.843104, averagePerformance - 0.52694)) / 1.05388;
+            if (!statRow) {
+              continue;
+            }
 
-        driverLogs.push(``);
-        driverLogs.push(`Driver: ${driverName || `Staff ${driver.StaffID}`}`);
-        driverLogs.push(`Performance factor: ${adjustmentFactor.toFixed(3)}`);
+            let currentValue = statRow.Val;
+            let changed = false;
 
-        for (const statId of DRIVER_STAT_IDS) {
-          const statRow = database.getAllRows(`
-            SELECT Val
-            FROM Staff_PerformanceStats
+            for (let day = 0; day < daysSinceLastUpdate; day += 1) {
+              if (Math.random() < 0.0125) {
+                const change = Math.random() < adjustmentFactor ? 1 : -1;
+                const nextValue = Math.max(1, Math.min(99, currentValue + change));
+                if (nextValue !== currentValue) {
+                  driverLogs.push(`Stat ${statId} day ${day + 1}: ${currentValue} -> ${nextValue}`);
+                  currentValue = nextValue;
+                  changed = true;
+                }
+              }
+            }
+
+            if (changed) {
+              database.exec(`
+                UPDATE Staff_PerformanceStats
+                SET Val = :value
+                WHERE StaffID = :driverId
+                  AND StatID = :statId
+              `, {
+                ":value": currentValue,
+                ":driverId": driver.StaffID,
+                ":statId": statId,
+              });
+              statUpdates += 1;
+            }
+          }
+
+          const improvabilityRow = readFirstRow(database, `
+            SELECT Improvability
+            FROM Staff_DriverData
             WHERE StaffID = :driverId
-              AND StatID = :statId
             LIMIT 1
           `, {
             ":driverId": driver.StaffID,
-            ":statId": statId,
-          })[0];
+          });
 
-          if (!statRow) {
-            continue;
-          }
-
-          let currentValue = statRow.Val;
-          let changed = false;
+          let improvability = improvabilityRow?.Improvability ?? 50;
+          let improvabilityChanged = false;
 
           for (let day = 0; day < daysSinceLastUpdate; day += 1) {
             if (Math.random() < 0.0125) {
               const change = Math.random() < adjustmentFactor ? 1 : -1;
-              const nextValue = Math.max(1, Math.min(99, currentValue + change));
-              if (nextValue !== currentValue) {
-                driverLogs.push(`Stat ${statId} day ${day + 1}: ${currentValue} -> ${nextValue}`);
-                currentValue = nextValue;
-                changed = true;
+              const nextValue = Math.max(1, Math.min(99, improvability + change));
+              if (nextValue !== improvability) {
+                driverLogs.push(`Improvability day ${day + 1}: ${improvability} -> ${nextValue}`);
+                improvability = nextValue;
+                improvabilityChanged = true;
               }
             }
           }
 
-          if (changed) {
+          if (improvabilityChanged) {
             database.exec(`
-              UPDATE Staff_PerformanceStats
-              SET Val = :value
+              UPDATE Staff_DriverData
+              SET Improvability = :value
               WHERE StaffID = :driverId
-                AND StatID = :statId
             `, {
-              ":value": currentValue,
+              ":value": improvability,
               ":driverId": driver.StaffID,
-              ":statId": statId,
             });
-            statUpdates += 1;
+            improvabilityUpdates += 1;
           }
         }
 
-        const improvabilityRow = database.getAllRows(`
-          SELECT Improvability
-          FROM Staff_DriverData
-          WHERE StaffID = :driverId
-          LIMIT 1
+        database.exec(`
+          UPDATE Parts_Enum_Stats
+          SET name = :currentDate
+          WHERE Value = 13
         `, {
-          ":driverId": driver.StaffID,
-        })[0];
+          ":currentDate": currentDate,
+        });
 
-        let improvability = improvabilityRow?.Improvability ?? 50;
-        let improvabilityChanged = false;
-
-        for (let day = 0; day < daysSinceLastUpdate; day += 1) {
-          if (Math.random() < 0.0125) {
-            const change = Math.random() < adjustmentFactor ? 1 : -1;
-            const nextValue = Math.max(1, Math.min(99, improvability + change));
-            if (nextValue !== improvability) {
-              driverLogs.push(`Improvability day ${day + 1}: ${improvability} -> ${nextValue}`);
-              improvability = nextValue;
-              improvabilityChanged = true;
-            }
-          }
-        }
-
-        if (improvabilityChanged) {
-          database.exec(`
-            UPDATE Staff_DriverData
-            SET Improvability = :value
-            WHERE StaffID = :driverId
-          `, {
-            ":value": improvability,
-            ":driverId": driver.StaffID,
-          });
-          improvabilityUpdates += 1;
-        }
-      }
-
-      database.exec(`
-        UPDATE Parts_Enum_Stats
-        SET name = :currentDate
-        WHERE Value = 13
-      `, {
-        ":currentDate": currentDate,
+        return {
+          nextLog: [
+            `@sam_fakt F1 driver attribute randomizer`,
+            `Days simulated: ${daysSinceLastUpdate}`,
+            `Drivers processed: ${drivers.length}`,
+            `Updated stat rows: ${statUpdates}`,
+            `Updated improvability rows: ${improvabilityUpdates}`,
+            "",
+            driverLogs.join("\n"),
+          ].join("\n"),
+          statUpdates,
+          improvabilityUpdates,
+        };
       });
 
-      database.exec("COMMIT");
-
-      setLog([
-        `@sam_fakt F1 driver attribute randomizer`,
-        `Days simulated: ${daysSinceLastUpdate}`,
-        `Drivers processed: ${drivers.length}`,
-        `Updated stat rows: ${statUpdates}`,
-        `Updated improvability rows: ${improvabilityUpdates}`,
-        "",
-        driverLogs.join("\n"),
-      ].join("\n"));
-
+      setLog(nextLog);
       enqueueSnackbar(`Updated ${statUpdates} driver stat rows and ${improvabilityUpdates} improvability rows.`, {
         variant: statUpdates || improvabilityUpdates ? "success" : "warning",
       });
     } catch (error) {
-      try {
-        database.exec("ROLLBACK");
-      } catch {
-        // Ignore rollback failures after partial transaction state changes.
-      }
       enqueueSnackbar(`Driver randomizer failed: ${error.message || error}`, { variant: "error" });
     } finally {
       setBusyAction("");

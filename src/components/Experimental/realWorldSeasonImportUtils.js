@@ -4,6 +4,7 @@ import {
   setCareerSaveMetadataFields,
 } from "@/components/Customize/Player/timeMachineUtils";
 import { parseBasicInfo } from "@/js/BasicInfo";
+import {readRows} from "@/js/database/utils";
 import { dateToDay, dayToDate, resolveDriverCode, resolveLiteral, resolveName, unresolveDriverCode, unresolveName } from "@/js/localization";
 
 const SEASON_RACE_DELETE_TABLES = [
@@ -3905,14 +3906,6 @@ function normalizeDriverCode(value) {
 
 function sanitizeRowObject(row) {
   return Object.fromEntries(Object.entries(row).filter(([, value]) => value !== undefined));
-}
-
-function readRows(database, query, params = {}) {
-  try {
-    return database.getAllRows(query, params);
-  } catch {
-    return [];
-  }
 }
 
 function withImportSqlLogger(database, callback) {

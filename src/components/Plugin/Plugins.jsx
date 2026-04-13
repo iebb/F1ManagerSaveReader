@@ -1,4 +1,4 @@
-import CommunityPartRandomizer from "@/components/Plugin/CommunityPartRandomizer";
+import CommunityPlugins from "@/components/Plugin/community";
 import {Alert, AlertTitle, Divider, Typography} from "@mui/material";
 
 export default function Plugins() {
@@ -19,7 +19,7 @@ export default function Plugins() {
       </Alert>
 
       <Divider />
-      <CommunityPartRandomizer />
+      <CommunityPlugins />
     </div>
   );
 }

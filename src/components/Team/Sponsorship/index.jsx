@@ -14,17 +14,10 @@ import {
   resolveLiteral,
 } from "@/js/localization";
 import { getExistingTableSet } from "@/components/Customize/Player/timeMachineUtils";
+import {readRows} from "@/js/database/utils";
 import { useSnackbar } from "notistack";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useState } from "react";
-
-const readRows = (database, query, params = {}) => {
-  try {
-    return database.getAllRows(query, params);
-  } catch {
-    return [];
-  }
-};
 
 const clampPercentage = (value, max) => {
   if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {

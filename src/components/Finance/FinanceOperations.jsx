@@ -1,18 +1,12 @@
 import {BasicInfoContext, DatabaseContext, MetadataContext} from "@/js/Contexts";
-import {dayToDate, formatDate, resolveLiteral, teamNames} from "@/js/localization";
+import {readRows} from "@/js/database/utils";
+import {dayToDate, formatDate} from "@/js/localization";
+import {getTeamDisplayName} from "@/js/utils/teamDisplay";
 import {Alert, AlertTitle, Button} from "@mui/material";
 import {DataGrid} from "@mui/x-data-grid";
 import {useSnackbar} from "notistack";
 import * as React from "react";
 import {useContext, useEffect, useMemo, useState} from "react";
-
-const readRows = (database, query, params = {}) => {
-  try {
-    return database.getAllRows(query, params);
-  } catch {
-    return [];
-  }
-};
 
 const formatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -20,12 +14,6 @@ const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const resolveTeamDisplayName = (teamMap, teamId, version) => {
-  if (teamId > 31 && teamMap?.[teamId]?.TeamNameLocKey) {
-    return resolveLiteral(teamMap[teamId].TeamNameLocKey);
-  }
-  return teamNames(teamId, version);
-};
 
 export default function FinanceOperations() {
   const database = useContext(DatabaseContext);
@@ -56,7 +44,7 @@ export default function FinanceOperations() {
     ).map((row) => ({
       id: row.TeamID,
       ...row,
-      Team: resolveTeamDisplayName(teamMap, row.TeamID, version),
+      Team: getTeamDisplayName(teamMap, row.TeamID, version),
     }));
     setTeamBalanceRows(balanceData);
 
