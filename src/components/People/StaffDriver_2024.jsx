@@ -1,4 +1,4 @@
-import { resolveName, teamNames, dayToDate, getDriverCode, localDateToDay, formatISODateLocal } from "@/js/localization";
+import { resolveName, teamNames, dayToDate, getDriverCode, formatISODateLocal } from "@/js/localization";
 import { getCountryFlag, getCountryShort } from "@/js/localization/ISOCountries";
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
@@ -9,6 +9,8 @@ import { getStaff } from "./commons/drivers";
 import { localeStaffStats } from "./commons/staffCommon";
 import ContractSwapper from "./subcomponents/ContractSwapper";
 import StaffEditor from "./subcomponents/StaffEditor";
+import PeopleToolbar from "./subcomponents/PeopleToolbar";
+import {saveStaffRow} from "./commons/saveStaffRow";
 
 
 export default function StaffDriver2024({ StaffType = 0 }) {
@@ -18,7 +20,6 @@ export default function StaffDriver2024({ StaffType = 0 }) {
   const basicInfo = useContext(BasicInfoContext);
   const { enqueueSnackbar } = useSnackbar();
 
-  const basicDataTable = version === 2 ? "Staff_CommonData" : "Staff_BasicData";
   const retirementDataTable = version === 2 ? "Staff_CommonData" : "Staff_GameData";
   const { weekend, player } = basicInfo;
 
@@ -32,14 +33,19 @@ export default function StaffDriver2024({ StaffType = 0 }) {
   const [view, setView] = useState("contract");
   const [nameFilter, setNameFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [paginationModel, setPaginationModel] = useState({page: 0, pageSize: 20});
 
-  const refresh = () => setUpdated(+new Date());
+  const refresh = () => setUpdated((value) => value + 1);
 
 
   useEffect(() => {
     try {
       const [StaffStats, results] = getStaff({ basicInfo, database, version }, StaffType);
-      setStaffStats(StaffStats);
+      // Keep column definitions stable when only row values changed.
+      setStaffStats((current) => (
+        current.length === StaffStats.length && current.every((stat, index) => stat === StaffStats[index])
+          ? current : StaffStats
+      ));
       setRows(results);
     } catch (e) {
       console.error(e);
@@ -48,7 +54,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
         { variant: "error" }
       );
     }
-  }, [database, updated])
+  }, [basicInfo, database, enqueueSnackbar, StaffType, updated, version]);
 
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -128,7 +134,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
 
   const nameColumn = {
     field: 'FirstName',
-    valueGetter: ({ row }) => resolveName(row.FirstName) + resolveName(row.LastName),
+    valueGetter: ({ row }) => `${resolveName(row.FirstName)} ${resolveName(row.LastName)}`,
     headerName: 'Name',
     width: 124,
     renderCell: ({ row }) => (
@@ -182,7 +188,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
           <div className="text-[12px] font-semibold text-red-300">Retired</div>
           <button className="mt-1 text-[11px] uppercase tracking-[0.08em] text-sky-300" onClick={() => {
             database.exec(`UPDATE ${retirementDataTable} SET Retired = 0, RetirementAge = ${extendedRetirementAge} WHERE StaffID = ${row.StaffID}`);
-            setUpdated(+new Date());
+            refresh();
           }}>Unretire</button>
         </div>
       ) : (
@@ -191,7 +197,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
           {retirementInYears < 5 && (
             <button className="mt-1 text-[11px] uppercase tracking-[0.08em] text-sky-300" onClick={() => {
               database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = RetirementAge + 5 - ${retirementInYears} WHERE StaffID = ${row.StaffID}`);
-              setUpdated(+new Date());
+              refresh();
             }}>Postpone</button>
           )}
         </div>
@@ -216,12 +222,12 @@ export default function StaffDriver2024({ StaffType = 0 }) {
             <span>Until {Contract.EndSeason}</span>
             <button className="text-sky-300" onClick={() => {
               database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason + 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
-              setUpdated(+new Date());
+              refresh();
             }}>+1</button>
             {Contract.EndSeason > player.CurrentSeason ? (
               <button className="text-sky-300" onClick={() => {
                 database.exec(`UPDATE Staff_Contracts SET EndSeason = EndSeason - 1 WHERE StaffID = ${row.StaffID} AND ContractType = 0 ${version <= 3 ? 'AND Accepted = 1' : ''}`);
-                setUpdated(+new Date());
+                refresh();
               }}>-1</button>
             ) : null}
           </div>
@@ -289,6 +295,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
     ...staffStats.map((x) => ({
       field: 'performance_stats_' + x,
       headerName: localeStaffStats["STAFF_STAT_" + x]?.slice(0, 3) || `${x}`,
+      description: localeStaffStats["STAFF_STAT_" + x] || `Stat ${x}`,
       width: 56,
       editable: true,
       type: 'number',
@@ -299,6 +306,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
     {
       field: 'Improvability',
       headerName: "Impr",
+      description: "Improvability",
       width: 56,
       editable: true,
       type: 'number',
@@ -309,6 +317,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
     {
       field: 'Aggression',
       headerName: "Aggr",
+      description: "Aggression",
       width: 56,
       editable: true,
       type: 'number',
@@ -320,6 +329,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
       {
         field: 'Marketability',
         headerName: "Mkt",
+        description: "Marketability",
         width: 56,
         editable: true,
         type: 'number',
@@ -330,6 +340,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
       {
         field: 'TargetMarketability',
         headerName: "TMk",
+        description: "Target Marketability",
         width: 56,
         editable: true,
         type: 'number',
@@ -339,7 +350,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
       },
     ]) : []),
     actionsColumn,
-  ], [staffStats, version]);
+  ], [staffStats, version, database, StaffType]);
 
   const contractColumns = useMemo(() => [
     idColumn,
@@ -351,7 +362,7 @@ export default function StaffDriver2024({ StaffType = 0 }) {
     teamColumn,
     contractColumn,
     actionsColumn,
-  ], [player.CurrentSeason, version]);
+  ], [player.CurrentSeason, version, database, StaffType]);
   const filteredRows = useMemo(() => {
     const query = nameFilter.trim().toLowerCase();
     return rows.filter((row) => {
@@ -385,116 +396,45 @@ export default function StaffDriver2024({ StaffType = 0 }) {
       }
       <StaffEditor editRow={editRow} setEditRow={setEditRow} refresh={refresh} />
       <ContractSwapper swapRow={swapRow} setSwapRow={setSwapRow} refresh={refresh} />
-      <div className="flex items-center gap-2 border border-white/10 bg-black/10 px-3 py-2">
-        <button
-          type="button"
-          onClick={() => setEditRow({ __isNew: true, StaffType, IsGeneratedStaff: 1 })}
-          className="border border-emerald-300/30 bg-emerald-500/[0.08] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100 transition hover:bg-emerald-500/[0.14]"
-        >
-          New Driver
-        </button>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">View</div>
-        {[
-          { id: "contract", label: "Contract" },
-          { id: "stats", label: "Stats" },
-        ].map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setView(option.id)}
-            className={`border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${view === option.id
-              ? "border-sky-300/40 bg-sky-500/10 text-white"
-              : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
-              }`}
-          >
-            {option.label}
-          </button>
-        ))}
-        <div className="ml-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Status</div>
-        {[
-          { id: "all", label: "All" },
-          { id: "contracted", label: "Contracted" },
-          { id: "available", label: "Available" },
-          { id: "retired", label: "Retired" },
-        ].map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setStatusFilter(option.id)}
-            className={`border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${
-              statusFilter === option.id
-                ? "border-sky-300/40 bg-sky-500/10 text-white"
-                : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-        <div className="ml-auto min-w-[220px]">
-          <input
-            type="text"
-            value={nameFilter}
-            onChange={(e) => setNameFilter(e.target.value)}
-            placeholder="Filter by name"
-            className="w-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white outline-none placeholder:text-slate-500"
-          />
-        </div>
-      </div>
+      <PeopleToolbar
+        label="Driver"
+        onCreate={() => setEditRow({ __isNew: true, StaffType, IsGeneratedStaff: 1 })}
+        view={view}
+        onViewChange={setView}
+        statusFilter={statusFilter}
+        onStatusChange={(value) => {
+          setStatusFilter(value);
+          setPaginationModel((current) => ({...current, page: 0}));
+        }}
+        nameFilter={nameFilter}
+        onNameChange={(value) => {
+          setNameFilter(value);
+          setPaginationModel((current) => ({...current, page: 0}));
+        }}
+        count={filteredRows.length}
+      />
       <div className="min-w-0 overflow-x-auto border border-white/10 bg-black/10">
         <DataGrid
-          key={`people-driver-${view}-${updated}`}
           rowHeight={60}
           columnHeaderHeight={44}
           rows={filteredRows}
           getRowId={r => r.StaffID}
-          isCellEditable={({ row, field, value }) => {
+          isCellEditable={({ field, value }) => {
             if (field === "Salary") {
               return value > 0;
             }
             return true;
           }}
-          onProcessRowUpdateError={e => console.error(e)}
+          onProcessRowUpdateError={(error) => enqueueSnackbar(error.message || "Could not save this edit.", {variant: "error"})}
           processRowUpdate={(newRow, oldRow) => {
-            for (const stat of staffStats) {
-              if (newRow['performance_stats_' + stat] !== oldRow['performance_stats_' + stat]) {
-                database.exec(`INSERT INTO Staff_PerformanceStats(StaffID, StatID, Val, Max)
-                VALUES(${newRow.StaffID}, ${stat}, ${newRow['performance_stats_' + stat]}, 100)
-                ON CONFLICT(StaffID, StatID) DO 
-                UPDATE SET Val = ${newRow['performance_stats_' + stat]}
-                WHERE StaffID = ${newRow.StaffID} AND StatID = ${stat};`
-                );
-              }
-              if (StaffType === 0) {
-                if (newRow.Improvability !== oldRow.Improvability) {
-                  database.exec(`UPDATE Staff_DriverData SET Improvability = ${newRow.Improvability} WHERE StaffID = ${newRow.StaffID}`);
-                }
-                if (newRow.Aggression !== oldRow.Aggression) {
-                  database.exec(`UPDATE Staff_DriverData SET Aggression = ${newRow.Aggression} WHERE StaffID = ${newRow.StaffID}`);
-                }
-              }
-              if (newRow.RetirementAge !== oldRow.RetirementAge) {
-                database.exec(`UPDATE ${retirementDataTable} SET RetirementAge = ${newRow.RetirementAge} WHERE StaffID = ${newRow.StaffID}`);
-              }
-              if (newRow.Salary !== oldRow.Salary && oldRow.Salary > 0) {
-                database.exec(`UPDATE Staff_Contracts SET Salary = ${newRow.Salary} WHERE StaffID = ${newRow.StaffID} AND ContractType = 0`);
-              }
-              if (newRow.DOB !== oldRow.DOB) {
-                const _DOB_Date = typeof newRow.DOB === 'object' ? newRow.DOB : dayToDate(newRow.DOB);
-                const _DOB_DayValue = localDateToDay(_DOB_Date);
-                const _DOB_ISO = formatISODateLocal(_DOB_Date);
-                database.exec(`UPDATE ${basicDataTable} SET DOB = ${_DOB_DayValue}, DOB_ISO = '${_DOB_ISO}' WHERE StaffID = ${newRow.StaffID}`);
-                newRow.DOB = _DOB_DayValue;
-              }
-            }
+            const savedRow = saveStaffRow({database, version, staffType: StaffType, staffStats}, newRow, oldRow);
             refresh();
-            return newRow;
+            return savedRow;
           }}
           columns={view === "stats" ? statsColumns : contractColumns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 20 },
-            },
-          }}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          disableRowSelectionOnClick
           pageSizeOptions={[20, 50, 100]}
         />
       </div>

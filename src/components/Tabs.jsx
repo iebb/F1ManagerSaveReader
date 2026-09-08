@@ -32,6 +32,7 @@ export const VTabs = ({ options }) => {
 
   return <TabContext value={value}>
     <Box sx={{
+      minWidth: 0,
       border: 1,
       borderColor: "divider",
       mb: 2,
@@ -69,7 +70,7 @@ export const VTabs = ({ options }) => {
         />)}
       </TabList>
     </Box>
-    {_options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ px: 0, pt: 0 }}>
+    {_options.map((t, _idx) => <TabPanel value={_idx.toString(10)} key={_idx.toString(10)} sx={{ minWidth: 0, px: 0, pt: 0 }}>
       {t.tab}
     </TabPanel>)}
   </TabContext>;
